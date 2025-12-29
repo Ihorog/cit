@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CIT Chat UI</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 1rem; }
+    #chat-log { border: 1px solid #ccc; padding: 1rem; height: 400px; overflow-y: auto; margin-bottom: 1rem; }
+    .message { margin-bottom: 0.5rem; }
+    .message .sender { font-weight: bold; }
+    #input-area { display: flex; gap: 0.5rem; }
+    #message-input { flex: 1; padding: 0.5rem; }
+    #send-btn { padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>CIT Chat UI</h1>
+  <div id="chat-log"></div>
+  <div id="input-area">
+    <input type="text" id="message-input" placeholder="Type your message..." autocomplete="off">
+    <button id="send-btn">Send</button>
+  </div>
+  <script>
+    const chatLog = document.getElementById('chat-log');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    function appendMessage(sender, text) {
+      const div = document.createElement('div');
+      div.classList.add('message');
+      div.innerHTML = '<span class="sender">' + sender + ':</span> ' + text;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      appendMessage('You', text);
+      messageInput.value = '';
+      try {
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [{ role: 'user', content: text }] })
+        });
+        const data = await response.json();
+        const reply = data.choices && data.choices.length > 0 ? data.choices[0].message.content : 'No response';
+        appendMessage('Assistant', reply);
+      } catch (err) {
+        appendMessage('Error', err.message);
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
