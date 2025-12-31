@@ -1,15 +1,12 @@
-# Python cache
+.env
+.env.*
+*.bak
+*.backup*
+*.db
+data/
+db/
+logs/
+dist/
 __pycache__/
 *.pyc
-
-# Environment variables
-.env
-
-# Editor files
-*.swp
-*.swo
-.idea/
-.vscode/
-
-# OS files
 .DS_Store
