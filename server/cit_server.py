@@ -20,6 +20,31 @@ from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import traceback
+# --- CIT_SINGLE_KEY_RESOLVER_V1 ---
+def _read_dotenv_key():
+    try:
+        base = Path(__file__).resolve().parents[1]
+        envp = base / ".env"
+        if not envp.exists():
+            return ""
+        for line in envp.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            kk, vv = line.split("=", 1)
+            kk = kk.strip()
+            vv = vv.strip().strip('"').strip("'")
+            if kk in ("OPENAI_API_KEY", "CIT_OPENAI_API_KEY") and vv:
+                return vv
+        return ""
+    except Exception:
+        return ""
+
+def _get_openai_key():
+    """Single source of truth. No recursion."""
+    return (os.getenv("CIT_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or _read_dotenv_key() or "").strip()
+# --- /CIT_SINGLE_KEY_RESOLVER_V1 ---
+
 
 # --- CIT_KEY_RESOLVER_V1 ---
 def _read_dotenv_key():
