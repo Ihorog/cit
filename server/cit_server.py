@@ -20,6 +20,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import traceback
+
+# --- CIT_BILLING_ERROR_REPLY_V1 ---
+def _friendly_error(raw):
+    try:
+        if isinstance(raw, dict):
+            err = raw.get("error") or {}
+            code = err.get("code") or ""
+            msg  = err.get("message") or ""
+            if code == "billing_not_active":
+                return "OpenAI API billing не активний для цього акаунта. Активуй білінг у platform.openai.com/account/billing і повтори."
+            if "billing" in msg.lower() and "active" in msg.lower():
+                return "OpenAI API billing не активний. Перевір billing details у platform.openai.com/account/billing."
+        return ""
+    except Exception:
+        return ""
+# --- /CIT_BILLING_ERROR_REPLY_V1 ---
 # --- CIT_SINGLE_KEY_RESOLVER_V1 ---
 def _read_dotenv_key():
     try:
