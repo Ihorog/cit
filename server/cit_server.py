@@ -21,6 +21,33 @@ from pathlib import Path
 import subprocess
 import traceback
 
+# --- CIT_BILLING_REPLY_V2 ---
+def _inject_friendly_billing_reply(out):
+    """
+    If OpenAI returns billing_not_active, ensure UI gets a human reply (not empty).
+    """
+    try:
+        if not isinstance(out, dict):
+            return out
+        if (out.get("reply") or "").strip():
+            return out
+        raw = out.get("raw") or {}
+        # raw may be {"error": "HTTPError 429", "body": "...json..."}
+        body = raw.get("body") if isinstance(raw, dict) else None
+        if isinstance(body, str) and body.strip().startswith("{"):
+            try:
+                j = json.loads(body)
+                err = (j.get("error") or {}) if isinstance(j, dict) else {}
+                if err.get("code") == "billing_not_active":
+                    out["ok"] = False
+                    out["reply"] = "OpenAI API billing не активний для цього акаунта. Активуй білінг у platform.openai.com/account/billing і повтори."
+            except Exception:
+                pass
+        return out
+    except Exception:
+        return out
+# --- /CIT_BILLING_REPLY_V2 ---
+
 # --- CIT_BILLING_ERROR_REPLY_V1 ---
 def _friendly_error(raw):
     try:
@@ -633,6 +660,8 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             out = call_openai(msg)
+
+            out = _inject_friendly_billing_reply(out)  # CIT_BILLING_REPLY_V2
             # normalize
             reply = (out.get("reply") or "").strip()
             _send_json(self, 200, {"reply": reply, "api": out.get("api"), "raw": out.get("raw")})
