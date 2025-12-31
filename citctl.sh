@@ -2,6 +2,21 @@
 set -euo pipefail
 
 
+
+# --- CIT_ENV_INJECT_V2 ---
+# Load .env if present (simple KEY=VALUE lines). Does not print values.
+if [ -f ".env" ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ".env"
+  set +a
+fi
+
+# Ensure OPENAI_API_KEY is present if CIT_OPENAI_API_KEY exists
+if [ -n "${CIT_OPENAI_API_KEY:-}" ] && [ -z "${OPENAI_API_KEY:-}" ]; then
+  export OPENAI_API_KEY="$CIT_OPENAI_API_KEY"
+fi
+# --- /CIT_ENV_INJECT_V2 ---
 # --- CIT_OPENAI_KEY_ALIAS_V1 ---
 # Provide OPENAI_API_KEY for code that expects the standard env var.
 # Prefer CIT_OPENAI_API_KEY if present.
@@ -50,7 +65,7 @@ EOF
       exit 0
     fi
 
-    nohup env CIT_PORT="$PORT" python server/cit_server.py > "$LOG" 2>&1 &
+    env OPENAI_API_KEY="${OPENAI_API_KEY:-}" CIT_OPENAI_API_KEY="${CIT_OPENAI_API_KEY:-}" CIT_OPENAI_MODEL="${CIT_OPENAI_MODEL:-}" nohup env CIT_PORT="$PORT" python server/cit_server.py > "$LOG" 2>&1 &
     PID="$!"
     echo "$PID" > "$PIDFILE"
     sleep 1
