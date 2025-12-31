@@ -1,6 +1,6 @@
 """
 CIT (Ci Interface Terminal) — minimal HTTP server with:
-- GET  /health  -> {"ok": true, "model": OPENAI_MODEL}
+- GET  /health  -> {"ok": true, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini")}
 - GET  /ui      -> Web UI (chat + STT + TTS in browser)
 - GET  /        -> same as /ui
 - POST /chat    -> forwards to OpenAI Responses API (or Chat Completions fallback)
@@ -269,7 +269,7 @@ def call_openai(message: str) -> dict:
     resp = _openai_request(
         "https://api.openai.com/v1/responses",
         {
-            "model": MODEL,
+            "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"),
             "input": message,
         },
     )
@@ -282,7 +282,7 @@ def call_openai(message: str) -> dict:
     resp2 = _openai_request(
         "https://api.openai.com/v1/chat/completions",
         {
-            "model": MODEL,
+            "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"),
             "messages": [{"role": "user", "content": message}],
         },
     )
@@ -312,7 +312,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if self.path.startswith("/health"):
-            _send_json(self, 200, {"ok": True, "model": MODEL, "ts": now_utc_iso()})
+            _send_json(self, 200, {"ok": True, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"), "ts": now_utc_iso()})
             return
 
         _send_json(self, 404, {"ok": False, "error": "not_found"})
