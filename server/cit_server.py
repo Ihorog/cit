@@ -1,6 +1,6 @@
 """
 CIT (Ci Interface Terminal) — minimal HTTP server with:
-- GET  /health  -> {"ok": true, "model": "..."}
+- GET  /health  -> {"ok": true, "model": OPENAI_MODEL}
 - GET  /ui      -> Web UI (chat + STT + TTS in browser)
 - GET  /        -> same as /ui
 - POST /chat    -> forwards to OpenAI Responses API (or Chat Completions fallback)
@@ -17,6 +17,9 @@ import os
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
+
+# === Model selection (env-first) ===
+OPENAI_MODEL = os.getenv("CIT_OPENAI_MODEL", "gpt-4.1-mini")
 
 MODEL = os.getenv("CIT_MODEL", "gpt-4o-mini")
 PORT = int(os.getenv("CIT_PORT", "8790"))
