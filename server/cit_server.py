@@ -39,9 +39,28 @@ def _read_dotenv_key():
         return ""
     except Exception:
         return ""
-
 def _get_openai_key():
-    return (os.getenv("CIT_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or _read_dotenv_key() or "").strip()
+    """Return OpenAI API key from CIT_OPENAI_API_KEY or OPENAI_API_KEY or repo .env (no recursion)."""
+    k = (os.getenv("CIT_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or "").strip()
+    if k:
+        return k
+    try:
+        base = Path(__file__).resolve().parents[1]
+        envp = base / ".env"
+        if envp.exists():
+            for line in envp.read_text(encoding="utf-8", errors="ignore").splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                kk, vv = line.split("=", 1)
+                kk = kk.strip()
+                vv = vv.strip().strip('"').strip("'")
+                if kk in ("OPENAI_API_KEY", "CIT_OPENAI_API_KEY") and vv:
+                    return vv
+    except Exception:
+        pass
+    return ""
+
 # --- /CIT_KEY_RESOLVER_V1 ---
 
 # --- CIT_OPENAI_KEY_READ_V1 ---
