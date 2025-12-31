@@ -19,6 +19,7 @@ import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
+import traceback
 
 # --- CIT_KEY_RESOLVER_V1 ---
 def _read_dotenv_key():
@@ -523,7 +524,48 @@ class Handler(BaseHTTPRequestHandler):
 
         _send_json(self, 404, {"ok": False, "error": "not_found"})
 
+    # --- CIT_SAFE_POST_WRAPPER_V1 ---
+
     def do_POST(self):
+
+        try:
+
+            return self._do_POST_impl()
+
+        except Exception as e:
+
+            # Never drop connection without a JSON response
+
+            try:
+
+                tb = traceback.format_exc(limit=12)
+
+            except Exception:
+
+                tb = "traceback_unavailable"
+
+            try:
+
+                self.send_response(500)
+
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+
+                self.end_headers()
+
+                import json
+
+                payload = {"ok": False, "error": str(e), "type": e.__class__.__name__, "trace": tb}
+
+                self.wfile.write(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+
+            except Exception:
+
+                pass
+
+    # --- /CIT_SAFE_POST_WRAPPER_V1 ---
+
+
+    def _do_POST_impl(self):
         # --- CHAT ALIASES (CIT_CHAT_ALIASES_V1) ---
         # accept common client endpoints and route them to /chat handler
         if self.path in ("/api/chat", "/v1/chat", "/api/message", "/message"):
