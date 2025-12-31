@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+
+# --- CIT_OPENAI_KEY_ALIAS_V1 ---
+# Provide OPENAI_API_KEY for code that expects the standard env var.
+# Prefer CIT_OPENAI_API_KEY if present.
+if [ -n "${CIT_OPENAI_API_KEY:-}" ] && [ -z "${OPENAI_API_KEY:-}" ]; then
+  export OPENAI_API_KEY="$CIT_OPENAI_API_KEY"
+fi
+# --- /CIT_OPENAI_KEY_ALIAS_V1 ---
 BASE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$BASE"
 

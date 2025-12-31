@@ -20,6 +20,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 
+# --- CIT_OPENAI_KEY_READ_V1 ---
+def _get_openai_key():
+    return (os.getenv("CIT_OPENAI_API_KEY") or _get_openai_key() or "").strip()
+# --- /CIT_OPENAI_KEY_READ_V1 ---
+
 # === CIT_UI_INTEGRATED_V1 ===
 UI_ROOT = "/ui"
 BASE_DIR = Path(__file__).resolve().parent.parent
