@@ -20,6 +20,30 @@ from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 
+# --- CIT_KEY_RESOLVER_V1 ---
+def _read_dotenv_key():
+    try:
+        base = Path(__file__).resolve().parents[1]
+        envp = base / ".env"
+        if not envp.exists():
+            return ""
+        for line in envp.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            k = k.strip()
+            v = v.strip().strip('"').strip("'")
+            if k in ("OPENAI_API_KEY", "CIT_OPENAI_API_KEY") and v:
+                return v
+        return ""
+    except Exception:
+        return ""
+
+def _get_openai_key():
+    return (os.getenv("CIT_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or _read_dotenv_key() or "").strip()
+# --- /CIT_KEY_RESOLVER_V1 ---
+
 # --- CIT_OPENAI_KEY_READ_V1 ---
 def _get_openai_key():
     return (os.getenv("CIT_OPENAI_API_KEY") or _get_openai_key() or "").strip()
@@ -342,7 +366,13 @@ def _send_json(handler: BaseHTTPRequestHandler, code: int, obj):
 
 def _openai_request(url: str, payload: dict) -> dict:
     if not OPENAI_API_KEY:
-        return {"error": "OPENAI_API_KEY is not set"}
+        # --- CIT_KEY_GUARD_AT_332_V1 ---
+        k = _get_openai_key()
+        if not k:
+            return {"error": "OPENAI_API_KEY is not set"}
+        os.environ["OPENAI_API_KEY"] = k
+        os.environ["CIT_OPENAI_API_KEY"] = k
+        # --- /CIT_KEY_GUARD_AT_332_V1 ---
 
     req = urllib.request.Request(
         url=url,
