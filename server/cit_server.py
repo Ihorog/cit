@@ -470,6 +470,24 @@ class Handler(BaseHTTPRequestHandler):
         _send_json(self, 404, {"ok": False, "error": "not_found"})
 
     def do_POST(self):
+        # --- CHAT ALIASES (CIT_CHAT_ALIASES_V1) ---
+        # accept common client endpoints and route them to /chat handler
+        if self.path in ("/api/chat", "/v1/chat", "/api/message", "/message"):
+            self.path = "/chat"
+        # --- /CHAT ALIASES ---
+        # --- PING (CIT_CHAT_PING_V1) ---
+        try:
+            if isinstance(data, dict) and data.get("ping") is True:
+                body = b'{"ok": true, "pong": true}'
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+        except Exception:
+            pass
+        # --- /PING ---
         if self.path.startswith("/chat"):
             data = _read_json(self)
             msg = (data.get("message") or "").strip()
