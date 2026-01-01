@@ -678,3 +678,18 @@ def main():
 
 if __name__ == "__main__":
     main()
+from server.cit_ui_pwa import UI_HTML_PWA
+
+@app.route('/manifest.webmanifest')
+def manifest():
+    import os
+    p=os.path.join(os.path.dirname(__file__),'..','ui','manifest.webmanifest')
+    with open(p,'r') as f:
+        return f.read(),200,{'Content-Type':'application/manifest+json'}
+
+@app.route('/icons/<f>')
+def icon(f):
+    import os
+    from flask import send_file
+    p=os.path.join(os.path.dirname(__file__),'..','ui','icons',f)
+    return send_file(p,mimetype='image/png')
