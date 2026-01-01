@@ -1,28 +1,46 @@
 # CIT Architecture
 
-The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge between a local Cimeika device and remote AI services.  The current version (v0) exposes two HTTP endpoints and forwards chat requests to OpenAI using only Python's standard library.
+The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge between a local Cimeika device and remote AI services.  The current version (v0) includes an embedded Web UI and exposes HTTP endpoints that forward chat requests to OpenAI using only Python's standard library.
 
 ## Components
 
 - **Android device (Termux)** – The server runs on an Android phone using the Termux terminal emulator.  Termux provides a full Linux environment for installing Python and running services.  A companion app (Termux Boot) can automatically launch CIT on startup.
 
-- **CIT server** – A lightweight HTTP server implemented in `server/cit_server.py`.  It listens on port `8790` and provides:
-  - `GET /health` to check whether the service is alive.  Returns `{ "ok": true }`.
-  - `POST /chat` to proxy chat requests to OpenAI.  Expects a JSON body with a `messages` array (as defined by the OpenAI Chat API).  Forwards the payload to the OpenAI endpoint and returns the response.
+- **CIT server** – A lightweight HTTP server implemented in `server/cit_server.py`.  It listens on port `8790` and provides:
+  - `GET /` or `GET /ui` – Serves an embedded Web UI with a full-featured chat interface. The UI includes:
+    - Dark theme optimized for mobile devices
+    - Speech-to-Text (STT) for voice input using Web Speech API (Ukrainian language)
+    - Text-to-Speech (TTS) for reading responses aloud
+    - Real-time health monitoring with model display
+    - Message history with clear functionality
+  - `GET /health` – Returns server status with model name and timestamp: `{"ok": true, "model": "gpt-4o-mini", "ts": "2026-01-01T..."}`
+  - `POST /chat` – Proxies chat requests to OpenAI. Accepts `{"message": "text"}` and returns `{"reply": "...", "api": "responses|chat.completions", "raw": {...}}`
 
-- **OpenAI API** – CIT uses Python's `urllib.request` to call `https://api.openai.com/v1/chat/completions`.  The `OPENAI_API_KEY` environment variable must be set; CIT does not read or store secrets from files.  All errors from the upstream API are surfaced as JSON.
+- **OpenAI API** – CIT uses Python's `urllib.request` to call OpenAI APIs with a dual-strategy approach:
+  1. Primary: Responses API (`https://api.openai.com/v1/responses`) for simplified interaction
+  2. Fallback: Chat Completions API (`https://api.openai.com/v1/chat/completions`) if Responses API fails
+  
+  The `OPENAI_API_KEY` environment variable must be set; CIT does not read or store secrets from files.  All errors from the upstream API are surfaced as JSON.
 
 - **WebDAV / rclone (optional)** – If the device has rclone configured to a WebDAV backend (e.g., Keenetic router), you can mount or sync your local chat logs and other data.  CIT itself does not perform any file operations, but it is structured to coexist with rclone services (started separately via `scripts/termux_bootstrap.sh`).
 
-- **Future gateways** – The architecture anticipates additional connectors to systems like GitHub, Hugging Face, Figma, or other AI models.  These would operate as separate modules communicating over HTTP or through a message bus.  The core CIT API remains unchanged: external services integrate by consuming or extending the `/chat` endpoint.
+- **Future gateways** – The architecture anticipates additional connectors to systems like GitHub, Hugging Face, Figma, or other AI models.  These would operate as separate modules communicating over HTTP or through a message bus.  The core CIT API remains unchanged: external services integrate by consuming or extending the `/chat` endpoint.
 
 ## Data flow
 
-1. A client on the Android device (or another host on the LAN) sends `GET /health` or `POST /chat` to the device's IP on port 8790.
+1. A client on the Android device (or another host on the LAN) sends a request to the device's IP on port 8790:
+   - `GET /` or `GET /ui` → Web UI (chat interface)
+   - `GET /health` → Server status check
+   - `POST /chat` → Chat request
+
 2. The CIT server receives the request and processes it:
-   - For `/health`, it immediately returns `{ "ok": true }`.
-   - For `/chat`, it validates the JSON, reads the `OPENAI_API_KEY` environment variable, and forwards the request body to the OpenAI API using `urllib`.
-3. The response from OpenAI is returned to the client unmodified (except for error handling).  Clients should parse the `choices` field to extract the model's reply.
+   - For `/` or `/ui`, it returns the embedded HTML interface with Ukrainian language support.
+   - For `/health`, it returns `{"ok": true, "model": "gpt-4o-mini", "ts": "2026-01-01T..."}`.
+   - For `/chat`, it validates the JSON body (`{"message": "text"}`), reads the `OPENAI_API_KEY` environment variable, and forwards to OpenAI:
+     1. First tries Responses API (`/v1/responses`) with `{"model": "...", "input": "text"}`
+     2. Falls back to Chat Completions API (`/v1/chat/completions`) with `{"model": "...", "messages": [{"role": "user", "content": "text"}]}`
+
+3. The response is normalized and returned as `{"reply": "...", "api": "responses|chat.completions", "raw": {...}}`.  The Web UI extracts the `reply` field and displays it in the chat log.
 
 ### Extended services
 
