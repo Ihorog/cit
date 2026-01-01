@@ -7,7 +7,9 @@ The service is designed to run locally on Android through Termux and can be conn
 ## Features
 
 * **Health check** – `GET /health` returns a simple JSON object to verify the service is running.  
+* **Web UI** – `GET /ui` (or `/`) provides a browser-based chat interface with Speech-to-Text (STT) and Text-to-Speech (TTS) support.
 * **Chat proxy** – `POST /chat` forwards your chat messages to OpenAI and returns the response.  
+* **Intelligent API routing** – Uses OpenAI's Responses API with automatic fallback to Chat Completions API.
 * **No external dependencies** – implemented with Python's built‑in modules, so it works out of the box in Termux.  
 * **Simple deployment** – start the server with a single script or integrate it into Termux Boot for auto‑start.
 
@@ -52,9 +54,21 @@ Send a chat message to OpenAI via CIT:
 ```bash
 curl -X POST http://127.0.0.1:8790/chat \
      -H "Content-Type: application/json" \
-     -d '{"messages": [{"role": "user", "content": "Hello, world!"}]}'
+     -d '{"message": "Hello, world!"}'
 
-# The response will include OpenAI's reply in the same JSON format as the API.
+# Example response:
+# {"reply": "Hello! How can I assist you today?", "api": "responses", "raw": {...}}
+```
+
+Or open the Web UI in your browser:
+
+```bash
+# Open http://127.0.0.1:8790/ui in your browser
+# Features:
+# - Interactive chat interface
+# - 🎙️ Speech-to-Text (STT) for voice input
+# - 🔊 Text-to-Speech (TTS) to hear responses
+# - Dark theme optimized for mobile
 ```
 
 ## Repository layout
