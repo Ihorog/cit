@@ -13,7 +13,7 @@ The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge b
 
 - **OpenAI API** – CIT uses Python's `urllib.request` to call OpenAI's APIs with intelligent routing:
   - **Primary**: Responses API (`https://api.openai.com/v1/responses`) for simplified single-turn interactions
-  - **Fallback**: Chat Completions API (`https://api.openai.com/v1/chat/completions`) if Responses API is unavailable
+  - **Fallback**: Chat Completions API (`https://api.openai.com/v1/chat/completions`) if Responses API doesn't return a valid response
   
   The `OPENAI_API_KEY` environment variable must be set; CIT does not read or store secrets from files.  The model can be configured via `CIT_MODEL` (default: `gpt-4o-mini`).  All errors from the upstream API are surfaced as JSON.
 
@@ -33,7 +33,7 @@ The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge b
    - For `/chat`, it validates the JSON (expecting `{"message": "..."}`), reads the `OPENAI_API_KEY` environment variable, and intelligently routes the request:
      1. First tries the Responses API with the message as `input`
      2. Falls back to Chat Completions API if needed
-     3. Returns a normalized response: `{"reply": "...", "api": "responses" (or `"chat.completions"`), "raw": {...}}`
+     3. Returns a normalized response: `{"reply": "...", "api": "responses"}` or `{"reply": "...", "api": "chat.completions", "raw": {...}}`
 
 3. The Web UI uses the `/chat` API endpoint to send messages and display responses with rich formatting and voice features.
 
