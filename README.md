@@ -57,7 +57,26 @@ curl -X POST http://127.0.0.1:8790/chat \
      -d '{"message": "Hello, world!"}'
 
 # Example response:
-# {"reply": "Hello! How can I assist you today?", "api": "responses", "raw": {...}}
+# {
+#   "reply": "Hello! How can I assist you today?",
+#   "api": "chat.completions",
+#   "raw": {
+#     "id": "chatcmpl-abc123",
+#     "object": "chat.completion",
+#     "created": 1735756800,
+#     "model": "gpt-4.1-mini",
+#     "choices": [
+#       {
+#         "index": 0,
+#         "message": {
+#           "role": "assistant",
+#           "content": "Hello! How can I assist you today?"
+#         },
+#         "finish_reason": "stop"
+#       }
+#     ]
+#   }
+# }
 ```
 
 Or open the Web UI in your browser:
