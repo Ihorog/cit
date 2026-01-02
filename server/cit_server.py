@@ -30,24 +30,37 @@ UI_HTML = """<!doctype html>
   <title>CIT</title>
   <style>
     :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b0f14; color:#e8eef6; }
     .wrap { max-width: 900px; margin: 0 auto; padding: 14px; }
-    .top { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom: 10px; }
-    .badge { font-size:12px; opacity:.8; }
-    .chat { border:1px solid rgba(255,255,255,.08); border-radius:14px; overflow:hidden; background:rgba(255,255,255,.03); }
-    .log { height: 62vh; overflow:auto; padding: 12px; }
-    .m { margin: 10px 0; line-height: 1.35; white-space: pre-wrap; }
-    .me { color:#cfe6ff; }
-    .ai { color:#e8eef6; }
-    .bar { display:flex; gap:10px; padding: 12px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.15); }
-    textarea { flex:1; resize:none; height: 44px; border-radius: 12px; border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.25); color:#e8eef6; padding:10px; outline:none; }
-    button { border-radius: 12px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06);
-      color:#e8eef6; padding: 10px 12px; cursor:pointer; }
-    button:disabled { opacity:.5; cursor:not-allowed; }
+    .top { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom: 12px; }
+    .badge { font-size:12px; opacity:.8; transition: opacity 0.3s ease; }
+    .chat { border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden; background:rgba(255,255,255,.03); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+    .log { height: 62vh; overflow:auto; padding: 16px; scroll-behavior: smooth; }
+    .m { margin: 12px 0; line-height: 1.45; white-space: pre-wrap; padding: 8px 12px; border-radius: 8px; }
+    .me { color:#cfe6ff; background:rgba(79,137,255,.08); }
+    .ai { color:#e8eef6; background:rgba(255,255,255,.03); }
+    .bar { display:flex; gap:10px; padding: 14px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.2); }
+    textarea { flex:1; resize:none; height: 48px; border-radius: 12px; border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.3); color:#e8eef6; padding:12px; outline:none; font-size: 14px; line-height: 1.5;
+      transition: border-color 0.2s ease, background-color 0.2s ease; }
+    textarea:focus { border-color: rgba(79,137,255,.4); background:rgba(0,0,0,.4); }
+    button { border-radius: 12px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.08);
+      color:#e8eef6; padding: 11px 14px; cursor:pointer; font-size: 14px; font-weight: 500;
+      transition: all 0.2s ease; }
+    button:hover:not(:disabled) { background:rgba(255,255,255,.14); border-color: rgba(255,255,255,.24); transform: translateY(-1px); }
+    button:active:not(:disabled) { transform: translateY(0); }
+    button:disabled { opacity:.4; cursor:not-allowed; }
     .row { display:flex; gap:10px; }
-    .hint { font-size: 12px; opacity: .7; margin-top: 8px; }
-    .small { font-size: 12px; opacity: .8; }
+    .hint { font-size: 12px; opacity: .65; margin-top: 10px; line-height: 1.4; }
+    .small { font-size: 12px; opacity: .75; margin-top: 2px; }
+    @media (max-width: 600px) {
+      .wrap { padding: 10px; }
+      .top { flex-wrap: wrap; }
+      .bar { flex-direction: column; }
+      textarea { height: 56px; }
+      button { width: 100%; justify-content: center; }
+    }
   </style>
 </head>
 <body>
