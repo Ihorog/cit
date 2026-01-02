@@ -83,16 +83,27 @@
 /* Main Content */
 .mainContent {
   flex: 1;
-  padding: 20px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .contentArea {
-  max-width: 800px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
   margin: 0 auto;
+  width: 100%;
+  overflow: hidden;
 }
 
-.contentArea h2 {
+.placeholder {
+  padding: 20px;
+  text-align: center;
+}
+
+.placeholder h2 {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 16px;
@@ -102,7 +113,7 @@
   background-clip: text;
 }
 
-.contentArea p {
+.placeholder p {
   font-size: 16px;
   line-height: 1.6;
   color: rgba(255, 255, 255, 0.8);
@@ -252,15 +263,11 @@
     padding: 12px 24px;
   }
 
-  .mainContent {
-    padding: 32px;
-  }
-
   .menuModal {
     width: 320px;
   }
 
-  .contentArea h2 {
+  .placeholder h2 {
     font-size: 40px;
   }
 }

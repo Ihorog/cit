@@ -123,6 +123,34 @@ cit/
     └── termux_boot/cit_start.sh # script run by Termux Boot
 ```
 
+## Web Interface (Cimeika)
+
+In addition to the embedded UI served by the CIT server, there's a modern **Next.js PWA** interface called **Cimeika** in the `/web` directory.
+
+**Features:**
+- 🎨 Beautiful dark theme optimized for mobile
+- 💬 Full-featured chat interface with AI
+- 🎙️ Speech-to-Text (Ukrainian)
+- 🔊 Text-to-Speech (Ukrainian)  
+- 📱 PWA support (install as app)
+- 🎯 Menu system with multiple sections
+- 📊 Real-time health monitoring
+
+**Quick start:**
+```bash
+# Start CIT server (required)
+export OPENAI_API_KEY=sk-...
+python server/cit_server.py
+
+# In another terminal, start web app
+cd web
+npm install
+npm run dev
+# Open http://localhost:3000
+```
+
+See [`web/README_WEB.md`](web/README_WEB.md) for detailed documentation, deployment guides, and PWA setup.
+
 ## License
 
 This project is released under the MIT License.  See `LICENSE` for details.

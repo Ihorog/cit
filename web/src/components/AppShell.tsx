@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import styles from './AppShell.module.css'
+import ChatInterface from './ChatInterface'
 
 interface MenuItem {
   id: string
@@ -52,8 +53,23 @@ export default function AppShell() {
       {/* Main Content */}
       <main className={styles.mainContent}>
         <div className={styles.contentArea}>
-          <h2>{activeSection}</h2>
-          <p>Вітаємо у {activeSection}</p>
+          {activeSection === 'Казкар' && <ChatInterface />}
+          {activeSection === '✨ Легенда Ci' && <ChatInterface />}
+          {activeSection === 'ПоДія' && <ChatInterface />}
+          {activeSection === 'Настрій' && <ChatInterface />}
+          {activeSection === 'Маля' && <ChatInterface />}
+          {activeSection === 'Календар' && (
+            <div className={styles.placeholder}>
+              <h2>Календар</h2>
+              <p>Календар подій та важливих дат</p>
+            </div>
+          )}
+          {activeSection === 'Галерея' && (
+            <div className={styles.placeholder}>
+              <h2>Галерея</h2>
+              <p>Колекція фото та спогадів</p>
+            </div>
+          )}
         </div>
       </main>
 
