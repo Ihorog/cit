@@ -19,7 +19,7 @@ The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge b
 
 - **WebDAV / rclone (optional)** – If the device has rclone configured to a WebDAV backend (e.g., Keenetic router), you can mount or sync your local chat logs and other data.  CIT itself does not perform any file operations, but it is structured to coexist with rclone services (started separately via `scripts/termux_bootstrap.sh`).
 
-- **Future gateways** – The architecture anticipates additional connectors to systems like GitHub, Hugging Face, Figma, or other AI models.  These would operate as separate modules communicating over HTTP or through a message bus.  The core CIT API remains unchanged: external services integrate by consuming or extending the `/chat` endpoint.
+- **Future gateways** – The architecture anticipates additional connectors to systems like GitHub, Hugging Face, Figma, or other AI models.  These would operate as separate modules communicating over HTTP or through a message bus.  The core CIT API remains unchanged: external services integrate by consuming or extending the `/chat` endpoint.
 
 ## Data flow
 

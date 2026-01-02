@@ -1,7 +1,7 @@
 # CIT (Ci Interface Terminal)
 
 CIT (Ci Interface Terminal) is a lightweight API gateway that sits between your Cimeika devices and the OpenAI API.  
-It exposes a minimal HTTP interface with two endpoints and forwards chat requests to OpenAI using Python's standard library.  
+It exposes a minimal HTTP interface and forwards chat requests to OpenAI using Python's standard library.  
 The service is designed to run locally on Android through Termux and can be connected to other systems over a LAN.  
 
 ## Features
@@ -38,15 +38,33 @@ Follow these three steps to install and run CIT on your Android device using Ter
    ```
 
 The service will listen on all interfaces (port `8790` by default).  
-You can add the start command to `scripts/termux_boot/cit_start.sh` and enable Termux Boot to run CIT automatically after a reboot.
+You can add the start command to `scripts/termux_boot/cit_start.sh` and enable Termux Boot to run CIT automatically after a reboot.
+
+Access the Web UI at `http://127.0.0.1:8790/ui` in your browser to use the chat interface with voice capabilities.
 
 ## Example requests
+
+### Web UI
+
+Open your browser and navigate to:
+```
+http://127.0.0.1:8790/ui
+```
+
+The Web UI provides:
+- Text input with "Send" button
+- 🎙️ STT button for voice input (Ukrainian language)
+- 🔊 TTS button to hear the assistant's response
+- Real-time health status indicator
+- Dark theme optimized for mobile
+
+### API Endpoints
 
 Check that CIT is running:
 
 ```bash
 curl http://127.0.0.1:8790/health
-# → {"ok": true}
+# → {"ok": true, "model": "gpt-4o-mini", "ts": "2026-01-01T22:04:59.584648+00:00"}
 ```
 
 Send a chat message to OpenAI via CIT:
