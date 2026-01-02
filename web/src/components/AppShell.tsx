@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import styles from './AppShell.module.css'
+import ChatInterface from './ChatInterface'
 
 interface MenuItem {
   id: string
@@ -51,10 +52,14 @@ export default function AppShell() {
 
       {/* Main Content */}
       <main className={styles.mainContent}>
-        <div className={styles.contentArea}>
-          <h2>{activeSection}</h2>
-          <p>Вітаємо у {activeSection}</p>
-        </div>
+        {activeSection === 'Казкар' ? (
+          <ChatInterface />
+        ) : (
+          <div className={styles.contentArea}>
+            <h2>{activeSection}</h2>
+            <p>Вітаємо у {activeSection}</p>
+          </div>
+        )}
       </main>
 
       {/* Menu Overlay */}
