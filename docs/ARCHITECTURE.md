@@ -33,7 +33,7 @@ The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge b
    - For `/chat`, it validates the JSON (expecting `{"message": "..."}`), reads the `OPENAI_API_KEY` environment variable, and intelligently routes the request:
      1. First tries the Responses API with the message as `input`
      2. Falls back to Chat Completions API if needed
-     3. Returns a normalized response: `{"reply": "...", "api": "responses|chat.completions", "raw": {...}}`
+     3. Returns a normalized response: `{"reply": "...", "api": "responses" (or `"chat.completions"`), "raw": {...}}`
 
 3. The Web UI uses the `/chat` API endpoint to send messages and display responses with rich formatting and voice features.
 
