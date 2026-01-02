@@ -10,3 +10,12 @@ dist/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Next.js
+web/.next/
+web/out/
+web/node_modules/
+web/.vercel
+web/npm-debug.log*
+web/yarn-debug.log*
+web/yarn-error.log*

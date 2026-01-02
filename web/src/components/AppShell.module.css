@@ -1,0 +1,288 @@
+/* App Shell Container */
+.appShell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #0b0b0b;
+  color: #ffffff;
+}
+
+/* Top Bar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background-color: rgba(11, 11, 11, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 60px;
+}
+
+/* Ci Button */
+.ciButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.ciButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.ciButton:active {
+  transform: scale(0.95);
+}
+
+.ciLogo {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+/* Brand Section */
+.brandSection {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.brand {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  margin: 0;
+  color: #ffffff;
+}
+
+.activeSectionText {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Main Content */
+.mainContent {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.contentArea {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.contentArea h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.contentArea p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Menu Overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 200;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Menu Modal */
+.menuModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 85%;
+  max-width: 320px;
+  height: 100%;
+  background-color: #1a1a1a;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Menu Header */
+.menuHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.menuTitle {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 0;
+}
+
+.closeButton:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.closeButton:active {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Menu List */
+.menuList {
+  list-style: none;
+  margin: 0;
+  padding: 12px 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.menuList li {
+  margin: 0;
+}
+
+/* Menu Items */
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 16px 20px;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.menuItem:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.menuItem:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menuItemActive {
+  background-color: rgba(102, 126, 234, 0.15);
+  color: #ffffff;
+  border-left-color: #667eea;
+  font-weight: 600;
+}
+
+.menuItemActive:hover {
+  background-color: rgba(102, 126, 234, 0.2);
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .topbar {
+    padding: 12px 24px;
+  }
+
+  .mainContent {
+    padding: 32px;
+  }
+
+  .menuModal {
+    width: 320px;
+  }
+
+  .contentArea h2 {
+    font-size: 40px;
+  }
+}
+
+/* Touch-friendly on mobile */
+@media (max-width: 767px) {
+  .ciButton {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .menuItem {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .closeButton {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Safari-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .topbar {
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+}
