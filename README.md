@@ -9,7 +9,7 @@ The service is designed to run locally on Android through Termux and can be conn
 * **Health check** – `GET /health` returns a simple JSON object to verify the service is running.  
 * **Web UI** – `GET /ui` (or `/`) provides a browser-based chat interface with Speech-to-Text (STT) and Text-to-Speech (TTS) support.
 * **Chat proxy** – `POST /chat` forwards your chat messages to OpenAI and returns the response.  
-* **Intelligent API routing** – Uses OpenAI's Responses API with automatic fallback to Chat Completions API.
+* **Intelligent API routing** – uses OpenAI's Responses API with automatic fallback to Chat Completions API.
 * **No external dependencies** – implemented with Python's built‑in modules, so it works out of the box in Termux.  
 * **Simple deployment** – start the server with a single script or integrate it into Termux Boot for auto‑start.
 
