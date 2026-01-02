@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import styles from './ChatInterface.module.css'
 
 interface Message {
+  id: string
   role: 'user' | 'assistant'
   content: string
 }
@@ -38,7 +39,7 @@ export default function ChatInterface({
     }
 
     checkHealth()
-    const interval = setInterval(checkHealth, 4000)
+    const interval = setInterval(checkHealth, 10000) // 10 seconds
     return () => clearInterval(interval)
   }, [apiUrl])
 
@@ -53,8 +54,9 @@ export default function ChatInterface({
     if (!input.trim() || isLoading) return
 
     const userMessage = input.trim()
+    const messageId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setMessages(prev => [...prev, { id: messageId, role: 'user', content: userMessage }])
     setIsLoading(true)
 
     try {
@@ -67,26 +69,51 @@ export default function ChatInterface({
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`Помилка сервера: ${response.status}`)
       }
 
       const data = await response.json()
       
+      // Validate response structure
+      if (typeof data !== 'object' || data === null) {
+        throw new Error('Невірний формат відповіді від сервера')
+      }
+
+      const replyId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      
       if (data.error) {
         setMessages(prev => [...prev, { 
+          id: replyId,
           role: 'assistant', 
           content: `Помилка: ${data.error}` 
         }])
-      } else {
+      } else if (data.reply && typeof data.reply === 'string') {
         setMessages(prev => [...prev, { 
+          id: replyId,
           role: 'assistant', 
-          content: data.reply || 'Немає відповіді' 
+          content: data.reply 
         }])
+      } else {
+        throw new Error('Відповідь не містить очікуваних даних')
       }
     } catch (error) {
+      const errorId = `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      let errorMessage = 'Помилка з\'єднання. '
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage += 'Перевірте підключення до інтернету або запустіть CIT сервер.'
+        } else {
+          errorMessage += error.message
+        }
+      } else {
+        errorMessage += 'Невідома помилка. Спробуйте ще раз.'
+      }
+      
       setMessages(prev => [...prev, { 
+        id: errorId,
         role: 'assistant', 
-        content: `Помилка з'єднання: ${error instanceof Error ? error.message : 'Невідома помилка'}` 
+        content: errorMessage
       }])
     } finally {
       setIsLoading(false)
@@ -126,9 +153,9 @@ export default function ChatInterface({
               <p>Напиши щось або натисни Enter...</p>
             </div>
           )}
-          {messages.map((msg, idx) => (
+          {messages.map((msg) => (
             <div 
-              key={idx} 
+              key={msg.id} 
               className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}
             >
               {msg.content}
