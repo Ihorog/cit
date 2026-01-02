@@ -1,0 +1,424 @@
+# .github/workflows/cit_bootstrap_web_pr.yml
+# Самовиконуваний workflow: створює гілку, генерує web/ (Next.js + PWA + меню “Сімейка”),
+# комітить і відкриває Pull Request у ihorog/cit.
+#
+# Запуск: GitHub → Actions → "CIT: Bootstrap web/ + PR" → Run workflow
+
+name: "CIT: Bootstrap web/ + PR"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bootstrap-web:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate web scaffold (Cimeika UI/PWA)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p web/public/icons
+          mkdir -p web/src/app web/src/components web/src/styles
+
+          cat > web/package.json <<'JSON'
+          {
+            "name": "cimeika-web",
+            "private": true,
+            "version": "0.1.0",
+            "scripts": {
+              "dev": "next dev -p 3000",
+              "build": "next build",
+              "start": "next start -p 3000"
+            },
+            "dependencies": {
+              "next": "15.1.4",
+              "react": "19.0.0",
+              "react-dom": "19.0.0"
+            }
+          }
+          JSON
+
+          cat > web/next.config.js <<'JS'
+          /** @type {import('next').NextConfig} */
+          const nextConfig = {
+            reactStrictMode: true
+          };
+          module.exports = nextConfig;
+          JS
+
+          cat > web/src/styles/globals.css <<'CSS'
+          * { box-sizing: border-box; }
+          html, body { margin: 0; padding: 0; }
+          button { font-family: inherit; }
+          CSS
+
+          cat > web/public/manifest.json <<'JSON'
+          {
+            "name": "Cimeika",
+            "short_name": "Cimeika",
+            "description": "Cimeika — PWA інтерфейс Ci",
+            "start_url": "/",
+            "scope": "/",
+            "display": "standalone",
+            "background_color": "#0b0b0b",
+            "theme_color": "#0b0b0b",
+            "icons": [
+              { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+              { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+            ]
+          }
+          JSON
+
+          cat > web/src/app/layout.tsx <<'TSX'
+          import type { Metadata, Viewport } from "next";
+          import "../styles/globals.css";
+
+          export const metadata: Metadata = {
+            title: "Cimeika",
+            description: "Cimeika — інтерфейс Ci",
+            applicationName: "Cimeika",
+            manifest: "/manifest.json"
+          };
+
+          export const viewport: Viewport = {
+            themeColor: "#0b0b0b"
+          };
+
+          export default function RootLayout({ children }: { children: React.ReactNode }) {
+            return (
+              <html lang="uk">
+                <body>{children}</body>
+              </html>
+            );
+          }
+          TSX
+
+          cat > web/src/app/page.tsx <<'TSX'
+          import AppShell from "../components/AppShell";
+          export default function Page() {
+            return <AppShell />;
+          }
+          TSX
+
+          cat > web/src/components/AppShell.module.css <<'CSS'
+          .root {
+            min-height: 100vh;
+            background: #0b0b0b;
+            color: #eef2ff;
+            display: flex;
+            flex-direction: column;
+          }
+
+          .topbar {
+            height: 56px;
+            display: grid;
+            grid-template-columns: 56px 1fr 56px;
+            align-items: center;
+            padding: 8px 10px;
+            position: sticky;
+            top: 0;
+            background: rgba(10, 10, 10, 0.65);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+          }
+
+          .ciButton {
+            width: 44px;
+            height: 44px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.35);
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+          }
+
+          .ciLogo {
+            width: 26px;
+            height: 26px;
+            object-fit: contain;
+          }
+
+          .titleBlock {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding-left: 8px;
+          }
+
+          .brand {
+            font-size: 12px;
+            opacity: 0.8;
+          }
+
+          .section {
+            font-size: 14px;
+            font-weight: 700;
+          }
+
+          .rightSlot {
+            width: 44px;
+            height: 44px;
+          }
+
+          .main {
+            flex: 1;
+            padding: 18px 14px 28px;
+            display: grid;
+            place-items: start center;
+          }
+
+          .card {
+            width: min(820px, 100%);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 18px;
+            padding: 18px;
+          }
+
+          .h1 { margin: 0 0 8px; font-size: 20px; }
+          .p  { margin: 0 0 16px; line-height: 1.45; opacity: 0.9; }
+
+          .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+          .primary, .secondary {
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 14px;
+            padding: 12px 14px;
+            background: rgba(0,0,0,0.35);
+            cursor: pointer;
+            color: inherit;
+            font-weight: 700;
+          }
+
+          .overlay { position: fixed; inset: 0; z-index: 50; }
+
+          .menuPanel {
+            position: relative;
+            margin: 10px;
+            width: min(520px, calc(100% - 20px));
+            background: rgba(10,10,10,0.82);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 18px;
+            padding: 12px;
+            z-index: 52;
+          }
+
+          .menuHeader {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 6px 6px 10px;
+          }
+
+          .menuTitle { font-size: 14px; font-weight: 800; }
+          .menuSubtitle { font-size: 12px; opacity: 0.75; }
+
+          .close {
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.35);
+            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            color: inherit;
+          }
+
+          .menuList { display: grid; gap: 8px; padding: 6px; }
+
+          .menuItem {
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 12px;
+            text-align: left;
+            cursor: pointer;
+            color: inherit;
+          }
+
+          .menuItemTitle { font-weight: 800; }
+          .menuItemSubtitle { margin-top: 3px; font-size: 12px; opacity: 0.75; }
+
+          .active { outline: 2px solid rgba(255,255,255,0.18); }
+
+          .menuFooter { padding: 8px 10px 10px; }
+          .footerNote { font-size: 12px; opacity: 0.85; }
+
+          .backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 51;
+            border: none;
+            background: rgba(0,0,0,0.45);
+          }
+          CSS
+
+          cat > web/src/components/AppShell.tsx <<'TSX'
+          "use client";
+
+          import { useMemo, useState } from "react";
+          import styles from "./AppShell.module.css";
+
+          type MenuItem = { id: string; title: string; subtitle?: string };
+
+          export default function AppShell() {
+            const [menuOpen, setMenuOpen] = useState(false);
+            const [active, setActive] = useState<string>("home");
+
+            const items = useMemo<MenuItem[]>(
+              () => [
+                { id: "kazkar", title: "Казкар" },
+                { id: "legenda_ci", title: "✨ Легенда Ci", subtitle: "ядро сенсів" },
+                { id: "podiya", title: "ПоДія" },
+                { id: "nastrii", title: "Настрій" },
+                { id: "malya", title: "Маля" },
+                { id: "calendar", title: "Календар" },
+                { id: "gallery", title: "Галерея" }
+              ],
+              []
+            );
+
+            const activeTitle = useMemo(() => {
+              if (active === "home") return "Головна";
+              return items.find((x) => x.id === active)?.title ?? "Головна";
+            }, [active, items]);
+
+            return (
+              <div className={styles.root}>
+                <header className={styles.topbar}>
+                  <button
+                    className={styles.ciButton}
+                    onClick={() => setMenuOpen((v) => !v)}
+                    aria-label="Ci — меню"
+                    title="Ci — меню"
+                  >
+                    <img src="/icons/icon-192.png" alt="Ci" className={styles.ciLogo} />
+                  </button>
+
+                  <div className={styles.titleBlock}>
+                    <div className={styles.brand}>Cimeika</div>
+                    <div className={styles.section}>{activeTitle}</div>
+                  </div>
+
+                  <div className={styles.rightSlot} />
+                </header>
+
+                <main className={styles.main}>
+                  <div className={styles.card}>
+                    <h1 className={styles.h1}>{activeTitle}</h1>
+                    <p className={styles.p}>
+                      Каркас UI/PWA для Cimeika у репозиторії <b>cit</b>.
+                    </p>
+
+                    <div className={styles.actions}>
+                      <button className={styles.primary} onClick={() => setMenuOpen(true)}>
+                        Відкрити меню Ci
+                      </button>
+                      <button className={styles.secondary} onClick={() => setActive("home")}>
+                        На головну
+                      </button>
+                    </div>
+                  </div>
+                </main>
+
+                {menuOpen && (
+                  <div className={styles.overlay} role="dialog" aria-modal="true">
+                    <div className={styles.menuPanel}>
+                      <div className={styles.menuHeader}>
+                        <div>
+                          <div className={styles.menuTitle}>Меню Cimeika</div>
+                          <div className={styles.menuSubtitle}>Класифікатор “Сімейка”</div>
+                        </div>
+                        <button className={styles.close} onClick={() => setMenuOpen(false)} aria-label="Закрити">
+                          ✕
+                        </button>
+                      </div>
+
+                      <nav className={styles.menuList}>
+                        {items.map((it) => (
+                          <button
+                            key={it.id}
+                            className={`${styles.menuItem} ${active === it.id ? styles.active : ""}`}
+                            onClick={() => {
+                              setActive(it.id);
+                              setMenuOpen(false);
+                            }}
+                          >
+                            <div className={styles.menuItemTitle}>{it.title}</div>
+                            {it.subtitle && <div className={styles.menuItemSubtitle}>{it.subtitle}</div>}
+                          </button>
+                        ))}
+                      </nav>
+
+                      <div className={styles.menuFooter}>
+                        <div className={styles.footerNote}>
+                          UI — українською. Бренд: <b>Cimeika</b>.
+                        </div>
+                      </div>
+                    </div>
+
+                    <button className={styles.backdrop} onClick={() => setMenuOpen(false)} aria-label="Закрити меню" />
+                  </div>
+                )}
+              </div>
+            );
+          }
+          TSX
+
+          # Placeholder icons (1x1 PNG). ЗАМІНИТИ на твої icon-192/icon-512 (PNG знак Ci)
+          # 1x1 transparent PNG base64
+          BASE64_PNG="iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/axqk0cAAAAASUVORK5CYII="
+          echo "$BASE64_PNG" | base64 -d > web/public/icons/icon-192.png
+          echo "$BASE64_PNG" | base64 -d > web/public/icons/icon-512.png
+
+          cat > web/README_WEB.md <<'MD'
+          # Cimeika web (cit/web)
+
+          ## Важливо
+          - UI українською, брендова назва: **Cimeika**
+          - Кнопка Ci (зліва зверху) відкриває меню “Сімейка”
+
+          ## Іконки
+          Файли-заглушки:
+          - `public/icons/icon-192.png`
+          - `public/icons/icon-512.png`
+
+          Замінити на твої PNG іконки (знак Ci) правильних розмірів.
+
+          ## Локально
+          ```bash
+          cd web
+          npm i
+          npm run dev
+          ```
+          MD
+
+      - name: Create Pull Request (branch + commit)
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "feat(web): bootstrap Cimeika PWA shell + Ci menu (UA)"
+          title: "feat(web): Cimeika UI/PWA shell + меню “Сімейка”"
+          body: |
+            Додає `web/` (Next.js + PWA) для деплою на Vercel.
+            - Кнопка Ci (лого) зліва зверху відкриває меню “Сімейка” (UA).
+            - Бренд: Cimeika (латиницею).
+            - Іконки `icon-192/512` наразі заглушки → замінити на канонічні PNG.
+            
+            Vercel: встановити Root Directory = `web`.
+          branch: "ci/bootstrap-web"
+          delete-branch: true
+          labels: |
+            ui
+            pwa
+            vercel
