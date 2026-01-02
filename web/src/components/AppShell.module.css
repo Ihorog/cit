@@ -108,6 +108,17 @@
   color: rgba(255, 255, 255, 0.8);
 }
 
+.comingSoon {
+  margin-top: 24px;
+  padding: 16px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border-left: 4px solid rgba(102, 126, 234, 0.5);
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
 /* Menu Overlay */
 .overlay {
   position: fixed;
