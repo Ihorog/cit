@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import styles from './AppShell.module.css'
 import ChatInterface from './ChatInterface'
 
@@ -13,6 +13,12 @@ interface MenuItem {
 export default function AppShell() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState('Казкар')
+  const [iconError, setIconError] = useState(false)
+
+  // Diagnostic log on mount
+  useEffect(() => {
+    console.log('Cimeika UI mounted')
+  }, [])
 
   const menuItems = useMemo<MenuItem[]>(() => [
     { id: 'kazkar', label: 'Казкар' },
@@ -42,7 +48,16 @@ export default function AppShell() {
           onClick={toggleMenu}
           aria-label="Відкрити меню Сімейка"
         >
-          <span className={styles.ciLogo}>Ci</span>
+          {!iconError ? (
+            <img 
+              src="/icons/icon-192.png" 
+              alt="Ci"
+              className={styles.ciIcon}
+              onError={() => setIconError(true)}
+            />
+          ) : (
+            <span className={styles.ciLogo}>Ci</span>
+          )}
         </button>
         <div className={styles.brandSection}>
           <h1 className={styles.brand}>Cimeika</h1>
@@ -53,6 +68,8 @@ export default function AppShell() {
       {/* Main Content */}
       <main className={styles.mainContent}>
         <div className={styles.contentArea}>
+          {/* Visual indicator for UI status */}
+          <div className={styles.uiStatusMarker}>Cimeika UI online</div>
           {activeSection === 'Казкар' && <ChatInterface />}
           {activeSection === '✨ Легенда Ci' && <ChatInterface />}
           {activeSection === 'ПоДія' && <ChatInterface />}
