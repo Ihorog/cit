@@ -8,6 +8,14 @@
   ],
   "routes": [
     {
+      "src": "/(_next|static)(.*)",
+      "dest": "web/$0"
+    },
+    {
+      "src": "/(favicon.ico|manifest.json|icons/.*)",
+      "dest": "web/$0"
+    },
+    {
       "src": "/(.*)",
       "dest": "web/$1"
     }
