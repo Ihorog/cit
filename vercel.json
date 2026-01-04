@@ -1,5 +1,23 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "cd web && npm run build",
-  "installCommand": "cd web && npm install"
+  "builds": [
+    {
+      "src": "web/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(_next|static)(.*)",
+      "dest": "web/$0"
+    },
+    {
+      "src": "/(favicon.ico|manifest.json|icons/.*)",
+      "dest": "web/$0"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "web/$1"
+    }
+  ]
 }
