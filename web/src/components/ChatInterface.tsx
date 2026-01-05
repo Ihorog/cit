@@ -116,7 +116,7 @@ export default function ChatInterface({
     if (!trimmedText || isLoading) return
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: 'user',
       content: trimmedText,
       timestamp: new Date()
