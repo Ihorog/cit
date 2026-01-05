@@ -150,22 +150,13 @@ export default function ChatInterface({
       }
 
       setMessages(prev => [...prev, assistantMessage])
-
-      // Auto-speak assistant response
-      if (data.reply && !data.error) {
-        speakText(data.reply)
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Невідома помилка'
-      setError(`Помилка з'єднання: ${errorMessage}`)
-
-      const errorMsg: Message = {
-        id: (Date.now() + 1).toString(),
+    } catch (error) {
+      const errorMessage: Message = {
         role: 'assistant',
-        content: `❌ Помилка: ${errorMessage}`,
+        content: `Помилка: ${error instanceof Error ? error.message : 'Невідома помилка'}`,
         timestamp: new Date()
       }
-      setMessages(prev => [...prev, errorMsg])
+      setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }

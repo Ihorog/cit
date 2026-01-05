@@ -1,0 +1,8 @@
+{
+  "name": "cit",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "vercel-build": "cd web && npm install && npm run build"
+  }
+}

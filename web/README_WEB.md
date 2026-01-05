@@ -70,6 +70,8 @@ npm start
 
 ## Deployment на Vercel
 
+Репозиторій налаштований для **автоматичного deployment** на Vercel. Деплой відбувається без ручного налаштування Root Directory.
+
 ### Крок 1: Підготовка
 
 1. Створіть акаунт на [vercel.com](https://vercel.com)
@@ -78,15 +80,7 @@ npm start
    npm install -g vercel
    ```
 
-### Крок 2: Налаштування проєкту
-
-При деплої на Vercel вкажіть:
-
-- **Framework Preset**: Next.js
-- **Root Directory**: `web`
-- **Build Command**: `npm run build` (автоматично)
-- **Output Directory**: `.next` (автоматично)
-- **Install Command**: `npm install` (автоматично)
+### Крок 2: Автоматичний Deployment
 
 ### Крок 2.5: Налаштування змінних середовища
 
@@ -108,16 +102,28 @@ npm start
 #### Через Vercel Dashboard (рекомендовано)
 
 1. Перейдіть на [vercel.com/new](https://vercel.com/new)
-2. Імпортуйте ваш GitHub репозиторій
-3. Вкажіть **Root Directory**: `web`
+2. Імпортуйте ваш GitHub репозиторій `Ihorog/cit`
+3. ✅ **НЕ ПОТРІБНО** налаштовувати Root Directory — все працює автоматично!
 4. Натисніть **Deploy**
+
+Vercel автоматично:
+- Виявить Next.js застосунок у `web/` директорії
+- Запустить build через `vercel.json` конфігурацію
+- Налаштує правильні routes
 
 #### Через CLI
 
 ```bash
-cd web
+# З кореневої директорії проєкту
 vercel --prod
 ```
+
+### Як це працює?
+
+Репозиторій містить:
+- `package.json` у корені з командою `vercel-build`
+- `vercel.json` з правильною конфігурацією для Next.js у subdirectory
+- Автоматичний routing на `web/` директорію
 
 ### Налаштування домену
 
@@ -186,8 +192,10 @@ web/
     │   ├── layout.tsx        # Root layout з metadata
     │   └── page.tsx          # Головна сторінка
     ├── components/
-    │   ├── AppShell.tsx      # Головний компонент UI
-    │   └── AppShell.module.css # Стилі компонента
+    │   ├── AppShell.tsx          # Головний компонент UI з меню
+    │   ├── AppShell.module.css   # Стилі AppShell
+    │   ├── ChatInterface.tsx     # Компонент чату з STT/TTS
+    │   └── ChatInterface.module.css  # Стилі чату
     └── styles/
         └── globals.css       # Глобальні стилі
 ```
@@ -202,6 +210,26 @@ web/
 
 ## Розробка
 
+### Функціональність чату
+
+Компонент `ChatInterface` надає повноцінний чат-інтерфейс:
+
+- **Підключення до CIT сервера**: автоматично підключається до `http://127.0.0.1:8790`
+- **Моніторинг здоров'я**: відображає статус підключення кожні 4 секунди
+- **Відправка повідомлень**: POST запити до `/chat` з автоматичним відображенням відповідей
+- **STT (Speech-to-Text)**: голосове введення українською мовою через Web Speech API
+- **TTS (Text-to-Speech)**: озвучування відповідей асистента
+- **Історія чату**: зберігається локально в компоненті (очищається при перезавантаженні)
+
+### Конфігурація API endpoint
+
+За замовчуванням чат підключається до `http://127.0.0.1:8790`. Для зміни адреси:
+
+```typescript
+// В AppShell.tsx
+<ChatInterface apiEndpoint="http://your-server:8790" />
+```
+
 ### Додавання нової секції до меню
 
 Відкрийте `src/components/AppShell.tsx` та додайте елемент до масиву `menuItems`:
@@ -211,6 +239,19 @@ const menuItems = useMemo<MenuItem[]>(() => [
   // ... існуючі пункти
   { id: 'new-section', label: 'Нова Секція' },
 ], [])
+```
+
+Потім додайте відповідний випадок у render секції:
+
+```typescript
+{activeSection === 'Нова Секція' && <ChatInterface />}
+// або
+{activeSection === 'Нова Секція' && (
+  <div className={styles.placeholder}>
+    <h2>Нова Секція</h2>
+    <p>Опис секції</p>
+  </div>
+)}
 ```
 
 ### Зміна теми
@@ -231,6 +272,28 @@ Next.js автоматично перезавантажує сторінку п�
 - Зміни в `layout.tsx` — потрібне перезавантаження сторінки
 
 ## Troubleshooting
+
+### Vercel Deployment не працює
+
+**Проблема:** Білий екран або помилка "404: NOT_FOUND"
+
+**Рішення:**
+1. ✅ З новою конфігурацією (`vercel.json` + root `package.json`) деплой має працювати автоматично
+2. Якщо проблема залишається:
+   - Перевірте Vercel build logs у Dashboard → Deployments → [ваш deployment] → Building
+   - Переконайтесь що білд завершився успішно
+3. Якщо білд падає:
+   - Перейдіть у Deployments
+   - Натисніть "Redeploy" на останньому деплої
+
+**Проблема:** Build fails або "Command not found"
+
+**Рішення:**
+1. Перевірте що у корені репозиторію є:
+   - `package.json` з командою `vercel-build`
+   - `vercel.json` з правильною конфігурацією
+2. Спробуйте локально: `npm run vercel-build` (з кореневої директорії)
+3. Якщо локально працює, а на Vercel ні — Redeploy
 
 ### Порт 3000 зайнятий
 
