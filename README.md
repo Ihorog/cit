@@ -110,6 +110,16 @@ Or open the Web UI in your browser:
 # - Dark theme optimized for mobile
 ```
 
+## Repository check
+
+Run a lightweight repo verification (syntax + /health probe) without external dependencies:
+
+```bash
+./scripts/repo_check.sh
+```
+
+The script starts a temporary server on port `8979` by default. Set `OPENAI_API_KEY` if you want to include the `/chat` smoke test.
+
 ## Repository layout
 
 ```
