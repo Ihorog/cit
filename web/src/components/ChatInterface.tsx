@@ -48,9 +48,9 @@ export default function ChatInterface({
         setIsListening(false)
       }
 
-      recognitionRef.current.onerror = () => {
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
         setIsListening(false)
-        setError('Помилка розпізнавання мови')
+        setError(`Помилка розпізнавання мови: ${event.error}`)
       }
 
       recognitionRef.current.onend = () => {
