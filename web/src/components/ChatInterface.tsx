@@ -250,6 +250,7 @@ export default function ChatInterface({
       <div className={styles.inputArea}>
         <div className={styles.inputWrapper}>
           <textarea
+            ref={textAreaRef} // Add a ref to the textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
