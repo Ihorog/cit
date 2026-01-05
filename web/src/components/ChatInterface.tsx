@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import styles from './ChatInterface.module.css'
 
 interface Message {
+  id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
@@ -13,102 +14,138 @@ interface ChatInterfaceProps {
   apiEndpoint?: string
 }
 
-export default function ChatInterface({ apiEndpoint = 'http://127.0.0.1:8790' }: ChatInterfaceProps) {
+export default function ChatInterface({
+  apiEndpoint = process.env.NEXT_PUBLIC_CIT_API_URL
+}: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
+  const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
-  const [healthStatus, setHealthStatus] = useState<{ ok: boolean; model?: string } | null>(null)
-  const logRef = useRef<HTMLDivElement>(null)
-  const recognitionRef = useRef<any>(null)
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Auto-scroll to bottom when new messages arrive
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
+
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Health check polling
+  // Initialize Speech Recognition
   useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const response = await fetch(`${apiEndpoint}/health`)
-        if (response.ok) {
-          const data = await response.json()
-          setHealthStatus({ ok: true, model: data.model })
-        } else {
-          setHealthStatus({ ok: false })
-        }
-      } catch (error) {
-        setHealthStatus({ ok: false })
+    if (typeof window !== 'undefined') {
+      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition()
+      recognitionRef.current.continuous = false
+      recognitionRef.current.interimResults = false
+      recognitionRef.current.lang = 'uk-UA'
+
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript
+        setInputText(transcript)
+        setIsListening(false)
+      }
+
+      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
+        setIsListening(false)
+        setError(`Помилка розпізнавання мови: ${event.error}`)
+      }
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false)
       }
     }
 
-    checkHealth()
-    const interval = setInterval(checkHealth, 4000)
-    return () => clearInterval(interval)
-  }, [apiEndpoint])
-
-  // Initialize speech recognition
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
-      if (SpeechRecognition) {
-        recognitionRef.current = new SpeechRecognition()
-        recognitionRef.current.lang = 'uk-UA'
-        recognitionRef.current.continuous = false
-        recognitionRef.current.interimResults = false
-
-        recognitionRef.current.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript
-          setInput(transcript)
-          setIsRecording(false)
-        }
-
-        recognitionRef.current.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error)
-          setIsRecording(false)
-        }
-
-        recognitionRef.current.onend = () => {
-          setIsRecording(false)
-        }
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop()
       }
     }
   }, [])
 
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      setError('Розпізнавання мови не підтримується у вашому браузері')
+      return
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop()
+      setIsListening(false)
+    } else {
+      setError(null)
+      recognitionRef.current.start()
+      setIsListening(true)
+    }
+  }
+
+  const speakText = (text: string) => {
+    if (!('speechSynthesis' in window)) {
+      setError('Синтез мови не підтримується у вашому браузері')
+      return
+    }
+
+    // Stop current speech if any
+    window.speechSynthesis.cancel()
+
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'uk-UA'
+    utterance.rate = 0.9
+    utterance.pitch = 1
+
+    utterance.onstart = () => setIsSpeaking(true)
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => {
+      setIsSpeaking(false)
+      setError('Помилка синтезу мови')
+    }
+
+    synthesisRef.current = utterance
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel()
+    setIsSpeaking(false)
+  }
+
   const sendMessage = async () => {
-    const text = input.trim()
-    if (!text || isLoading) return
+    const trimmedText = inputText.trim()
+    if (!trimmedText || isLoading) return
 
     const userMessage: Message = {
+      id: crypto.randomUUID(),
       role: 'user',
-      content: text,
+      content: trimmedText,
       timestamp: new Date()
     }
 
     setMessages(prev => [...prev, userMessage])
-    setInput('')
+    setInputText('')
     setIsLoading(true)
+    setError(null)
 
     try {
-      const response = await fetch(`${apiEndpoint}/chat`, {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: trimmedText })
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
       const data = await response.json()
+
       const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.reply || 'No response',
+        content: data.reply || data.error || 'Немає відповіді',
         timestamp: new Date()
       }
 
@@ -125,112 +162,127 @@ export default function ChatInterface({ apiEndpoint = 'http://127.0.0.1:8790' }:
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       sendMessage()
     }
   }
 
-  const startRecording = () => {
-    if (recognitionRef.current && !isRecording) {
-      setIsRecording(true)
-      try {
-        recognitionRef.current.start()
-      } catch (error) {
-        console.error('Failed to start recording:', error)
-        setIsRecording(false)
-      }
-    }
-  }
-
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'uk-UA'
-      window.speechSynthesis.speak(utterance)
-    }
-  }
-
-  const speakLastMessage = () => {
-    const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant')
-    if (lastAssistantMessage) {
-      speakText(lastAssistantMessage.content)
-    }
+  const clearChat = () => {
+    setMessages([])
+    setError(null)
+    stopSpeaking()
   }
 
   return (
     <div className={styles.chatContainer}>
-      {/* Status Bar */}
-      <div className={styles.statusBar}>
-        <div className={styles.healthBadge}>
-          <span className={`${styles.statusDot} ${healthStatus?.ok ? styles.statusOnline : styles.statusOffline}`} />
-          <span className={styles.statusText}>
-            {healthStatus?.ok ? `Онлайн ${healthStatus.model ? `• ${healthStatus.model}` : ''}` : 'Офлайн'}
-          </span>
+      {/* Header */}
+      <div className={styles.chatHeader}>
+        <h2 className={styles.chatTitle}>Казкар</h2>
+        {messages.length > 0 && (
+          <button
+            onClick={clearChat}
+            className={styles.clearButton}
+            aria-label="Очистити чат"
+          >
+            🗑️
+          </button>
+        )}
+      </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className={styles.errorBanner}>
+          {error}
+          <button onClick={() => setError(null)} className={styles.errorClose}>✕</button>
         </div>
-      </div>
+      )}
 
-      {/* Chat Log */}
-      <div className={styles.chatLog} ref={logRef}>
-        {messages.length === 0 && (
-          <div className={styles.welcomeMessage}>
-            <h3>👋 Привіт!</h3>
-            <p>Напиши повідомлення або натисни 🎙️ для голосового введення</p>
+      {/* Messages Area */}
+      <div className={styles.messagesArea}>
+        {messages.length === 0 ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>💬</div>
+            <p>Напиши або натисни на мікрофон</p>
+            <p className={styles.emptyHint}>Поставте питання Ci</p>
           </div>
-        )}
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.aiMessage}`}>
-            <div className={styles.messageContent}>{msg.content}</div>
-          </div>
-        ))}
-        {isLoading && (
-          <div className={`${styles.message} ${styles.aiMessage} ${styles.loadingMessage}`}>
-            <div className={styles.messageContent}>
-              <span className={styles.loadingDots}>
-                <span>●</span><span>●</span><span>●</span>
-              </span>
+        ) : (
+          messages.map(msg => (
+            <div
+              key={msg.id}
+              className={`${styles.message} ${styles[msg.role]}`}
+            >
+              <div className={styles.messageContent}>
+                {msg.content}
+              </div>
+              <div className={styles.messageTime}>
+                {msg.timestamp.toLocaleTimeString('uk-UA', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+              {msg.role === 'assistant' && (
+                <button
+                  onClick={() => speakText(msg.content)}
+                  className={styles.speakButton}
+                  aria-label="Озвучити відповідь"
+                >
+                  {isSpeaking ? '🔊' : '🔉'}
+                </button>
+              )}
             </div>
-          </div>
+          ))
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Bar */}
-      <div className={styles.inputBar}>
-        <textarea
-          className={styles.messageInput}
-          placeholder="Напиши або натисни 🎙️..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-          disabled={isLoading}
-          rows={1}
-        />
-        <div className={styles.buttonGroup}>
-          <button
-            className={`${styles.button} ${styles.micButton}`}
-            onClick={startRecording}
-            disabled={isRecording || isLoading}
-            title="Голосове введення (uk-UA)"
-          >
-            {isRecording ? '🔴' : '🎙️'}
-          </button>
-          <button
-            className={`${styles.button} ${styles.ttsButton}`}
-            onClick={speakLastMessage}
-            disabled={messages.length === 0 || isLoading}
-            title="Прослухати останню відповідь"
-          >
-            🔊
-          </button>
-          <button
-            className={`${styles.button} ${styles.sendButton}`}
-            onClick={sendMessage}
-            disabled={!input.trim() || isLoading}
-          >
-            Надіслати
-          </button>
+      {/* Input Area */}
+      <div className={styles.inputArea}>
+        <div className={styles.inputWrapper}>
+          <textarea
+            ref={textAreaRef} // Add a ref to the textarea
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyPress={handleKeyPress}
+            placeholder="Напиши повідомлення..."
+            className={styles.textInput}
+            rows={1}
+            disabled={isLoading}
+          />
+
+          <div className={styles.inputActions}>
+            {/* Voice Input Button */}
+            <button
+              onClick={toggleListening}
+              className={`${styles.actionButton} ${isListening ? styles.listening : ''}`}
+              aria-label={isListening ? 'Зупинити запис' : 'Голосовий ввід'}
+              disabled={isLoading}
+            >
+              {isListening ? '🎙️' : '🎤'}
+            </button>
+
+            {/* Stop Speaking Button */}
+            {isSpeaking && (
+              <button
+                onClick={stopSpeaking}
+                className={styles.actionButton}
+                aria-label="Зупинити відтворення"
+              >
+                ⏸️
+              </button>
+            )}
+
+            {/* Send Button */}
+            <button
+              onClick={sendMessage}
+              className={`${styles.sendButton} ${isLoading ? styles.loading : ''}`}
+              disabled={isLoading || !inputText.trim()}
+              aria-label="Відправити"
+            >
+              {isLoading ? '⏳' : '📤'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

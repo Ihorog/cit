@@ -39,11 +39,80 @@ export default function AppShell() {
     setIsMenuOpen(!isMenuOpen)
   }
 
+  const renderSectionContent = () => {
+    switch (activeSection) {
+      case 'Казкар':
+        return <ChatInterface />
+
+      case '✨ Легенда Ci':
+        return (
+          <div className={styles.contentArea}>
+            <h2>✨ Легенда Ci</h2>
+            <p>Історія та суть проекту Ci</p>
+            <p className={styles.comingSoon}>🚧 Розробляється...</p>
+          </div>
+        )
+
+      case 'ПоДія':
+        return (
+          <div className={styles.contentArea}>
+            <h2>ПоДія</h2>
+            <p>Події та новини</p>
+            <p className={styles.comingSoon}>🚧 Розробляється...</p>
+          </div>
+        )
+
+      case 'Настрій':
+        return (
+          <div className={styles.contentArea}>
+            <h2>Настрій</h2>
+            <p>Відстежування настрою</p>
+            <p className={styles.comingSoon}>🚧 Розробляється...</p>
+          </div>
+        )
+
+      case 'Маля':
+        return (
+          <div className={styles.contentArea}>
+            <h2>Маля</h2>
+            <p>Творчість та малювання</p>
+            <p className={styles.comingSoon}>🚧 Розробляється...</p>
+          </div>
+        )
+
+      case 'Календар':
+        return (
+          <div className={styles.contentArea}>
+            <h2>Календар</h2>
+            <p>Планування подій</p>
+            <p className={styles.comingSoon}>🚧 Розробляється...</p>
+          </div>
+        )
+
+      case 'Галерея':
+        return (
+          <div className={styles.contentArea}>
+            <h2>Галерея</h2>
+            <p>Медіа-бібліотека</p>
+            <p className={styles.comingSoon}>🚧 Розробляється...</p>
+          </div>
+        )
+
+      default:
+        return (
+          <div className={styles.contentArea}>
+            <h2>{activeSection}</h2>
+            <p>Вітаємо у {activeSection}</p>
+          </div>
+        )
+    }
+  }
+
   return (
     <div className={styles.appShell}>
       {/* Top Bar */}
       <header className={styles.topbar}>
-        <button 
+        <button
           className={styles.ciButton}
           onClick={toggleMenu}
           aria-label="Відкрити меню Сімейка"
@@ -67,27 +136,7 @@ export default function AppShell() {
 
       {/* Main Content */}
       <main className={styles.mainContent}>
-        <div className={styles.contentArea}>
-          {/* Visual indicator for UI status */}
-          <div className={styles.uiStatusMarker}>Cimeika UI online</div>
-          {activeSection === 'Казкар' && <ChatInterface />}
-          {activeSection === '✨ Легенда Ci' && <ChatInterface />}
-          {activeSection === 'ПоДія' && <ChatInterface />}
-          {activeSection === 'Настрій' && <ChatInterface />}
-          {activeSection === 'Маля' && <ChatInterface />}
-          {activeSection === 'Календар' && (
-            <div className={styles.placeholder}>
-              <h2>Календар</h2>
-              <p>Календар подій та важливих дат</p>
-            </div>
-          )}
-          {activeSection === 'Галерея' && (
-            <div className={styles.placeholder}>
-              <h2>Галерея</h2>
-              <p>Колекція фото та спогадів</p>
-            </div>
-          )}
-        </div>
+        {renderSectionContent()}
       </main>
 
       {/* Menu Overlay */}
