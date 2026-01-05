@@ -15,7 +15,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({
-  apiEndpoint = process.env.NEXT_PUBLIC_CIT_API_URL || 'http://127.0.0.1:8790/chat'
+  apiEndpoint = process.env.NEXT_PUBLIC_CIT_API_URL
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
