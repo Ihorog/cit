@@ -1,5 +1,7 @@
 # CIT (Ci Interface Terminal)
 
+[![Vercel Deployment](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml/badge.svg)](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml)
+
 CIT (Ci Interface Terminal) is a lightweight API gateway that sits between your Cimeika devices and the OpenAI API.  
 It exposes a minimal HTTP interface and forwards chat requests to OpenAI using Python's standard library.  
 The service is designed to run locally on Android through Termux and can be connected to other systems over a LAN.  
@@ -150,6 +152,29 @@ npm run dev
 ```
 
 See [`web/README_WEB.md`](web/README_WEB.md) for detailed documentation, deployment guides, and PWA setup.
+
+## 🚀 Автоматичне розгортання
+
+Веб-інтерфейс автоматично розгортається на Vercel при кожному push до `main` гілки.
+
+### Швидкий старт
+
+1. **Налаштуйте Vercel токени** — див. [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)
+2. **Push код** — деплой відбудеться автоматично
+3. **Створіть PR** — отримаєте preview URL для тестування
+
+### Локальне тестування
+
+```bash
+# Перевірити що збірка працює
+./scripts/test-vercel-deploy.sh
+
+# Деплой вручну (потрібен Vercel CLI)
+npm install -g vercel
+vercel --prod
+```
+
+Детальна документація: [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)
 
 ## License
 
