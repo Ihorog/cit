@@ -2,6 +2,8 @@ name: CIT AutoSync
 on:
   push:
     branches: [ main ]
+  schedule:
+    - cron: "0 4 * * *"  # щодня о 04:00 UTC
   workflow_dispatch:
 
 jobs:
@@ -30,7 +32,7 @@ jobs:
           git config --global user.name "Cimeika-CI"
           git pull --rebase origin main || true
           git add -A
-          git commit -m "🤖 AutoSync — CIT system update" || echo "No changes"
+          git commit -m "🤖 AutoSync — CIT scheduled update" || echo "No changes"
           git push origin main || echo "Push skipped"
 
       - name: Archive logs
