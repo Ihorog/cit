@@ -1,0 +1,161 @@
+{
+  "system": "Cimeika / Ci",
+  "version": "1.0.0",
+  "timestamp": "2026-01-06T17:30:00.000Z",
+  "status": "healthy",
+  "components": {
+    "web_ui": {
+      "status": "operational",
+      "framework": "Next.js 14.1.0",
+      "build_status": "success",
+      "build_time": "2026-01-06T17:27:00.000Z",
+      "routes": [
+        "/",
+        "/_not-found"
+      ],
+      "features": [
+        "PWA support",
+        "Speech-to-Text (Ukrainian)",
+        "Text-to-Speech (Ukrainian)",
+        "Dark theme",
+        "Responsive design",
+        "Chat interface"
+      ],
+      "bundle_size": {
+        "first_load_js": "84.3 kB",
+        "page_size": "4.5 kB"
+      }
+    },
+    "api_server": {
+      "status": "configured",
+      "language": "Python 3.10+",
+      "endpoints": [
+        "/health",
+        "/chat",
+        "/ui"
+      ],
+      "integrations": [
+        "OpenAI API",
+        "Hugging Face"
+      ],
+      "default_port": 8790
+    },
+    "modules": {
+      "kazkar": {
+        "name": "Казкар",
+        "description": "Голосовий чат-асистент з AI",
+        "status": "active",
+        "features": ["voice_input", "voice_output", "ai_chat"]
+      },
+      "podija": {
+        "name": "ПоДія",
+        "description": "Планувальник подій",
+        "status": "in_development"
+      },
+      "nastriy": {
+        "name": "Настрій",
+        "description": "Емоційний аналітик",
+        "status": "in_development"
+      },
+      "malya": {
+        "name": "Маля",
+        "description": "Творчий модуль",
+        "status": "in_development"
+      },
+      "gallery": {
+        "name": "Галерея",
+        "description": "Медіа-менеджер",
+        "status": "in_development"
+      }
+    }
+  },
+  "deployment": {
+    "platform": "Vercel",
+    "auto_deploy": true,
+    "branch": "main",
+    "build_command": "cd web && npm install && npm run build",
+    "output_directory": "web/.next",
+    "environment_variables": [
+      "NEXT_PUBLIC_CIT_API_URL"
+    ]
+  },
+  "dependencies": {
+    "frontend": {
+      "next": "14.1.0",
+      "react": "18.2.0",
+      "react-dom": "18.2.0",
+      "typescript": "latest",
+      "@types/react": "latest",
+      "@types/node": "latest"
+    },
+    "backend": {
+      "python": ">=3.10",
+      "packages": [
+        "requests",
+        "numpy",
+        "asyncio",
+        "dataclasses",
+        "openai",
+        "huggingface_hub",
+        "python-dotenv"
+      ]
+    }
+  },
+  "integrations": {
+    "github": {
+      "repository": "Ihorog/cit",
+      "ci_cd": "GitHub Actions"
+    },
+    "huggingface": {
+      "space": "Ihorog/Cimeika.com.ua"
+    },
+    "telegram": {
+      "bots": [
+        "@cimeika_bot",
+        "@cimeika_kazkar_bot"
+      ],
+      "channel": "@ci_chanal"
+    },
+    "openai": {
+      "models": ["gpt-4o-mini", "whisper-large"],
+      "apis": ["chat.completions", "audio.transcriptions"]
+    }
+  },
+  "security": {
+    "https_only": true,
+    "cors_enabled": true,
+    "api_key_required": true,
+    "environment_secrets": [
+      "OPENAI_API_KEY",
+      "HF_TOKEN"
+    ]
+  },
+  "performance": {
+    "build_time_seconds": 15,
+    "static_pages": 4,
+    "optimization": "enabled",
+    "compression": "enabled"
+  },
+  "monitoring": {
+    "health_endpoint": "/health",
+    "logs": {
+      "api": ".api.auto.log",
+      "ui": ".ui.auto.log"
+    }
+  },
+  "notes": [
+    "Web UI successfully built and ready for deployment",
+    "All TypeScript types are valid",
+    "PWA manifest configured",
+    "Speech recognition requires HTTPS or localhost",
+    "API server requires OPENAI_API_KEY environment variable",
+    "Vercel deployment configured via vercel.json"
+  ],
+  "next_steps": [
+    "Deploy to Vercel",
+    "Configure production API endpoint",
+    "Set up environment variables in Vercel",
+    "Test PWA installation",
+    "Complete remaining modules (ПоДія, Настрій, Маля, Галерея)"
+  ]
+}
