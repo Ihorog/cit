@@ -20,9 +20,13 @@ RUN mkdir -p logs
 # Expose port
 EXPOSE 8790
 
+# Set default Gunicorn configuration (can be overridden via environment variables)
+ENV GUNICORN_WORKERS=2
+ENV GUNICORN_TIMEOUT=120
+
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8790/health || exit 1
 
 # Start the API server with Gunicorn (production-ready WSGI server)
-CMD ["gunicorn", "--bind", "0.0.0.0:8790", "--workers", "2", "--timeout", "120", "cit_api:app"]
+CMD gunicorn --bind 0.0.0.0:8790 --workers ${GUNICORN_WORKERS} --timeout ${GUNICORN_TIMEOUT} cit_api:app
