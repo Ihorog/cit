@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask import Flask, jsonify, request
 from datetime import datetime
+import asyncio
 import os
 import sys
 import json
@@ -113,7 +114,6 @@ def run_task(task_id):
         return jsonify({"error": "Task not found"}), 404
 
     try:
-        import asyncio
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(orchestrator.run_task(task_id))
