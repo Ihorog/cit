@@ -2,11 +2,7 @@ from flask import Flask, request, jsonify
 from datetime import datetime
 import asyncio
 import os
-import sys
 import json
-
-# Add cimeika path for imports
-sys.path.append('/vercel/sandbox')
 
 try:
     from orchestrator import TaskOrchestrator, TaskPriority
