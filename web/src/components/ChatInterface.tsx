@@ -15,7 +15,7 @@ interface ChatInterfaceProps {
 }
 
 export default function ChatInterface({
-  apiEndpoint = process.env.NEXT_PUBLIC_CIT_API_URL
+  apiEndpoint = process.env.NEXT_PUBLIC_CIT_API_URL || 'http://127.0.0.1:8790/chat'
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputText, setInputText] = useState('')
@@ -25,7 +25,8 @@ export default function ChatInterface({
   const [error, setError] = useState<string | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const recognitionRef = useRef<SpeechRecognition | null>(null)
+  const textAreaRef = useRef<HTMLTextAreaElement>(null)
+  const recognitionRef = useRef<any>(null)
   const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   // Scroll to bottom when new messages arrive
@@ -36,25 +37,27 @@ export default function ChatInterface({
   // Initialize Speech Recognition
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition()
-      recognitionRef.current.continuous = false
-      recognitionRef.current.interimResults = false
-      recognitionRef.current.lang = 'uk-UA'
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        recognitionRef.current = new SpeechRecognition()
+        recognitionRef.current.continuous = false
+        recognitionRef.current.interimResults = false
+        recognitionRef.current.lang = 'uk-UA'
 
-      recognitionRef.current.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript
-        setInputText(transcript)
-        setIsListening(false)
-      }
+        recognitionRef.current.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript
+          setInputText(transcript)
+          setIsListening(false)
+        }
 
-      recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
-        setIsListening(false)
-        setError(`Помилка розпізнавання мови: ${event.error}`)
-      }
+        recognitionRef.current.onerror = (event: any) => {
+          setIsListening(false)
+          setError(`Помилка розпізнавання мови: ${event.error}`)
+        }
 
-      recognitionRef.current.onend = () => {
-        setIsListening(false)
+        recognitionRef.current.onend = () => {
+          setIsListening(false)
+        }
       }
     }
 
@@ -143,7 +146,7 @@ export default function ChatInterface({
       const data = await response.json()
 
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: data.reply || data.error || 'Немає відповіді',
         timestamp: new Date()
@@ -152,6 +155,7 @@ export default function ChatInterface({
       setMessages(prev => [...prev, assistantMessage])
     } catch (error) {
       const errorMessage: Message = {
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: `Помилка: ${error instanceof Error ? error.message : 'Невідома помилка'}`,
         timestamp: new Date()
@@ -241,21 +245,21 @@ export default function ChatInterface({
       <div className={styles.inputArea}>
         <div className={styles.inputWrapper}>
           <textarea
-            ref={textAreaRef} // Add a ref to the textarea
+            ref={textAreaRef}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyPress}
             placeholder="Напиши повідомлення..."
-            className={styles.textInput}
+            className={`${styles.textInput} ${styles.messageInput}`}
             rows={1}
             disabled={isLoading}
           />
 
-          <div className={styles.inputActions}>
+          <div className={styles.buttonGroup}>
             {/* Voice Input Button */}
             <button
               onClick={toggleListening}
-              className={`${styles.actionButton} ${isListening ? styles.listening : ''}`}
+              className={`${styles.button} ${isListening ? styles.listening : ''}`}
               aria-label={isListening ? 'Зупинити запис' : 'Голосовий ввід'}
               disabled={isLoading}
             >
@@ -266,7 +270,7 @@ export default function ChatInterface({
             {isSpeaking && (
               <button
                 onClick={stopSpeaking}
-                className={styles.actionButton}
+                className={styles.button}
                 aria-label="Зупинити відтворення"
               >
                 ⏸️

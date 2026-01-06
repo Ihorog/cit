@@ -1,89 +1,53 @@
 version: '3.8'
 
 services:
-  cimeika-api:
+  # CIT API Server (Python)
+  cit-api:
     build:
       context: .
       dockerfile: Dockerfile.api
+    container_name: cimeika-api
     ports:
       - "8790:8790"
     environment:
-      - PYTHONPATH=/app
-      - LOG_LEVEL=INFO
-    env_file:
-      - cimeika/configs/CIMEIKA_FULL_ACCESS.env
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - PORT=8790
     volumes:
+      - ./server:/app/server
       - ./logs:/app/logs
-      - ./cimeika:/app/cimeika
-    depends_on:
-      - cimeika-orchestrator
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8790/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 10s
+    networks:
+      - cimeika-network
 
-  cimeika-orchestrator:
+  # Web UI (Next.js)
+  cit-web:
     build:
-      context: .
-      dockerfile: Dockerfile.orchestrator
-    environment:
-      - PYTHONPATH=/app
-      - LOG_LEVEL=INFO
-    env_file:
-      - cimeika/configs/CIMEIKA_FULL_ACCESS.env
-    volumes:
-      - ./logs:/app/logs
-      - ./cimeika:/app/cimeika
-    restart: unless-stopped
-    command: ["python", "-c", "
-import time
-from orchestrator import TaskOrchestrator
-from ci_mitca_sense import SensomatykaAnalyzer
-print('🧠 Cimeika Orchestrator starting...')
-o = TaskOrchestrator()
-s = SensomatykaAnalyzer()
-print('✅ Orchestrator and Sensomatyka initialized')
-# Keep running
-while True:
-    time.sleep(60)
-    print(f'📊 Active tasks: {len([t for t in o.tasks.values() if t.status == \"in_progress\"])}')
-"]
-
-  cimeika-web:
-    image: nginx:alpine
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: cimeika-web
     ports:
-      - "8000:80"
-    volumes:
-      - ./ui:/usr/share/nginx/html
-      - ./nginx.conf:/etc/nginx/nginx.conf
-    depends_on:
-      - cimeika-api
-    restart: unless-stopped
-
-  cimeika-watchdog:
-    build:
-      context: .
-      dockerfile: Dockerfile.api
+      - "3000:3000"
     environment:
-      - PYTHONPATH=/app
-      - LOG_LEVEL=INFO
-    env_file:
-      - cimeika/configs/CIMEIKA_FULL_ACCESS.env
-    volumes:
-      - ./logs:/app/logs
-      - ./cimeika:/app/cimeika
-    command: ["python", "ci_watchdog.py"]
-    restart: unless-stopped
+      - NEXT_PUBLIC_CIT_API_URL=http://cit-api:8790/chat
+      - NODE_ENV=production
     depends_on:
-      - cimeika-api
+      cit-api:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cimeika-network
+
+networks:
+  cimeika-network:
+    driver: bridge
 
 volumes:
   logs:
     driver: local
-
-networks:
-  default:
-    name: cimeika-network
