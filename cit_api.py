@@ -77,9 +77,10 @@ def chat():
         })
 
     except Exception as e:
+        app.logger.exception("Unhandled exception while processing request")
         return jsonify({
             "response": "Вибачте, сталася помилка при обробці вашого запиту.",
-            "error": str(e),
+            "error_code": "internal_error",
             "timestamp": datetime.now().isoformat()
         }), 500
 
