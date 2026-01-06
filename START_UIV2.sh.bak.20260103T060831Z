@@ -1,0 +1,384 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -euo pipefail
+
+ROOT="/data/data/com.termux/files/home/cimeika/cit"
+UI="$ROOT/ui"
+LOG="$ROOT/logs"
+
+cd "$ROOT" || exit 1
+mkdir -p "$LOG"
+cd "$UI" || exit 1
+
+echo "=== [1/6] Write UIv2 files (index.html, app.js) ==="
+
+cat > index.html <<'HTML'
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CIT — UIv2</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; }
+    body { margin: 0; background: #0B0F14; color: #E8EEF6; height: 100vh; display: flex; flex-direction: column; }
+    .top { padding: 12px 14px; border-bottom: 1px solid #1F2A36; font-weight: 800; display:flex; gap:10px; align-items:center; }
+    .pill { font-size: 12px; padding: 4px 10px; border: 1px solid #2A3A4A; border-radius: 999px; background:#0F1620; color:#C9D6E6; }
+    .wrap { flex: 1; display: grid; grid-template-rows: auto 1fr; gap: 10px; padding: 10px; overflow: hidden; }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; overflow: hidden; }
+    @media (min-width: 980px) {
+      .grid { grid-template-columns: 420px 1fr; }
+    }
+    .card { border: 1px solid #1F2A36; border-radius: 16px; background: #0F1620; overflow: hidden; display:flex; flex-direction:column; min-height: 0; }
+    .card h3 { margin: 0; padding: 12px 12px; border-bottom: 1px solid #1F2A36; font-size: 14px; letter-spacing: 0.2px; display:flex; justify-content:space-between; align-items:center;}
+    .card .body { padding: 12px; display:flex; flex-direction:column; gap:10px; min-height:0; }
+    .row { display:flex; gap:8px; align-items:center; }
+    .row > * { flex: 0 0 auto; }
+    .row .grow { flex: 1 1 0%; }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #1F2A36;
+      background: #0B0F14;
+      color: #E8EEF6;
+      outline: none;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    button {
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid #2A3A4A;
+      background: #16314B;
+      color: #E8EEF6;
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+    }
+    button.secondary { background:#0B0F14; border-color:#2A3A4A; color:#C9D6E6; font-weight:700; }
+    button.danger { background:#3A1C1C; border-color:#5A2B2B; }
+    button:active { transform: translateY(1px); }
+    .chatlog { flex: 1; overflow:auto; display:flex; flex-direction:column; gap:10px; padding-right: 4px; }
+    .b { padding: 10px 12px; border: 1px solid #1F2A36; border-radius: 14px; max-width: 95%; white-space: pre-wrap; word-break: break-word; }
+    .me { align-self: flex-end; background: #12202F; }
+    .bot { align-self: flex-start; background: #0B0F14; }
+    .muted { color:#9FB2C7; font-size:12px; }
+    .split { display:grid; grid-template-columns: 1fr; gap:10px; }
+    @media (min-width: 980px) {
+      .split { grid-template-columns: 1fr 1fr; }
+    }
+    .viewer {
+      flex: 1;
+      overflow:auto;
+      padding: 12px;
+      background:#0B0F14;
+      border: 1px solid #1F2A36;
+      border-radius: 12px;
+      white-space: pre;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 12px;
+      line-height: 1.4;
+      min-height: 0;
+    }
+    .statusline { display:flex; gap:8px; flex-wrap:wrap; }
+    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:6px; }
+    .ok { background:#2ECC71; }
+    .no { background:#E74C3C; }
+    .tiny { font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div style="font-size:16px;">CIT — UIv2</div>
+    <div class="pill" id="uiLink">UI: http://127.0.0.1:8010/</div>
+    <div class="pill" id="apiLink">API: http://127.0.0.1:8790</div>
+    <div class="pill statusline" id="apiStatus"><span class="dot no"></span><span class="tiny">health: unknown</span></div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+
+      <div class="card">
+        <h3>Чат (POST /api/chat) <span class="muted" id="chatHint"></span></h3>
+        <div class="body" style="min-height:0;">
+          <div class="chatlog" id="chat"></div>
+          <div class="row">
+            <input class="grow" id="msg" placeholder="Напиши..." />
+            <button id="send">➤</button>
+          </div>
+          <div class="row">
+            <button class="secondary" id="pingChat">Ping chat</button>
+            <button class="secondary" id="clearChat">Очистити чат</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Exec (POST /api/exec) <span class="muted" id="execHint"></span></h3>
+        <div class="body" style="min-height:0;">
+          <div class="split">
+            <div>
+              <div class="muted">Action</div>
+              <select id="action">
+                <option value="actions.registry.get">actions.registry.get</option>
+                <option value="actions.node_packages.get">actions.node_packages.get</option>
+              </select>
+            </div>
+            <div>
+              <div class="muted">Шаблон</div>
+              <select id="template">
+                <option value="empty">input: {}</option>
+                <option value="id_ci">input: { node_id: "ci" }</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <div class="muted">Payload (JSON)</div>
+            <textarea id="payload">{ "action": "actions.registry.get", "input": {} }</textarea>
+          </div>
+
+          <div class="row">
+            <button id="runExec">Виконати</button>
+            <button class="secondary" id="loadRegistry">GET /registry</button>
+            <button class="secondary" id="loadNodes">GET /node-packages</button>
+            <button class="secondary" id="copyOut">Копіювати output</button>
+          </div>
+
+          <div class="row">
+            <button class="secondary" id="health">Перевірити health</button>
+            <button class="danger" id="wipeOut">Очистити output</button>
+          </div>
+
+          <div class="muted">Output</div>
+          <pre class="viewer" id="out">{}</pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+HTML
+
+cat > app.js <<'JS'
+(() => {
+  const API_BASE = 'http://127.0.0.1:8790';
+  const CHAT_URL = `${API_BASE}/api/chat`;
+  const EXEC_URL = `${API_BASE}/api/exec`;
+  const REG_URL  = `${API_BASE}/registry`;
+  const NODES_URL= `${API_BASE}/node-packages`;
+  const HEALTH_URL = `${API_BASE}/health`;
+
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('msg');
+  const sendBtn = document.getElementById('send');
+  const pingChat = document.getElementById('pingChat');
+  const clearChat = document.getElementById('clearChat');
+
+  const actionSel = document.getElementById('action');
+  const templateSel = document.getElementById('template');
+  const payloadEl = document.getElementById('payload');
+
+  const runExec = document.getElementById('runExec');
+  const loadRegistry = document.getElementById('loadRegistry');
+  const loadNodes = document.getElementById('loadNodes');
+  const copyOut = document.getElementById('copyOut');
+  const wipeOut = document.getElementById('wipeOut');
+
+  const healthBtn = document.getElementById('health');
+  const out = document.getElementById('out');
+  const apiStatus = document.getElementById('apiStatus');
+
+  function addMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = `b ${cls}`;
+    d.textContent = text;
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function setOut(objOrText) {
+    if (typeof objOrText === 'string') out.textContent = objOrText;
+    else out.textContent = JSON.stringify(objOrText, null, 2);
+  }
+
+  async function fetchText(url, opts) {
+    const r = await fetch(url, opts);
+    const t = await r.text();
+    let j = null;
+    try { j = JSON.parse(t); } catch (_) {}
+    return { r, t, j };
+  }
+
+  function setHealth(ok, text) {
+    apiStatus.innerHTML = `<span class="dot ${ok ? "ok":"no"}"></span><span class="tiny">health: ${text}</span>`;
+  }
+
+  async function checkHealth() {
+    try {
+      const { r, t, j } = await fetchText(HEALTH_URL, { method: 'GET' });
+      if (!r.ok) { setHealth(false, `HTTP ${r.status}`); return; }
+      const model = j?.model || '';
+      const ts = j?.ts || '';
+      setHealth(true, `${model} ${ts}`.trim() || 'ok');
+      setOut(j || t);
+    } catch (e) {
+      setHealth(false, String(e).slice(0, 60));
+      setOut(`health error: ${String(e)}`);
+    }
+  }
+
+  function applyTemplate() {
+    const action = actionSel.value;
+    const tpl = templateSel.value;
+    let input = {};
+    if (tpl === 'id_ci') input = { node_id: "ci" };
+    payloadEl.value = JSON.stringify({ action, input }, null, 2);
+  }
+
+  async function sendChat(message) {
+    addMsg(message, 'me');
+    try {
+      const { r, t, j } = await fetchText(CHAT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+
+      if (!r.ok) {
+        addMsg(`HTTP ${r.status}: ${j?.error || t.slice(0, 160)}`, 'bot');
+        return;
+      }
+
+      const reply = j?.reply ?? j?.text ?? j?.message ?? t;
+      addMsg(reply || '[empty]', 'bot');
+      setOut(j || t);
+    } catch (e) {
+      addMsg(`API error: ${String(e).slice(0, 160)}`, 'bot');
+    }
+  }
+
+  async function runExecAction() {
+    let payload;
+    try {
+      payload = JSON.parse(payloadEl.value);
+    } catch (e) {
+      setOut({ ok:false, error:{ code:"bad_json", message:String(e) } });
+      return;
+    }
+
+    try {
+      const { r, t, j } = await fetchText(EXEC_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!r.ok) {
+        setOut(j || t);
+        addMsg(`exec: HTTP ${r.status}`, 'bot');
+        return;
+      }
+
+      setOut(j || t);
+      const ok = j?.ok === true;
+      addMsg(ok ? `exec ok: ${payload.action}` : `exec fail: ${payload.action}`, 'bot');
+    } catch (e) {
+      setOut(`exec error: ${String(e)}`);
+    }
+  }
+
+  async function loadGet(url, label) {
+    try {
+      const { r, t, j } = await fetchText(url, { method:'GET' });
+      if (!r.ok) { setOut(j || t); addMsg(`${label}: HTTP ${r.status}`, 'bot'); return; }
+      setOut(j || t);
+      addMsg(`${label}: loaded`, 'bot');
+    } catch (e) {
+      setOut(`${label} error: ${String(e)}`);
+    }
+  }
+
+  // Wire
+  sendBtn.onclick = () => sendChat(input.value.trim());
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') sendBtn.click(); });
+
+  pingChat.onclick = () => sendChat("ping");
+  clearChat.onclick = () => { chat.innerHTML = ''; addMsg("CIT UIv2 ready.", "bot"); };
+
+  actionSel.onchange = applyTemplate;
+  templateSel.onchange = applyTemplate;
+
+  runExec.onclick = runExecAction;
+  loadRegistry.onclick = () => loadGet(REG_URL, "registry");
+  loadNodes.onclick = () => loadGet(NODES_URL, "node-packages");
+  healthBtn.onclick = checkHealth;
+
+  copyOut.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(out.textContent || '');
+      addMsg("output copied", "bot");
+    } catch (e) {
+      addMsg("clipboard denied", "bot");
+    }
+  };
+
+  wipeOut.onclick = () => setOut({});
+
+  // Init
+  addMsg("CIT UIv2 ready.", "bot");
+  applyTemplate();
+  checkHealth();
+})();
+JS
+
+echo "=== [2/6] Restart UI static server (:8010) ==="
+pkill -f "python -m http.server 8010" 2>/dev/null || true
+nohup python -m http.server 8010 --bind 127.0.0.1 > "$LOG/ui_8010.log" 2>&1 &
+sleep 0.6
+
+echo "=== [3/6] Verify UI ==="
+curl -sS --max-time 2 -I http://127.0.0.1:8010/ | head -n 1 || echo "UI DOWN"
+echo
+
+echo "=== [4/6] Verify API health ==="
+curl -sS --max-time 2 http://127.0.0.1:8790/health || echo "API DOWN"
+echo
+
+echo "=== [5/6] Verify exec (registry.get) ==="
+curl -sS --max-time 3 -X POST http://127.0.0.1:8790/api/exec -H "Content-Type: application/json" -d '{"action":"actions.registry.get","input":{}}' || echo "EXEC DOWN"
+echo
+
+echo "=== [6/6] READY LINKS ==="
+echo "UI              : http://127.0.0.1:8010/"
+echo "API health      : http://127.0.0.1:8790/health"
+echo "API chat bridge : http://127.0.0.1:8790/api/chat"
+echo "API exec        : http://127.0.0.1:8790/api/exec"
+echo "Registry (GET)  : http://127.0.0.1:8790/registry"
+echo "Node-packages   : http://127.0.0.1:8790/node-packages"
+
+
+# === CANON UI RESTART (Termux) ===
+UI_PORT=8010
+UI_HOST=127.0.0.1
+ROOT="/data/data/com.termux/files/home/cimeika/cit/ui"
+LOGDIR="/data/data/com.termux/files/home/cimeika/cit/logs"
+LOGFILE="$LOGDIR/ui_${UI_PORT}.log"
+
+mkdir -p "$LOGDIR" || exit 1
+
+# stop
+pids="$(ps -A -o pid,args | grep -E "python -m http\.server $UI_PORT" | grep -v grep | awk '{print $1}' || true)"
+for pid in $pids; do kill -9 "$pid" 2>/dev/null || true; done
+sleep 0.2
+
+# start
+cd "$ROOT" || exit 1
+nohup python -m http.server "$UI_PORT" --bind "$UI_HOST" > "$LOGFILE" 2>&1 &
+sleep 0.4
+
+# verify
+curl -sS --max-time 2 -I "http://$UI_HOST:$UI_PORT/" | head -n 1
+# === /CANON UI RESTART ===

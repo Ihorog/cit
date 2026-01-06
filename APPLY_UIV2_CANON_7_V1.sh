@@ -1,0 +1,281 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -e
+
+ROOT="/data/data/com.termux/files/home/cimeika/cit"
+UI="$ROOT/ui"
+LOG="$ROOT/logs"
+ASSETS="$UI/assets"
+mkdir -p "$LOG" "$ASSETS"
+
+# --- ensure Ci logo (canonical) ---
+# якщо вже є assets/ci.png — не чіпаємо
+if [ ! -f "$ASSETS/ci.png" ]; then
+  # best-effort: спроба з raw (може бути 404 через регістр/шлях)
+  (curl -fsSL "https://raw.githubusercontent.com/Ihorog/media/main/Ci.png" -o "$ASSETS/ci.png" 2>/dev/null) || true
+fi
+
+# --- write UIv2 canon: 7 nodes, Legend as subnode of Kazkar ---
+cat > "$UI/index.html" <<'HTML'
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Ci — Cimeika</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1620; --panel2:#121f2f; --line:#1f2a36;
+      --text:#e8eef6; --muted:#9fb0c3; --accent:#2b6cb0; --glow: rgba(255,215,120,.18);
+      --r:18px;
+    }
+    *{box-sizing:border-box;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+    body{margin:0;background:radial-gradient(1100px 600px at 20% -10%, var(--glow), transparent 60%), var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column}
+    a{color:inherit;text-decoration:none}
+    header{display:flex; align-items:center; gap:10px; padding:10px 12px; border-bottom:1px solid var(--line); background:rgba(15,22,32,.65); backdrop-filter: blur(6px)}
+    .brand{display:flex; align-items:center; gap:10px; min-width:0}
+    .logoBtn{width:44px;height:44px;border-radius:14px; border:1px solid var(--line); background:linear-gradient(180deg, rgba(18,31,47,.9), rgba(15,22,32,.9)); display:grid; place-items:center; cursor:pointer; position:relative; overflow:hidden}
+    .logoBtn img{width:26px;height:26px; object-fit:contain; filter: drop-shadow(0 0 10px rgba(255,215,120,.18))}
+    .title{font-weight:800; letter-spacing:.2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .sub{font-size:12px;color:var(--muted)}
+    main{flex:1; overflow:auto; padding:12px}
+    .grid{display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px}
+    @media (min-width: 860px){ .grid{grid-template-columns:repeat(4, minmax(0,1fr));} }
+    .card{border:1px solid var(--line); background:rgba(15,22,32,.75); border-radius:var(--r); padding:12px; cursor:pointer; transition:transform .12s ease, border-color .12s ease}
+    .card:hover{transform:translateY(-1px); border-color:#2a3a4a}
+    .card h3{margin:0 0 6px 0; font-size:14px}
+    .card p{margin:0; color:var(--muted); font-size:12px; line-height:1.25}
+    .page{display:none}
+    .page.active{display:block}
+    .crumb{display:flex; align-items:center; gap:8px; color:var(--muted); font-size:12px; margin-bottom:10px}
+    .crumb .dot{opacity:.5}
+    .panel{border:1px solid var(--line); border-radius:var(--r); background:rgba(15,22,32,.75); padding:12px}
+    .panel h2{margin:0 0 8px 0; font-size:16px}
+    .panel .meta{color:var(--muted); font-size:12px}
+    /* Drawer */
+    .overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); display:none}
+    .overlay.show{display:block}
+    .drawer{position:fixed; inset:0 0 0 auto; width:min(420px, 100%); background:rgba(11,15,20,.92); border-left:1px solid var(--line); transform:translateX(100%); transition:transform .16s ease; display:flex; flex-direction:column}
+    .drawer.show{transform:translateX(0)}
+    .drawerHead{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border-bottom:1px solid var(--line)}
+    .drawerHead .h{font-weight:800}
+    .drawerHead button{border:1px solid var(--line); background:rgba(15,22,32,.85); color:var(--text); padding:8px 10px; border-radius:12px; cursor:pointer}
+    .chat{flex:1; overflow:auto; padding:12px; display:flex; flex-direction:column; gap:10px}
+    .b{padding:10px 12px; border:1px solid var(--line); border-radius:14px; max-width:92%}
+    .me{align-self:flex-end; background:rgba(18,31,47,.9)}
+    .bot{align-self:flex-start; background:rgba(15,22,32,.9)}
+    .bar{display:flex; gap:8px; padding:10px; border-top:1px solid var(--line)}
+    #msg{flex:1; padding:12px; border-radius:12px; border:1px solid var(--line); background:rgba(15,22,32,.9); color:var(--text)}
+    #send{padding:0 14px; border-radius:12px; border:1px solid #2a3a4a; background:rgba(22,49,75,.95); color:var(--text); font-weight:800; cursor:pointer}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:rgba(15,22,32,.85); color:var(--muted); font-size:12px}
+    .row{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <button class="logoBtn" id="ciBtn" aria-label="Ci">
+      <img src="assets/ci.png" alt="Ci"/>
+    </button>
+    <div style="min-width:0">
+      <div class="title" id="hdrTitle">Cimeika</div>
+      <div class="sub" id="hdrSub">7 вузлів • Ci Drawer • локальний UIv2</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- DASHBOARD -->
+  <section class="page active" id="page-dashboard">
+    <div class="crumb"><span>Dashboard</span></div>
+    <div class="grid">
+      <div class="card" data-go="ci"><h3>Ci</h3><p>Центр. Контакт. Оркестрація.</p></div>
+      <div class="card" data-go="kazkar"><h3>Казкар</h3><p>Памʼять. Досвід. Оповідь. (містить ✨Легенда Ci)</p></div>
+      <div class="card" data-go="podija"><h3>ПоДія</h3><p>Події. Майбутнє. Запуски.</p></div>
+      <div class="card" data-go="nastrij"><h3>Настрій</h3><p>Стан. Емоційна координата.</p></div>
+      <div class="card" data-go="malya"><h3>Маля</h3><p>Ідеї. Варіативність. Теперішнє.</p></div>
+      <div class="card" data-go="calendar"><h3>Календар</h3><p>Час. Ритми. План.</p></div>
+      <div class="card" data-go="gallery"><h3>Галерея</h3><p>Образи. Артефакти. Візуальна памʼять.</p></div>
+    </div>
+  </section>
+
+  <!-- PAGES -->
+  <section class="page" id="page-ci">
+    <div class="crumb"><a href="#" data-back>Dashboard</a><span class="dot">•</span><span>Ci</span></div>
+    <div class="panel">
+      <h2>Ci</h2>
+      <div class="meta">Глобальна кнопка Ci відкриває Drawer з чатом. Це доступно на кожному екрані.</div>
+      <div class="row">
+        <span class="pill">API: /api/chat</span>
+        <span class="pill">API: /api/exec</span>
+        <span class="pill">GET: /registry</span>
+        <span class="pill">GET: /node-packages</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-kazkar">
+    <div class="crumb"><a href="#" data-back>Dashboard</a><span class="dot">•</span><span>Казкар</span></div>
+    <div class="panel">
+      <h2>Казкар</h2>
+      <div class="meta">Підрозділ: ✨Легенда Ci має окремий інтерфейс, але не є окремим вузлом системи.</div>
+      <div class="row">
+        <button class="card" style="width:100%; text-align:left" data-go="legend">
+          <h3 style="margin:0 0 6px 0">✨Легенда Ci</h3>
+          <p style="margin:0;color:var(--muted);font-size:12px">Вхід у підінтерфейс Легенди всередині Казкаря</p>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <section class="page" id="page-legend">
+    <div class="crumb"><a href="#" data-back="kazkar">Казкар</a><span class="dot">•</span><span>✨Легенда Ci</span></div>
+    <div class="panel">
+      <h2>✨Легенда Ci</h2>
+      <div class="meta">Окремий інтерфейс під Казкарем. Тут буде бібліотека символів/рун/міфології.</div>
+    </div>
+  </section>
+
+  <section class="page" id="page-podija"><div class="crumb"><a href="#" data-back>Dashboard</a><span class="dot">•</span><span>ПоДія</span></div><div class="panel"><h2>ПоДія</h2><div class="meta">Майбутні події, ініціації, запускові сценарії.</div></div></section>
+  <section class="page" id="page-nastrij"><div class="crumb"><a href="#" data-back>Dashboard</a><span class="dot">•</span><span>Настрій</span></div><div class="panel"><h2>Настрій</h2><div class="meta">Емоційний стан як координата взаємодії.</div></div></section>
+  <section class="page" id="page-malya"><div class="crumb"><a href="#" data-back>Dashboard</a><span class="dot">•</span><span>Маля</span></div><div class="panel"><h2>Маля</h2><div class="meta">Генерація ідей, альтернатив, варіантів.</div></div></section>
+  <section class="page" id="page-calendar"><div class="crumb"><a href="#" data-back>Dashboard</a><span class="dot">•</span><span>Календар</span></div><div class="panel"><h2>Календар</h2><div class="meta">Ритми, планування, точки часу.</div></div></section>
+  <section class="page" id="page-gallery"><div class="crumb"><a href="#" data-back>Dashboard</a><span class="dot">•</span><span>Галерея</span></div><div class="panel"><h2>Галерея</h2><div class="meta">Слайдер/історії/макети друку — інтеграція далі.</div></div></section>
+
+</main>
+
+<!-- Ci Drawer -->
+<div class="overlay" id="ov"></div>
+<aside class="drawer" id="dr">
+  <div class="drawerHead">
+    <div class="h">Ci</div>
+    <button id="closeDr">Закрити</button>
+  </div>
+  <div id="chat" class="chat">
+    <div class="b bot">CIT піднявся. Пиши.</div>
+  </div>
+  <div class="bar">
+    <input id="msg" placeholder="Напиши...">
+    <button id="send">➤</button>
+  </div>
+</aside>
+
+<script src="app.js"></script>
+<script>
+  const pages = {
+    dashboard: document.getElementById('page-dashboard'),
+    ci: document.getElementById('page-ci'),
+    kazkar: document.getElementById('page-kazkar'),
+    legend: document.getElementById('page-legend'),
+    podija: document.getElementById('page-podija'),
+    nastrij: document.getElementById('page-nastrij'),
+    malya: document.getElementById('page-malya'),
+    calendar: document.getElementById('page-calendar'),
+    gallery: document.getElementById('page-gallery'),
+  };
+  const hdrTitle = document.getElementById('hdrTitle');
+
+  function show(key){
+    Object.values(pages).forEach(p=>p.classList.remove('active'));
+    pages[key].classList.add('active');
+    hdrTitle.textContent = (key==='dashboard') ? 'Cimeika' :
+      (key==='ci') ? 'Ci' :
+      (key==='kazkar') ? 'Казкар' :
+      (key==='legend') ? '✨Легенда Ci' :
+      (key==='podija') ? 'ПоДія' :
+      (key==='nastrij') ? 'Настрій' :
+      (key==='malya') ? 'Маля' :
+      (key==='calendar') ? 'Календар' :
+      (key==='gallery') ? 'Галерея' : 'Cimeika';
+  }
+
+  document.querySelectorAll('[data-go]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const go = el.getAttribute('data-go');
+      show(go);
+      history.replaceState({},'', '#'+go);
+    });
+  });
+
+  document.querySelectorAll('[data-back]').forEach(el=>{
+    el.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const back = el.getAttribute('data-back');
+      show(back || 'dashboard');
+      history.replaceState({},'', back ? '#'+back : '#dashboard');
+    });
+  });
+
+  // open by hash
+  const h = (location.hash||'').replace('#','');
+  if (h && pages[h]) show(h);
+
+  // drawer toggle
+  const ov = document.getElementById('ov');
+  const dr = document.getElementById('dr');
+  const ciBtn = document.getElementById('ciBtn');
+  const closeDr = document.getElementById('closeDr');
+  function openDr(){ ov.classList.add('show'); dr.classList.add('show'); }
+  function shut(){ ov.classList.remove('show'); dr.classList.remove('show'); }
+  ciBtn.onclick = openDr;
+  closeDr.onclick = shut;
+  ov.onclick = shut;
+</script>
+</body>
+</html>
+HTML
+
+# --- write app.js (chat bridge) ---
+cat > "$UI/app.js" <<'JS'
+(() => {
+  const chat = document.getElementById('chat');
+  const input = document.getElementById('msg');
+  const sendBtn = document.getElementById('send');
+
+  const API_URL = 'http://127.0.0.1:8790/api/chat';
+
+  function addMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = `b ${cls}`;
+    d.textContent = text;
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  async function send() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    input.value = '';
+    addMsg(text, 'me');
+
+    try {
+      const r = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text })
+      });
+
+      const raw = await r.text();
+      let j = null;
+      try { j = JSON.parse(raw); } catch (_) {}
+
+      if (!r.ok) {
+        addMsg(`HTTP ${r.status}: ${(j && (j.error || j.message)) || raw.slice(0, 160)}`, 'bot');
+        return;
+      }
+
+      const reply = (j && (j.reply || j.text || j.message)) || raw.slice(0, 240) || '[empty]';
+      addMsg(reply, 'bot');
+    } catch (e) {
+      addMsg(`API error: ${String(e).slice(0, 160)}`, 'bot');
+    }
+  }
+
+  sendBtn.onclick = send;
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+})();
+JS
+
+echo "=== [DONE] UIv2 canon written ==="
+echo "Open: http://127.0.0.1:8010/"

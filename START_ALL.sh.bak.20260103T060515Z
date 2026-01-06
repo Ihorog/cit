@@ -1,0 +1,33 @@
+#!/data/data/com.termux/files/usr/bin/bash
+set -e
+
+ROOT="/data/data/com.termux/files/home/cimeika/cit"
+UI="$ROOT/ui"
+LOG="$ROOT/logs"
+
+cd "$ROOT" || exit 1
+mkdir -p "$LOG"
+
+echo "[STOP] old UI/API (best-effort)"
+pkill -f "python -m http.server 8010" 2>/dev/null || true
+pkill -f "server/cit_server.py" 2>/dev/null || true
+
+echo "[START] API (expected :8790)"
+nohup python "$ROOT/server/cit_server.py" > "$LOG/cit_api_8790.log" 2>&1 &
+sleep 0.8
+
+echo "[START] UI (static :8010)"
+cd "$UI" || exit 1
+nohup python -m http.server 8010 --bind 127.0.0.1 > "$LOG/ui_8010.log" 2>&1 &
+sleep 0.4
+
+echo "[CHECK] UI"
+curl -sS --max-time 2 -I http://127.0.0.1:8010/ | head -n 1 || echo "UI DOWN"
+
+echo "[CHECK] API"
+curl -sS --max-time 2 http://127.0.0.1:8790/health || echo "API DOWN"
+echo
+
+echo "[DONE]"
+echo "UI  : http://127.0.0.1:8010/"
+echo "API : http://127.0.0.1:8790/health"

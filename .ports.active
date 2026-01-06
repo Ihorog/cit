@@ -1,0 +1,9 @@
+CIT_DIR=/data/data/com.termux/files/home/cimeika/cit
+API_HOST=127.0.0.1
+API_PORT=8792
+API_PID=21924
+UI_HOST=127.0.0.1
+UI_PORT=8012
+UI_PID=21925
+UI_URL=http://127.0.0.1:8012/
+UI_URL_WITH_API=http://127.0.0.1:8012/?api=http://127.0.0.1:8792

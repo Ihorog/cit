@@ -1,3 +1,4 @@
+from cit_ui_pwa import UI_HTML_PWA
 """
 CIT (Ci Interface Terminal) — minimal HTTP server with:
 - GET  /health  -> {"ok": true, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini")}
@@ -13,9 +14,18 @@ Env:
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
+import pathlib
 import os
 import urllib.request
 import urllib.error
+import base64
+import cgi
+import mimetypes
+import shutil
+from pathlib import Path
+from urllib.parse import urlparse, parse_qs, unquote
+
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
@@ -143,7 +153,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 VAULT_DIR = BASE_DIR / "vault" / "local"
 LOG_FILE = BASE_DIR / "logs" / "cit_8794.log"
 
-UI_HTML = """<!doctype html>
+UI_HTML_PWA = """<!doctype html>
 <html lang="uk">
 <head>
   <meta charset="utf-8"/>
@@ -240,9 +250,124 @@ OPENAI_MODEL = os.getenv("CIT_OPENAI_MODEL", "gpt-4.1-mini")
 
 MODEL = os.getenv("CIT_MODEL", "gpt-4o-mini")
 PORT = int(os.getenv("CIT_PORT", "8790"))
+
+
+BIND = os.getenv("CIT_BIND", "127.0.0.1")
+# --- CIT_FILES_API_V1 ---
+
+# CIT_FILES_API_V1
+HOME_DIR = os.getenv("HOME", "/data/data/com.termux/files/home")
+CFG_DIR = Path(os.getenv("CIT_CFG_DIR", str(Path(HOME_DIR) / ".cit")))
+CFG_DIR.mkdir(parents=True, exist_ok=True)
+CFG_PATH = Path(os.getenv("CIT_CFG_PATH", str(CFG_DIR / "config.json")))
+
+def _load_cfg():
+  cfg = {}
+  try:
+    cfg = json.loads(CFG_PATH.read_text(encoding="utf-8"))
+  except Exception:
+    cfg = {}
+  # env overrides (if present)
+  if os.getenv("CIT_MODEL"):
+    cfg["model"] = os.getenv("CIT_MODEL")
+  if os.getenv("CIT_STORAGE_MODE"):
+    cfg["storage_mode"] = os.getenv("CIT_STORAGE_MODE")
+  if os.getenv("CIT_VAULT_DIR"):
+    cfg["vault_dir"] = os.getenv("CIT_VAULT_DIR")
+  if os.getenv("CIT_WEBDAV_URL"):
+    cfg["webdav_url"] = os.getenv("CIT_WEBDAV_URL")
+  if os.getenv("CIT_WEBDAV_USER"):
+    cfg["webdav_user"] = os.getenv("CIT_WEBDAV_USER")
+  # never env-pass into cfg unless set explicitly
+  return cfg
+
+def _save_cfg(update: dict):
+  cfg = _load_cfg()
+  # secrets
+  if update.get("openai_api_key"):
+    cfg["openai_api_key"] = update["openai_api_key"]
+  if update.get("webdav_pass"):
+    cfg["webdav_pass"] = update["webdav_pass"]
+  # non-secrets
+  for k in ("model","storage_mode","vault_dir","webdav_url","webdav_user"):
+    v = update.get(k)
+    if isinstance(v,str) and v.strip():
+      cfg[k] = v.strip()
+  CFG_PATH.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
+  return cfg
+
+def _mask(s: str):
+  if not s: return ""
+  if len(s) <= 8: return "*"*len(s)
+  return s[:3] + "*"*(len(s)-7) + s[-4:]
+
+def _vault_dir(cfg):
+  return Path(cfg.get("vault_dir") or os.getenv("CIT_VAULT_DIR") or "/storage/emulated/0/CimeikaVault")
+
+def _storage_mode(cfg):
+  return (cfg.get("storage_mode") or os.getenv("CIT_STORAGE_MODE") or "local").strip().lower()
+
+def _webdav(cfg):
+  return {
+    "url": (cfg.get("webdav_url") or os.getenv("CIT_WEBDAV_URL") or "").strip(),
+    "user": (cfg.get("webdav_user") or os.getenv("CIT_WEBDAV_USER") or "").strip(),
+    "pass": (cfg.get("webdav_pass") or os.getenv("CIT_WEBDAV_PASS") or "").strip(),
+  }
+
+def _safe_name(name: str):
+  name = (name or "").replace("\\","/").split("/")[-1]
+  name = re.sub(r"[^A-Za-z0-9._ -]+", "_", name).strip()
+  if not name: name = "file"
+  return name
+
+def _json(handler, code, obj):
+  data = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+  handler.send_response(code)
+  handler.send_header("Content-Type", "application/json; charset=utf-8")
+  handler.send_header("Content-Length", str(len(data)))
+  handler.end_headers()
+  handler.wfile.write(data)
+
+def _bin(handler, code, data: bytes, ctype="application/octet-stream", extra_headers=None):
+  handler.send_response(code)
+  handler.send_header("Content-Type", ctype)
+  handler.send_header("Content-Length", str(len(data)))
+  if extra_headers:
+    for k,v in extra_headers.items():
+      handler.send_header(k,v)
+  handler.end_headers()
+  handler.wfile.write(data)
+
+def _webdav_put(cfg, rel_name: str, content: bytes):
+  wd = _webdav(cfg)
+  if not wd["url"]:
+    raise ValueError("webdav_url not set")
+  base = wd["url"].rstrip("/")
+  url = base + "/" + rel_name
+  req = urllib.request.Request(url, data=content, method="PUT")
+  if wd["user"] or wd["pass"]:
+    token = base64.b64encode((wd["user"] + ":" + wd["pass"]).encode("utf-8")).decode("ascii")
+    req.add_header("Authorization", "Basic " + token)
+  req.add_header("Content-Type", "application/octet-stream")
+  with urllib.request.urlopen(req, timeout=15) as r:
+    return r.status
+
+def _webdav_delete(cfg, rel_name: str):
+  wd = _webdav(cfg)
+  if not wd["url"]:
+    raise ValueError("webdav_url not set")
+  base = wd["url"].rstrip("/")
+  url = base + "/" + rel_name
+  req = urllib.request.Request(url, method="DELETE")
+  if wd["user"] or wd["pass"]:
+    token = base64.b64encode((wd["user"] + ":" + wd["pass"]).encode("utf-8")).decode("ascii")
+    req.add_header("Authorization", "Basic " + token)
+  with urllib.request.urlopen(req, timeout=15) as r:
+    return r.status
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
-UI_HTML = """<!doctype html>
+UI_HTML_PWA = """<!doctype html>
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
@@ -515,6 +640,57 @@ def call_openai(message: str) -> dict:
     except Exception:
         return {"reply": "", "raw": resp2, "api": "chat.completions"}
 
+def _serve_ui_html(handler, code=200):
+    try:
+        html = (pathlib.Path(__file__).resolve().parent / "ui" / "index.html").read_text(encoding="utf-8")
+    except Exception as e:
+        handler.send_response(500)
+        handler.send_header("Content-Type", "text/plain; charset=utf-8")
+        handler.end_headers()
+        handler.wfile.write(f"UI load error: {e}".encode("utf-8"))
+        return
+    handler.send_response(code)
+    handler.send_header("Content-Type", "text/html; charset=utf-8")
+    handler.send_header("Cache-Control", "no-store")
+    handler.end_headers()
+    handler.wfile.write(html.encode("utf-8"))
+
+# === Ci/CIT EXEC HELPERS (v2) ===
+def _cit_load_json_file(path):
+    try:
+        import json, pathlib
+        return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"ok": False, "error": {"code":"registry_read_failed","message": str(e)}}
+
+def _cit_exec_action(data):
+    action = (data or {}).get("action") or ""
+    if action == "actions.registry.get":
+        j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
+        return {"ok": True, "action": action, "result": (j.get("registry", j) if isinstance(j, dict) else j)}
+    if action == "actions.node_packages.get":
+        j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
+        return {"ok": True, "action": action, "result": (j.get("node_packages", j) if isinstance(j, dict) else j)}
+    return {"ok": False, "action": action, "error": {"code":"not_implemented","message":"action not implemented"}}
+
+def _cit_send_json_safe(handler, code, payload):
+    try:
+        if not isinstance(payload, dict):
+            payload = {"ok": True, "result": payload}
+        _send_json(handler, code, payload)
+    except Exception as e:
+        try:
+            handler.send_response(500)
+            handler.send_header("Content-Type", "text/plain; charset=utf-8")
+            handler.end_headers()
+            handler.wfile.write(f"CIT_FATAL_SEND: {e}".encode("utf-8"))
+        except Exception:
+            pass
+
+def _cit_error_payload(code, e):
+    return {"ok": False, "error": {"code": code, "message": str(e), "trace": traceback.format_exc()[-3000:]}}
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(204)
@@ -525,11 +701,178 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
 
+
+    # --- files/config endpoints ---
+    parsed = urlparse(self.path)
+    path = parsed.path or "/"
+    qs = parse_qs(parsed.query or "")
+    if path == "/config":
+      cfg = _load_cfg()
+      out = {
+        "model": cfg.get("model") or MODEL,
+        "storage_mode": _storage_mode(cfg),
+        "vault_dir": str(_vault_dir(cfg)),
+        "webdav_url": _webdav(cfg).get("url",""),
+        "webdav_user": _webdav(cfg).get("user",""),
+        "openai_api_key_masked": _mask(cfg.get("openai_api_key") or os.getenv("OPENAI_API_KEY","")),
+      }
+      return _json(self, 200, out)
+
+    if path == "/files":
+      cfg = _load_cfg()
+      mode = _storage_mode(cfg)
+      if mode != "local":
+        # list for webdav: not implemented (server would need PROPFIND). keep minimal.
+        return _json(self, 200, {"mode": mode, "items": [], "note": "webdav list not implemented"})
+      vd = _vault_dir(cfg)
+      vd.mkdir(parents=True, exist_ok=True)
+      items = []
+      for fp in sorted(vd.glob("*")):
+        if fp.is_file():
+          st = fp.stat()
+          items.append({"name": fp.name, "size": st.st_size, "mtime": __import__("datetime").datetime.fromtimestamp(st.st_mtime).isoformat(timespec="seconds")})
+      return _json(self, 200, {"mode": mode, "vault": str(vd), "items": items})
+
+    if path == "/file":
+      name = unquote((qs.get("name") or [""])[0])
+      cfg = _load_cfg()
+      mode = _storage_mode(cfg)
+      safe = _safe_name(name)
+      if mode == "local":
+        vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
+        fp = vd / safe
+        if not fp.exists() or not fp.is_file():
+          return _json(self, 404, {"ok": False, "err": "not found"})
+        data = fp.read_bytes()
+        ctype = mimetypes.guess_type(fp.name)[0] or "application/octet-stream"
+        return _bin(self, 200, data, ctype=ctype, extra_headers={"Content-Disposition": f'inline; filename="{fp.name}"'})
+      # webdav get: minimal via GET pass-through
+      wd = _webdav(cfg)
+      if not wd["url"]:
+        return _json(self, 400, {"ok": False, "err": "webdav_url not set"})
+      url = wd["url"].rstrip("/") + "/" + safe
+      req = urllib.request.Request(url, method="GET")
+      if wd["user"] or wd["pass"]:
+        token = base64.b64encode((wd["user"] + ":" + wd["pass"]).encode("utf-8")).decode("ascii")
+        req.add_header("Authorization", "Basic " + token)
+      try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+          data = r.read()
+          ctype = r.headers.get("Content-Type") or "application/octet-stream"
+          return _bin(self, 200, data, ctype=ctype, extra_headers={"Content-Disposition": f'inline; filename="{safe}"'})
+      except Exception as e:
+        return _json(self, 502, {"ok": False, "err": str(e)})
+
+        
+
+
+        
+
+        # --- v2: GET /registry + /node-packages (SAFE)
+
+        if self.path == "/registry":
+
+            try:
+
+                j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
+
+                out = (j.get("registry", j) if isinstance(j, dict) else j)
+
+                _cit_send_json_safe(self, 200, out)
+
+            except Exception as e:
+
+                _cit_send_json_safe(self, 500, _cit_error_payload("registry_get_crash", e))
+
+            return
+
+        
+
+        if self.path == "/node-packages":
+
+            try:
+
+                j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
+
+                out = (j.get("node_packages", j) if isinstance(j, dict) else j)
+
+                _cit_send_json_safe(self, 200, out)
+
+            except Exception as e:
+
+                _cit_send_json_safe(self, 500, _cit_error_payload("node_packages_get_crash", e))
+
+            return
+
+        
+
+        # --- REAL: GET /registry + /node-packages
+
+        if self.path == "/registry":
+
+            j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
+
+            _send_json(self, 200, j.get("registry", j) if isinstance(j, dict) else j)
+
+            return
+
+        if self.path == "/node-packages":
+
+            j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
+
+            _send_json(self, 200, j.get("node_packages", j) if isinstance(j, dict) else j)
+
+            return
+
+        
+        p = (self.path or '/').split('?',1)[0]
+        if p in ('/', '/ui'):
+            return _serve_ui_html(self, 200)
+        import os
+
         # --- UI integrated routes ---
+
+        # === PWA ROUTES ===
+        if self.path == "/manifest.webmanifest":
+            try:
+                manifest_path = os.path.join(os.path.dirname(__file__), "..", "ui", "manifest.webmanifest")
+                with open(manifest_path, "r", encoding="utf-8") as mf:
+                    body = mf.read().encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/manifest+json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(f"Manifest not found: {e}".encode())
+                return
+
+        if self.path.startswith("/icons/"):
+            try:
+                filename = self.path.split("/icons/")[1]
+                icon_path = os.path.join(os.path.dirname(__file__), "..", "ui", "icons", filename)
+                with open(icon_path, "rb") as icf:
+                    body = icf.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as e:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(f"Icon not found: {e}".encode())
+                return
 
         if self.path == "/ui" or self.path == "/ui/":
 
-            body = UI_HTML.encode("utf-8")
+            body = UI_HTML_PWA.encode("utf-8")
 
             self.send_response(200)
 
@@ -577,7 +920,7 @@ class Handler(BaseHTTPRequestHandler):
 
         # --- /UI integrated routes ---
         if self.path in ("/", "/ui"):
-            raw = UI_HTML.encode("utf-8")
+            raw = UI_HTML_PWA.encode("utf-8")
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(raw)))
@@ -596,6 +939,99 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
 
+
+    # --- config + upload endpoints ---
+    parsed = urlparse(self.path)
+    path = parsed.path or "/"
+    if path == "/config":
+      try:
+        ln = int(self.headers.get("Content-Length","0") or "0")
+        raw = self.rfile.read(ln) if ln>0 else b"{}"
+        payload = json.loads(raw.decode("utf-8", errors="ignore") or "{}")
+        cfg = _save_cfg(payload if isinstance(payload, dict) else {})
+        return _json(self, 200, {"ok": True, "model": cfg.get("model") or MODEL})
+      except Exception as e:
+        return _json(self, 400, {"ok": False, "err": str(e)})
+
+    if path == "/upload":
+      try:
+        cfg = _load_cfg()
+        mode = _storage_mode(cfg)
+        ctype = self.headers.get("Content-Type","")
+        if "multipart/form-data" not in ctype:
+          return _json(self, 400, {"ok": False, "err": "multipart/form-data required"})
+        form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={
+          "REQUEST_METHOD":"POST",
+          "CONTENT_TYPE": ctype,
+        })
+        if "file" not in form:
+          return _json(self, 400, {"ok": False, "err": "file field missing"})
+        f = form["file"]
+        kind = (form.getfirst("kind") or "file").strip()
+        filename = _safe_name(getattr(f, "filename", "") or "file")
+        data = f.file.read() if getattr(f, "file", None) else b""
+        if mode == "local":
+          vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
+          out = vd / filename
+          out.write_bytes(data)
+          return _json(self, 200, {"ok": True, "mode": mode, "kind": kind, "name": filename, "path": str(out), "size": len(data)})
+        # webdav
+        st = _webdav_put(cfg, filename, data)
+        return _json(self, 200, {"ok": True, "mode": mode, "kind": kind, "name": filename, "path": ( (_webdav(cfg)["url"].rstrip("/") + "/" + filename) if _webdav(cfg)["url"] else filename ), "status": st, "size": len(data)})
+      except Exception as e:
+        return _json(self, 500, {"ok": False, "err": str(e)})
+
+
+
+        
+
+
+        
+
+                # --- v2: POST /api/exec (SAFE)
+        if self.path.startswith("/api/exec"):
+            try:
+                # Prefer the same JSON reader used by existing routes (e.g. /api/chat)
+                if "_read_json" in globals():
+                    data = _read_json(self)
+                else:
+                    length = int(self.headers.get("Content-Length", "0") or "0")
+                    raw = self.rfile.read(length) if length > 0 else b"{}"
+                    try:
+                        data = json.loads(raw.decode("utf-8", errors="replace"))
+                    except Exception:
+                        data = {}
+                if not isinstance(data, dict):
+                    data = {}
+                out = _cit_exec_action(data)
+                _cit_send_json_safe(self, 200 if (isinstance(out, dict) and out.get("ok")) else 400, out)
+            except Exception as e:
+                _cit_send_json_safe(self, 500, _cit_error_payload("exec_handler_crash", e))
+            return
+
+        # --- REAL: POST /api/exec
+
+        if self.path.startswith("/api/exec"):
+
+            length = int(self.headers.get("Content-Length", "0") or "0")
+
+            raw = self.rfile.read(length) if length > 0 else b"{}"
+
+            try:
+
+                data = json.loads(raw.decode("utf-8", errors="replace"))
+
+            except Exception:
+
+                data = {}
+
+            out = _cit_exec_action(data)
+
+            _send_json(self, 200 if out.get("ok") else 400, out)
+
+            return
+
+        
         try:
 
             return self._do_POST_impl()
@@ -671,6 +1107,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     host = "0.0.0.0"
+    HTTPServer.allow_reuse_address = True
     httpd = HTTPServer((host, PORT), Handler)
     print(f"[CIT] listening on http://{host}:{PORT}")
     print(f"[CIT] UI: http://127.0.0.1:{PORT}/ui")
@@ -680,16 +1117,50 @@ if __name__ == "__main__":
     main()
 from server.cit_ui_pwa import UI_HTML_PWA
 
-@app.route('/manifest.webmanifest')
-def manifest():
-    import os
-    p=os.path.join(os.path.dirname(__file__),'..','ui','manifest.webmanifest')
-    with open(p,'r') as f:
-        return f.read(),200,{'Content-Type':'application/manifest+json'}
+# === Ci/CIT REAL EXEC (v1) ===
 
-@app.route('/icons/<f>')
-def icon(f):
-    import os
-    from flask import send_file
-    p=os.path.join(os.path.dirname(__file__),'..','ui','icons',f)
-    return send_file(p,mimetype='image/png')
+def _cit_load_json_file(path):
+    try:
+        import json, pathlib
+        return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"ok": False, "error": {"code":"registry_read_failed","message": str(e)}}
+
+def _cit_exec_action(data):
+    action = (data or {}).get("action") or ""
+    if action == "actions.registry.get":
+        j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
+        if isinstance(j, dict) and "registry" in j: return {"ok": True, "action": action, "result": j["registry"]}
+        return {"ok": True, "action": action, "result": j}
+    if action == "actions.node_packages.get":
+        j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
+        if isinstance(j, dict) and "node_packages" in j: return {"ok": True, "action": action, "result": j["node_packages"]}
+        return {"ok": True, "action": action, "result": j}
+    return {"ok": False, "action": action, "error": {"code":"not_implemented","message":"action not implemented","details":{"action":action}}}
+
+
+
+
+  def do_DELETE(self):
+    parsed = urlparse(self.path)
+    path = parsed.path or "/"
+    qs = parse_qs(parsed.query or "")
+    if path == "/file":
+      name = unquote((qs.get("name") or [""])[0])
+      cfg = _load_cfg()
+      mode = _storage_mode(cfg)
+      safe = _safe_name(name)
+      try:
+        if mode == "local":
+          vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
+          fp = vd / safe
+          if fp.exists() and fp.is_file():
+            fp.unlink()
+            return _json(self, 200, {"ok": True, "mode": mode, "name": safe})
+          return _json(self, 404, {"ok": False, "err": "not found"})
+        st = _webdav_delete(cfg, safe)
+        return _json(self, 200, {"ok": True, "mode": mode, "name": safe, "status": st})
+      except Exception as e:
+        return _json(self, 500, {"ok": False, "err": str(e)})
+    return _json(self, 404, {"ok": False, "err": "unknown route"})
+
