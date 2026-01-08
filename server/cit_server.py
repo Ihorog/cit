@@ -781,7 +781,6 @@ class Handler(BaseHTTPRequestHandler):
             p = (self.path or '/').split('?',1)[0]
             if p in ('/', '/ui'):
                 return _serve_ui_html(self, 200)
-            import os
 
             # --- UI integrated routes ---
 
@@ -882,9 +881,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(raw)
                 return
 
-            if self.path.startswith("/health"):
-                _send_json(self, 200, {"ok": True, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"), "ts": now_utc_iso()})
-                return
+        if self.path.startswith("/health"):
+            _send_json(self, 200, {"ok": True, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"), "ts": now_utc_iso()})
+            return
 
             _send_json(self, 404, {"ok": False, "error": "not_found"})
 
