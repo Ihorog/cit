@@ -1,4 +1,3 @@
-from cit_ui_pwa import UI_HTML_PWA
 """
 CIT (Ci Interface Terminal) — minimal HTTP server with:
 - GET  /health  -> {"ok": true, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini")}
@@ -12,6 +11,13 @@ Env:
 - CIT_PORT         (optional, default: "8790")
 """
 
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from server.cit_ui_pwa import UI_HTML_PWA
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import pathlib
@@ -881,9 +887,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(raw)
                 return
 
-        if self.path.startswith("/health"):
-            _send_json(self, 200, {"ok": True, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"), "ts": now_utc_iso()})
-            return
+            if self.path.startswith("/health"):
+                _send_json(self, 200, {"ok": True, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"), "ts": now_utc_iso()})
+                return
 
             _send_json(self, 404, {"ok": False, "error": "not_found"})
 
