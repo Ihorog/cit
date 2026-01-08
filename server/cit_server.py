@@ -1058,6 +1058,28 @@ class Handler(BaseHTTPRequestHandler):
 
             _send_json(self, 404, {"ok": False, "error": "not_found"})
 
+    def do_DELETE(self):
+      parsed = urlparse(self.path)
+      path = parsed.path or "/"
+      qs = parse_qs(parsed.query or "")
+      if path == "/file":
+        name = unquote((qs.get("name") or [""])[0])
+        cfg = _load_cfg()
+        mode = _storage_mode(cfg)
+        safe = _safe_name(name)
+        try:
+          if mode == "local":
+            vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
+            fp = vd / safe
+            if fp.exists() and fp.is_file():
+              fp.unlink()
+              return _json(self, 200, {"ok": True, "mode": mode, "name": safe})
+            return _json(self, 404, {"ok": False, "err": "not found"})
+          st = _webdav_delete(cfg, safe)
+          return _json(self, 200, {"ok": True, "mode": mode, "name": safe, "status": st})
+        except Exception as e:
+          return _json(self, 500, {"ok": False, "err": str(e)})
+      return _json(self, 404, {"ok": False, "err": "unknown route"})
 def main():
     host = "0.0.0.0"
     HTTPServer.allow_reuse_address = True
@@ -1068,7 +1090,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-from server.cit_ui_pwa import UI_HTML_PWA
 
 # === Ci/CIT REAL EXEC (v1) ===
 
@@ -1094,26 +1115,4 @@ def _cit_exec_action(data):
 
 
 
-    def do_DELETE(self):
-      parsed = urlparse(self.path)
-      path = parsed.path or "/"
-      qs = parse_qs(parsed.query or "")
-      if path == "/file":
-        name = unquote((qs.get("name") or [""])[0])
-        cfg = _load_cfg()
-        mode = _storage_mode(cfg)
-        safe = _safe_name(name)
-        try:
-          if mode == "local":
-            vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
-            fp = vd / safe
-            if fp.exists() and fp.is_file():
-              fp.unlink()
-              return _json(self, 200, {"ok": True, "mode": mode, "name": safe})
-            return _json(self, 404, {"ok": False, "err": "not found"})
-          st = _webdav_delete(cfg, safe)
-          return _json(self, 200, {"ok": True, "mode": mode, "name": safe, "status": st})
-        except Exception as e:
-          return _json(self, 500, {"ok": False, "err": str(e)})
-      return _json(self, 404, {"ok": False, "err": "unknown route"})
 
