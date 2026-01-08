@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="ui/icons/icon-512.png" alt="CIT Logo" width="180" />
+  <img src="https://raw.githubusercontent.com/Ihorog/cit/main/ui/icons/icon-512.png" alt="CIT Logo" width="180" />
 </p>
 
 # CIT (Ci Interface Terminal)
