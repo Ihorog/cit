@@ -399,6 +399,9 @@ UI_HTML_PWA = """<!doctype html>
     .row { display:flex; gap:10px; }
     .hint { font-size: 12px; opacity: .65; margin-top: 10px; line-height: 1.4; }
     .small { font-size: 12px; opacity: .75; margin-top: 2px; }
+    .header-container { display: flex; align-items: center; gap: 10px; }
+    .header-logo { border-radius: 10px; }
+    .header-title { font-weight: 700; }
     @media (max-width: 600px) {
       .wrap { padding: 10px; }
       .top { flex-wrap: wrap; }
@@ -411,10 +414,10 @@ UI_HTML_PWA = """<!doctype html>
 <body>
   <div class="wrap">
     <div class="top">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <img src="/icons/icon-192.png" alt="CIT logo" width="40" height="40" style="border-radius:10px;">
+      <div class="header-container">
+        <img src="/icons/icon-192.png" alt="CIT logo" width="40" height="40" class="header-logo">
         <div>
-          <div style="font-weight:700;">CIT</div>
+          <div class="header-title">CIT</div>
           <div class="badge" id="status">offline</div>
           <div class="small" id="model"></div>
         </div>
