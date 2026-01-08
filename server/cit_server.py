@@ -412,7 +412,7 @@ UI_HTML_PWA = """<!doctype html>
   <div class="wrap">
     <div class="top">
       <div style="display:flex;align-items:center;gap:10px;">
-        <img src="/icons/icon-192.png" alt="CIT" width="40" height="40" style="border-radius:10px;">
+        <img src="/icons/icon-192.png" alt="CIT logo" width="40" height="40" style="border-radius:10px;">
         <div>
           <div style="font-weight:700;">CIT</div>
           <div class="badge" id="status">offline</div>
