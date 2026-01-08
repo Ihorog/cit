@@ -1,4 +1,3 @@
-from cit_ui_pwa import UI_HTML_PWA
 """
 CIT (Ci Interface Terminal) — minimal HTTP server with:
 - GET  /health  -> {"ok": true, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini")}
@@ -12,6 +11,13 @@ Env:
 - CIT_PORT         (optional, default: "8790")
 """
 
+import sys
+import os
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from server.cit_ui_pwa import UI_HTML_PWA
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import pathlib
@@ -1059,18 +1065,6 @@ class Handler(BaseHTTPRequestHandler):
 
             _send_json(self, 404, {"ok": False, "error": "not_found"})
 
-    def main():
-        host = "0.0.0.0"
-        HTTPServer.allow_reuse_address = True
-        httpd = HTTPServer((host, PORT), Handler)
-        print(f"[CIT] listening on http://{host}:{PORT}")
-        print(f"[CIT] UI: http://127.0.0.1:{PORT}/ui")
-        httpd.serve_forever()
-
-    if __name__ == "__main__":
-        main()
-    from server.cit_ui_pwa import UI_HTML_PWA
-
     # === Ci/CIT REAL EXEC (v1) ===
 
     def _cit_load_json_file(path):
@@ -1117,4 +1111,15 @@ class Handler(BaseHTTPRequestHandler):
           except Exception as e:
             return _json(self, 500, {"ok": False, "err": str(e)})
         return _json(self, 404, {"ok": False, "err": "unknown route"})
+
+def main():
+    host = "0.0.0.0"
+    HTTPServer.allow_reuse_address = True
+    httpd = HTTPServer((host, PORT), Handler)
+    print(f"[CIT] listening on http://{host}:{PORT}")
+    print(f"[CIT] UI: http://127.0.0.1:{PORT}/ui")
+    httpd.serve_forever()
+
+if __name__ == "__main__":
+    main()
 
