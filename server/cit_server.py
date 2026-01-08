@@ -106,8 +106,7 @@ def _get_openai_key():
 # --- /CIT_SINGLE_KEY_RESOLVER_V1 ---
 
 
-
-# === CIT_UI_INTEGRATED_V1 ===
+# --- CIT_KEY_RESOLVER_V1 ---
 UI_ROOT = "/ui"
 BASE_DIR = Path(__file__).resolve().parent.parent
 VAULT_DIR = BASE_DIR / "vault" / "local"
@@ -788,7 +787,6 @@ class Handler(BaseHTTPRequestHandler):
             p = (self.path or '/').split('?',1)[0]
             if p in ('/', '/ui'):
                 return _serve_ui_html(self, 200)
-            import os
 
             # --- UI integrated routes ---
 
@@ -1065,53 +1063,28 @@ class Handler(BaseHTTPRequestHandler):
 
             _send_json(self, 404, {"ok": False, "error": "not_found"})
 
-    # === Ci/CIT REAL EXEC (v1) ===
-
-    def _cit_load_json_file(path):
-        try:
-            import json, pathlib
-            return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
-        except Exception as e:
-            return {"ok": False, "error": {"code":"registry_read_failed","message": str(e)}}
-
-    def _cit_exec_action(data):
-        action = (data or {}).get("action") or ""
-        if action == "actions.registry.get":
-            j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
-            if isinstance(j, dict) and "registry" in j: return {"ok": True, "action": action, "result": j["registry"]}
-            return {"ok": True, "action": action, "result": j}
-        if action == "actions.node_packages.get":
-            j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
-            if isinstance(j, dict) and "node_packages" in j: return {"ok": True, "action": action, "result": j["node_packages"]}
-            return {"ok": True, "action": action, "result": j}
-        return {"ok": False, "action": action, "error": {"code":"not_implemented","message":"action not implemented","details":{"action":action}}}
-
-
-
-
     def do_DELETE(self):
-        parsed = urlparse(self.path)
-        path = parsed.path or "/"
-        qs = parse_qs(parsed.query or "")
-        if path == "/file":
-          name = unquote((qs.get("name") or [""])[0])
-          cfg = _load_cfg()
-          mode = _storage_mode(cfg)
-          safe = _safe_name(name)
-          try:
-            if mode == "local":
-              vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
-              fp = vd / safe
-              if fp.exists() and fp.is_file():
-                fp.unlink()
-                return _json(self, 200, {"ok": True, "mode": mode, "name": safe})
-              return _json(self, 404, {"ok": False, "err": "not found"})
-            st = _webdav_delete(cfg, safe)
-            return _json(self, 200, {"ok": True, "mode": mode, "name": safe, "status": st})
-          except Exception as e:
-            return _json(self, 500, {"ok": False, "err": str(e)})
-        return _json(self, 404, {"ok": False, "err": "unknown route"})
-
+      parsed = urlparse(self.path)
+      path = parsed.path or "/"
+      qs = parse_qs(parsed.query or "")
+      if path == "/file":
+        name = unquote((qs.get("name") or [""])[0])
+        cfg = _load_cfg()
+        mode = _storage_mode(cfg)
+        safe = _safe_name(name)
+        try:
+          if mode == "local":
+            vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
+            fp = vd / safe
+            if fp.exists() and fp.is_file():
+              fp.unlink()
+              return _json(self, 200, {"ok": True, "mode": mode, "name": safe})
+            return _json(self, 404, {"ok": False, "err": "not found"})
+          st = _webdav_delete(cfg, safe)
+          return _json(self, 200, {"ok": True, "mode": mode, "name": safe, "status": st})
+        except Exception as e:
+          return _json(self, 500, {"ok": False, "err": str(e)})
+      return _json(self, 404, {"ok": False, "err": "unknown route"})
 def main():
     host = "0.0.0.0"
     HTTPServer.allow_reuse_address = True
@@ -1122,4 +1095,29 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# === Ci/CIT REAL EXEC (v1) ===
+
+def _cit_load_json_file(path):
+    try:
+        import json, pathlib
+        return json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"ok": False, "error": {"code":"registry_read_failed","message": str(e)}}
+
+def _cit_exec_action(data):
+    action = (data or {}).get("action") or ""
+    if action == "actions.registry.get":
+        j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
+        if isinstance(j, dict) and "registry" in j: return {"ok": True, "action": action, "result": j["registry"]}
+        return {"ok": True, "action": action, "result": j}
+    if action == "actions.node_packages.get":
+        j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
+        if isinstance(j, dict) and "node_packages" in j: return {"ok": True, "action": action, "result": j["node_packages"]}
+        return {"ok": True, "action": action, "result": j}
+    return {"ok": False, "action": action, "error": {"code":"not_implemented","message":"action not implemented","details":{"action":action}}}
+
+
+
+
 
