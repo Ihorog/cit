@@ -139,6 +139,8 @@ cit/
     └── termux_boot/cit_start.sh # script run by Termux Boot
 ```
 
+> **Note:** Operational scripts have been organized into `scripts/ops/` and vault/sync scripts into `scripts/vault/`. See README files in those directories for details.
+
 ## Web Interface (Cimeika)
 
 In addition to the embedded UI served by the CIT server, there's a modern **Next.js PWA** interface called **Cimeika** in the `/web` directory.
