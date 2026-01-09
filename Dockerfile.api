@@ -9,17 +9,12 @@ RUN apt-get update && apt-get install -y \
 
 # Copy server files
 COPY server/ /app/server/
-COPY orchestrator.py /app/
-COPY ci_home_chat_orchestrated.py /app/
-COPY ci_mitca_sense.py /app/
+
+# Copy requirements file
+COPY requirements.txt /app/
 
 # Install Python dependencies
-RUN pip install --no-cache-dir \
-    requests \
-    numpy \
-    openai \
-    huggingface_hub \
-    python-dotenv
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Create logs directory
 RUN mkdir -p /app/logs
@@ -27,13 +22,9 @@ RUN mkdir -p /app/logs
 # Expose port
 EXPOSE 8790
 
-# Set default Gunicorn configuration (can be overridden via environment variables)
-ENV GUNICORN_WORKERS=2
-ENV GUNICORN_TIMEOUT=120
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8790/health || exit 1
 
-# Start the API server with Gunicorn (production-ready WSGI server)
-CMD gunicorn --bind 0.0.0.0:8790 --workers ${GUNICORN_WORKERS} --timeout ${GUNICORN_TIMEOUT} cit_api:app
+# Start the CIT server (runs on port from env or 8790 default)
+CMD ["python", "/app/server/cit_server.py"]

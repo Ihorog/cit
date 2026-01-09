@@ -6,10 +6,7 @@ on:
       - main
     paths:
       - 'cimeika/**'
-      - 'cit_api.py'
-      - 'orchestrator.py'
-      - 'ci_mitca_sense.py'
-      - 'ci_home_chat_orchestrated.py'
+      - 'server/**'
       - 'docker-compose.yml'
       - 'Dockerfile.*'
       - 'requirements.txt'
@@ -19,10 +16,7 @@ on:
       - main
     paths:
       - 'cimeika/**'
-      - 'cit_api.py'
-      - 'orchestrator.py'
-      - 'ci_mitca_sense.py'
-      - 'ci_home_chat_orchestrated.py'
+      - 'server/**'
       - 'docker-compose.yml'
       - 'Dockerfile.*'
       - 'requirements.txt'
@@ -49,19 +43,17 @@ jobs:
 
       - name: Run syntax checks
         run: |
-          python -m py_compile cit_api.py
-          python -m py_compile orchestrator.py
-          python -m py_compile ci_mitca_sense.py
-          python -m py_compile ci_home_chat_orchestrated.py
+          python -m py_compile server/cit_server.py
+          python -m py_compile server/cit_ui_pwa.py
+          python -m py_compile ui_dashboard/ui_server.py
 
-      - name: Test orchestrator initialization
+      - name: Test server module import
         run: |
           python -c "
-          from orchestrator import TaskOrchestrator
-          from ci_mitca_sense import SensomatykaAnalyzer
-          o = TaskOrchestrator()
-          s = SensomatykaAnalyzer()
-          print('✅ Components initialized successfully')
+          import sys
+          sys.path.insert(0, 'server')
+          import cit_server
+          print('✅ Server module imported successfully')
           "
 
   build-and-deploy:
@@ -86,14 +78,6 @@ jobs:
           file: ./Dockerfile.api
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/cimeika-api:latest
-
-      - name: Build and push orchestrator image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.orchestrator
-          push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/cimeika-orchestrator:latest
 
       - name: Deploy to production server
         uses: appleboy/ssh-action@v1.0.0
