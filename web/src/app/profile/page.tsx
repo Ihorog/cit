@@ -2,9 +2,19 @@
 
 import { useState, useEffect } from 'react';
 
+interface Profile {
+  name: string;
+  email: string;
+  bio: string;
+  avatar: string;
+  interests: string[];
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export default function ProfilePage() {
   const [health, setHealth] = useState<string>('...');
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const API = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8790';
 
@@ -56,7 +66,7 @@ export default function ProfilePage() {
     }
   };
 
-  const saveProfile = async (updatedProfile: any) => {
+  const saveProfile = async (updatedProfile: Profile) => {
     try {
       await fetch(`${API}/api/exec`, {
         method: 'POST',
@@ -212,7 +222,7 @@ export default function ProfilePage() {
                       Інтереси
                     </div>
                     <div className="tags">
-                      {profile.interests.map((interest: string) => {
+                      {profile.interests.map((interest) => {
                         const interestData = interestOptions.find(opt => opt.value === interest);
                         return (
                           <span key={interest} className="tag" style={{ 
