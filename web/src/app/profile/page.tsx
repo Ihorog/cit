@@ -28,6 +28,15 @@ export default function ProfilePage() {
     }
   };
 
+  const getDefaultProfile = (): Profile => ({
+    name: '',
+    email: '',
+    bio: '',
+    avatar: '👤',
+    interests: [],
+    createdAt: new Date().toISOString()
+  });
+
   const loadProfile = async () => {
     try {
       const res = await fetch(`${API}/api/exec`, {
@@ -42,27 +51,11 @@ export default function ProfilePage() {
       if (data.result?.value) {
         setProfile(JSON.parse(data.result.value));
       } else {
-        // Default profile if none exists
-        setProfile({
-          name: '',
-          email: '',
-          bio: '',
-          avatar: '👤',
-          interests: [],
-          createdAt: new Date().toISOString()
-        });
+        setProfile(getDefaultProfile());
       }
     } catch (err) {
       console.error('Failed to load profile:', err);
-      // Set default profile on error
-      setProfile({
-        name: '',
-        email: '',
-        bio: '',
-        avatar: '👤',
-        interests: [],
-        createdAt: new Date().toISOString()
-      });
+      setProfile(getDefaultProfile());
     }
   };
 
