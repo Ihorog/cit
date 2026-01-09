@@ -1,5 +1,0 @@
-nohup: ignoring input
-  File "/data/data/com.termux/files/home/cimeika/cit/server/cit_server.py", line 693
-    parsed = urlparse(self.path)
-    ^^^^^^
-IndentationError: expected an indented block after function definition on line 689
