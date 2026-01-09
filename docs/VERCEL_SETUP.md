@@ -20,34 +20,13 @@
 
 1. Перейдіть у налаштування репозиторію: `Settings` → `Secrets and variables` → `Actions`
 2. Натисніть **"New repository secret"**
-3. Додайте наступні секрети:
+3. Додайте наступний секрет:
 
-### VERCEL_TOKEN
+### VERCEL_TOKEN (обов'язковий)
 - **Name:** `VERCEL_TOKEN`
 - **Value:** токен з Кроку 1
 
-### VERCEL_ORG_ID (опціонально для команд)
-- **Name:** `VERCEL_ORG_ID`
-- **Value:** ID вашої організації Vercel
-
-### VERCEL_PROJECT_ID
-- **Name:** `VERCEL_PROJECT_ID`
-- **Value:** ID проекту Vercel
-
-#### Як знайти Project ID:
-```bash
-# Встановіть Vercel CLI
-npm i -g vercel
-
-# Авторизуйтесь
-vercel login
-
-# З кореневої директорії репозиторію
-vercel link
-
-# ID будуть збережені в .vercel/project.json
-cat .vercel/project.json
-```
+**Примітка:** Новіша версія Vercel CLI автоматично визначає проект за допомогою файлу `web/vercel.json` та конфігурації в проекті Vercel, тому `VERCEL_ORG_ID` та `VERCEL_PROJECT_ID` більше не потрібні.
 
 ## 🎯 Крок 3: Налаштування змінних оточення в Vercel
 
@@ -97,8 +76,9 @@ git push origin feature/new-ui
 - Перевірте `VERCEL_PROJECT_ID` (якщо використовується)
 
 ### Deployment не запускається
-- Перевірте що зміни внесені у директорію `web/` або файли `vercel.json`/`package.json`
-- Workflow запускається тільки при змінах цих файлів
+- Перевірте що зміни внесені у директорію `web/`
+- Workflow запускається тільки при змінах файлів у `web/**`
+- Можете запустити вручну через вкладку Actions → Vercel Deployment → Run workflow
 
 ## 📚 Додаткові ресурси
 
