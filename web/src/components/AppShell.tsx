@@ -28,6 +28,7 @@ export default function AppShell() {
     { id: 'malya', label: 'Маля', icon: '🎨' },
     { id: 'calendar', label: 'Календар', icon: '📅' },
     { id: 'gallery', label: 'Галерея', icon: '🖼️' },
+    { id: 'profile', label: 'Профіль', icon: '👤' },
   ], [])
 
   const handleMenuItemClick = (id: string, label: string) => {
@@ -50,6 +51,10 @@ export default function AppShell() {
     }
     if (id === 'calendar') {
       window.location.href = '/calendar'
+      return
+    }
+    if (id === 'profile') {
+      window.location.href = '/profile'
       return
     }
     
@@ -80,6 +85,7 @@ export default function AppShell() {
       case 'Маля':
       case 'Календар':
       case 'Галерея':
+      case 'Профіль':
         // These are handled by navigation in handleMenuItemClick
         return null
 
