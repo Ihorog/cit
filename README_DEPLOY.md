@@ -51,7 +51,7 @@
 ## 📋 Вимоги
 
 ### Локальна розробка
-- Node.js ≥ 22.x
+- Node.js ≥ 20.x (рекомендовано 20.19.0 або новіше)
 - npm або yarn
 - Python ≥ 3.10
 - Git
@@ -348,31 +348,52 @@ tail -f .ui.auto.log
 
 ### GitHub Actions
 
-Workflow файл `.github/workflows/vercel-deploy.yml`:
+Workflow файл `.github/workflows/vercel-deploy.yml` автоматично розгортає проєкт на Vercel при кожному push до `main` або створенні PR.
+
+#### Необхідні GitHub Secrets
+
+Додайте наступні секрети в Settings → Secrets and variables → Actions:
+
+- **VERCEL_TOKEN** — токен доступу до Vercel (отримайте в https://vercel.com/account/tokens)
+- **VERCEL_ORG_ID** — ID організації Vercel (знайдіть в настройках проєкту)
+- **VERCEL_PROJECT_ID** — ID проєкту Vercel (знайдіть в настройках проєкту)
+
+#### Як отримати Vercel токени:
+
+1. Зайдіть на https://vercel.com/account/tokens
+2. Створіть новий токен з назвою "GitHub Actions"
+3. Скопіюйте токен і додайте його як `VERCEL_TOKEN` в GitHub Secrets
+
+#### Workflow конфігурація:
 
 ```yaml
 name: Vercel Deployment
 on:
   push:
     branches: [main]
+    paths: ['web/**']
   pull_request:
     branches: [main]
+    paths: ['web/**']
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: cd web && npm install
-      - run: cd web && npm run build
-      - uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'web/package-lock.json'
+      - run: npm install -g vercel@latest
+      - working-directory: ./web
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+      - working-directory: ./web
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+      - working-directory: ./web
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 ```
 
 ## 📚 Додаткові ресурси
