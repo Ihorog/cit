@@ -261,7 +261,7 @@ export default function ProfilePage() {
               <h2>Редагування профілю</h2>
             </div>
             <div className="body">
-              <form onSubmit={(e) => {
+              <form key={profile.updatedAt || profile.createdAt} onSubmit={(e) => {
                 e.preventDefault();
                 const formData = new FormData(e.currentTarget);
                 const interests = formData.getAll('interests') as string[];
