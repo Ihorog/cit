@@ -22,10 +22,6 @@ RUN mkdir -p /app/logs
 # Expose port
 EXPOSE 8790
 
-# Set default Gunicorn configuration (can be overridden via environment variables)
-ENV GUNICORN_WORKERS=2
-ENV GUNICORN_TIMEOUT=120
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8790/health || exit 1
