@@ -72,8 +72,8 @@ git push origin feature/new-ui
 - Секрет має бути у розділі **Actions**, а не **Dependabot**
 
 ### Помилка: "Project not found"
-- Переконайтесь що проект існує на Vercel
-- Перевірте `VERCEL_PROJECT_ID` (якщо використовується)
+- Переконайтесь що проект створено на Vercel Dashboard
+- Переконайтесь що Vercel CLI може автоматично визначити проект через `web/vercel.json`
 
 ### Deployment не запускається
 - Перевірте що зміни внесені у директорію `web/`

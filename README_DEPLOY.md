@@ -352,13 +352,13 @@ Workflow файл `.github/workflows/vercel-deploy.yml` автоматично �
 
 #### Необхідні GitHub Secrets
 
-Додайте наступні секрети в Settings → Secrets and variables → Actions:
+Додайте наступний секрет в Settings → Secrets and variables → Actions:
 
 - **VERCEL_TOKEN** — токен доступу до Vercel (отримайте в https://vercel.com/account/tokens)
-- **VERCEL_ORG_ID** — ID організації Vercel (знайдіть в настройках проєкту)
-- **VERCEL_PROJECT_ID** — ID проєкту Vercel (знайдіть в настройках проєкту)
 
-#### Як отримати Vercel токени:
+**Примітка:** Новіша версія Vercel CLI автоматично визначає проект через конфігурацію в `web/vercel.json` та проект на Vercel Dashboard, тому `VERCEL_ORG_ID` та `VERCEL_PROJECT_ID` більше не потрібні.
+
+#### Як отримати Vercel токен:
 
 1. Зайдіть на https://vercel.com/account/tokens
 2. Створіть новий токен з назвою "GitHub Actions"
