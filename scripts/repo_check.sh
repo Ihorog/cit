@@ -24,14 +24,16 @@ export CIT_PORT="$PORT"
 python server/cit_server.py > "$LOG_FILE" 2>&1 &
 PID=$!
 
+is_healthy=false
 for _ in {1..20}; do
   if curl -s "http://127.0.0.1:${PORT}/health" >/dev/null; then
+    is_healthy=true
     break
   fi
   sleep 0.2
 done
 
-if ! curl -s "http://127.0.0.1:${PORT}/health" >/dev/null; then
+if ! $is_healthy; then
   echo "❌ Server did not become healthy. Logs:"
   cat "$LOG_FILE"
   exit 1
