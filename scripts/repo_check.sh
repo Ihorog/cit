@@ -20,6 +20,11 @@ fi
 
 cd "$ROOT_DIR"
 
+# Common security options for curl
+CURL_SECURITY_OPTS="--connect-timeout 3 --max-filesize 1048576"
+CURL_TIMEOUT_SHORT="--max-time 5"
+CURL_TIMEOUT_LONG="--max-time 10"  # /chat needs longer timeout for LLM response
+
 cleanup() {
   if [[ -n "${PID:-}" ]]; then
     kill "$PID" 2>/dev/null || true
@@ -38,8 +43,9 @@ PID=$!
 
 is_healthy=false
 for _ in {1..20}; do
-  # Add timeout and max-time to prevent hanging, max-filesize to limit response size
-  if curl -s --max-time 5 --connect-timeout 3 --max-filesize 1048576 "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
+  # Add security options to prevent hanging and limit response size
+  # shellcheck disable=SC2086  # Word splitting is intentional for curl options
+  if curl -s $CURL_SECURITY_OPTS $CURL_TIMEOUT_SHORT "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
     is_healthy=true
     break
   fi
@@ -53,12 +59,14 @@ if ! $is_healthy; then
 fi
 
 echo "✅ /health response:"
-curl -s --max-time 5 --connect-timeout 3 --max-filesize 1048576 "http://127.0.0.1:${PORT}/health"
+# shellcheck disable=SC2086  # Word splitting is intentional for curl options
+curl -s $CURL_SECURITY_OPTS $CURL_TIMEOUT_SHORT "http://127.0.0.1:${PORT}/health"
 echo
 
 if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   printf "\n💬 /chat smoke test:\n"
-  curl -s --max-time 10 --connect-timeout 3 --max-filesize 1048576 -X POST "http://127.0.0.1:${PORT}/chat" \
+  # shellcheck disable=SC2086  # Word splitting is intentional for curl options
+  curl -s $CURL_SECURITY_OPTS $CURL_TIMEOUT_LONG -X POST "http://127.0.0.1:${PORT}/chat" \
     -H 'Content-Type: application/json' \
     -d '{"message":"ping"}'
   echo
