@@ -25,6 +25,12 @@ python server/cit_server.py > "$LOG_FILE" 2>&1 &
 PID=$!
 
 for _ in {1..20}; do
+  # Verify the spawned process is still alive
+  if ! kill -0 "$PID" 2>/dev/null; then
+    echo "❌ Server process died unexpectedly. Logs:"
+    cat "$LOG_FILE"
+    exit 1
+  fi
   if curl -s "http://127.0.0.1:${PORT}/health" >/dev/null; then
     break
   fi
