@@ -46,7 +46,8 @@ if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   printf "\n💬 /chat smoke test:\n"
   curl -s -X POST "http://127.0.0.1:${PORT}/chat" \
     -H 'Content-Type: application/json' \
-    -d '{"message":"ping"}' || true
+    -d '{"message":"ping"}'
+  echo
 else
   printf "\nℹ️ OPENAI_API_KEY not set — skipping /chat check.\n"
 fi
