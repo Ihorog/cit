@@ -28,7 +28,7 @@ fi
 cd "$ROOT_DIR"
 
 # Curl security options as arrays for safe expansion
-CURL_BASE_OPTS=(-s --connect-timeout 3 --max-filesize 1048576)
+CURL_BASE_OPTS=(-s --connect-timeout 3 --max-filesize 1048576)  # 1MB response limit
 CURL_TIMEOUT_SHORT=(--max-time 5)
 CURL_TIMEOUT_LONG=(--max-time 10)  # /chat needs longer timeout for LLM response
 
