@@ -1,0 +1,156 @@
+{
+  "registry": {
+    "name": "CiRegistry",
+    "version": "1.0",
+    "system": {
+      "system_id": "cimeika-ci",
+      "timezone": "Europe/Kyiv",
+      "root_operator": "Ci",
+      "resource": "CIT",
+      "contract": {
+        "name": "CiCIT_Contract",
+        "version": "1.0"
+      }
+    },
+    "api": {
+      "base": "http://127.0.0.1:8790",
+      "endpoints": {
+        "health": "/health",
+        "exec": "/api/exec",
+        "chat_bridge": "/api/chat"
+      }
+    },
+    "nodes": [
+      {
+        "id": "ci",
+        "title": "Ci",
+        "kind": "operator",
+        "capabilities": [
+          "actions.state.get",
+          "actions.state.set",
+          "actions.event.emit",
+          "actions.registry.get",
+          "actions.module.call"
+        ]
+      },
+      {
+        "id": "kazkar",
+        "title": "Казкар",
+        "kind": "node",
+        "capabilities": [
+          "actions.state.get",
+          "actions.state.set",
+          "actions.module.call"
+        ],
+        "subnodes": [
+          {
+            "id": "legend_ci",
+            "title": "✨Легенда Ci",
+            "kind": "subnode",
+            "capabilities": [
+              "actions.state.get",
+              "actions.state.set"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "podija",
+        "title": "ПоДія",
+        "kind": "node",
+        "capabilities": [
+          "actions.event.emit",
+          "actions.state.set",
+          "actions.module.call"
+        ]
+      },
+      {
+        "id": "nastrij",
+        "title": "Настрій",
+        "kind": "node",
+        "capabilities": [
+          "actions.state.get",
+          "actions.state.set",
+          "actions.module.call"
+        ]
+      },
+      {
+        "id": "malya",
+        "title": "Маля",
+        "kind": "node",
+        "capabilities": [
+          "actions.module.call",
+          "actions.event.emit"
+        ]
+      },
+      {
+        "id": "calendar",
+        "title": "Календар",
+        "kind": "node",
+        "capabilities": [
+          "actions.schedule.get",
+          "actions.schedule.set",
+          "actions.state.get",
+          "actions.state.set"
+        ]
+      },
+      {
+        "id": "gallery",
+        "title": "Галерея",
+        "kind": "node",
+        "capabilities": [
+          "actions.asset.get",
+          "actions.asset.put",
+          "actions.state.get",
+          "actions.state.set"
+        ]
+      }
+    ],
+    "channels": [
+      {
+        "id": "web_local_ui",
+        "title": "Web UI (local)",
+        "kind": "projection",
+        "access": {
+          "url": "http://127.0.0.1:8010/"
+        },
+        "binds_to": {
+          "api_base": "http://127.0.0.1:8790",
+          "primary": [
+            "POST /api/chat",
+            "POST /api/exec"
+          ]
+        }
+      },
+      {
+        "id": "telegram_bot",
+        "title": "Telegram Bot",
+        "kind": "projection",
+        "access": {
+          "url": "telegram://"
+        },
+        "binds_to": {
+          "api_base": "http://127.0.0.1:8790",
+          "primary": [
+            "POST /api/exec",
+            "POST /api/chat"
+          ]
+        }
+      },
+      {
+        "id": "cli",
+        "title": "CLI",
+        "kind": "projection",
+        "access": {
+          "url": "local-shell"
+        },
+        "binds_to": {
+          "api_base": "http://127.0.0.1:8790",
+          "primary": [
+            "POST /api/exec"
+          ]
+        }
+      }
+    ]
+  }
+}

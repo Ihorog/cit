@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>CIT • Vault Dashboard</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:16px;line-height:1.35}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .card{border:1px solid #ddd;border-radius:12px;padding:12px;min-width:280px;flex:1}
+    button{padding:10px 12px;border-radius:10px;border:1px solid #bbb;background:#fff}
+    pre{white-space:pre-wrap;word-break:break-word;background:#f7f7f7;border-radius:10px;padding:10px}
+    .muted{opacity:.7}
+  </style>
+</head>
+<body>
+  <h2>CIT • Vault Dashboard</h2>
+  <div class="muted">CIT: <code id="citUrl">http://127.0.0.1:8794</code> • UI: <code>http://127.0.0.1:8795</code></div>
+
+  <div class="row" style="margin-top:12px">
+    <div class="card">
+      <h3>Health</h3>
+      <button onclick="loadHealth()">Оновити</button>
+      <pre id="health">—</pre>
+    </div>
+
+    <div class="card">
+      <h3>Vault (local)</h3>
+      <button onclick="loadVault()">Оновити</button>
+      <pre id="vault">—</pre>
+    </div>
+
+    <div class="card">
+      <h3>Logs (last 80)</h3>
+      <button onclick="loadLogs()">Оновити</button>
+      <pre id="logs">—</pre>
+    </div>
+  </div>
+
+<script>
+async function loadHealth(){
+  const r = await fetch('http://127.0.0.1:8794/health').catch(()=>null);
+  document.getElementById('health').textContent = r ? await r.text() : 'CIT недоступний';
+}
+async function loadVault(){
+  const r = await fetch('/api/vault').catch(()=>null);
+  document.getElementById('vault').textContent = r ? await r.text() : 'UI API error';
+}
+async function loadLogs(){
+  const r = await fetch('/api/logs').catch(()=>null);
+  document.getElementById('logs').textContent = r ? await r.text() : 'UI API error';
+}
+loadHealth(); loadVault(); loadLogs();
+</script>
+</body>
+</html>

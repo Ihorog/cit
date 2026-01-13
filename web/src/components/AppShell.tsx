@@ -21,16 +21,43 @@ export default function AppShell() {
   }, [])
 
   const menuItems = useMemo<MenuItem[]>(() => [
-    { id: 'kazkar', label: 'Казкар' },
+    { id: 'kazkar', label: 'Казкар', icon: '💬' },
     { id: 'ci-legend', label: '✨ Легенда Ci', icon: '✨' },
-    { id: 'podia', label: 'ПоДія' },
-    { id: 'nastriy', label: 'Настрій' },
-    { id: 'malya', label: 'Маля' },
-    { id: 'calendar', label: 'Календар' },
-    { id: 'gallery', label: 'Галерея' },
+    { id: 'podija', label: 'ПоДія', icon: '🎯' },
+    { id: 'nastrij', label: 'Настрій', icon: '😊' },
+    { id: 'malya', label: 'Маля', icon: '🎨' },
+    { id: 'calendar', label: 'Календар', icon: '📅' },
+    { id: 'gallery', label: 'Галерея', icon: '🖼️' },
+    { id: 'profile', label: 'Профіль', icon: '👤' },
   ], [])
 
-  const handleMenuItemClick = (label: string) => {
+  const handleMenuItemClick = (id: string, label: string) => {
+    // Navigate to dedicated pages for modules
+    if (id === 'podija') {
+      window.location.href = '/podija'
+      return
+    }
+    if (id === 'nastrij') {
+      window.location.href = '/nastrij'
+      return
+    }
+    if (id === 'malya') {
+      window.location.href = '/malya'
+      return
+    }
+    if (id === 'gallery') {
+      window.location.href = '/gallery'
+      return
+    }
+    if (id === 'calendar') {
+      window.location.href = '/calendar'
+      return
+    }
+    if (id === 'profile') {
+      window.location.href = '/profile'
+      return
+    }
+    
     setActiveSection(label)
     setIsMenuOpen(false)
   }
@@ -54,49 +81,13 @@ export default function AppShell() {
         )
 
       case 'ПоДія':
-        return (
-          <div className={styles.contentArea}>
-            <h2>ПоДія</h2>
-            <p>Події та новини</p>
-            <p className={styles.comingSoon}>🚧 Розробляється...</p>
-          </div>
-        )
-
       case 'Настрій':
-        return (
-          <div className={styles.contentArea}>
-            <h2>Настрій</h2>
-            <p>Відстежування настрою</p>
-            <p className={styles.comingSoon}>🚧 Розробляється...</p>
-          </div>
-        )
-
       case 'Маля':
-        return (
-          <div className={styles.contentArea}>
-            <h2>Маля</h2>
-            <p>Творчість та малювання</p>
-            <p className={styles.comingSoon}>🚧 Розробляється...</p>
-          </div>
-        )
-
       case 'Календар':
-        return (
-          <div className={styles.contentArea}>
-            <h2>Календар</h2>
-            <p>Планування подій</p>
-            <p className={styles.comingSoon}>🚧 Розробляється...</p>
-          </div>
-        )
-
       case 'Галерея':
-        return (
-          <div className={styles.contentArea}>
-            <h2>Галерея</h2>
-            <p>Медіа-бібліотека</p>
-            <p className={styles.comingSoon}>🚧 Розробляється...</p>
-          </div>
-        )
+      case 'Профіль':
+        // These are handled by navigation in handleMenuItemClick
+        return null
 
       default:
         return (
@@ -165,8 +156,9 @@ export default function AppShell() {
                     className={`${styles.menuItem} ${
                       activeSection === item.label ? styles.menuItemActive : ''
                     }`}
-                    onClick={() => handleMenuItemClick(item.label)}
+                    onClick={() => handleMenuItemClick(item.id, item.label)}
                   >
+                    {item.icon && <span style={{ marginRight: '8px' }}>{item.icon}</span>}
                     {item.label}
                   </button>
                 </li>
