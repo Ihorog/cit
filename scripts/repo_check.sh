@@ -6,7 +6,14 @@ ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Validate PORT to prevent command injection and ensure valid range
 PORT="${CIT_PORT:-8979}"
-if ! [[ "$PORT" =~ ^[0-9]+$ ]] || [ "$PORT" -lt 1024 ] || [ "$PORT" -gt 65535 ]; then
+if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
+  echo "❌ Invalid PORT: $PORT (must be numeric)"
+  exit 1
+fi
+# Strip leading zeros to ensure consistent decimal interpretation
+PORT=$((10#$PORT))
+# Validate range using arithmetic evaluation
+if (( PORT < 1024 || PORT > 65535 )); then
   echo "❌ Invalid PORT: $PORT (must be 1024-65535)"
   exit 1
 fi
@@ -20,10 +27,10 @@ fi
 
 cd "$ROOT_DIR"
 
-# Common security options for curl
-CURL_SECURITY_OPTS="--connect-timeout 3 --max-filesize 1048576"
-CURL_TIMEOUT_SHORT="--max-time 5"
-CURL_TIMEOUT_LONG="--max-time 10"  # /chat needs longer timeout for LLM response
+# Curl security options as arrays for safe expansion
+CURL_BASE_OPTS=(-s --connect-timeout 3 --max-filesize 1048576)
+CURL_TIMEOUT_SHORT=(--max-time 5)
+CURL_TIMEOUT_LONG=(--max-time 10)  # /chat needs longer timeout for LLM response
 
 cleanup() {
   if [[ -n "${PID:-}" ]]; then
@@ -43,9 +50,8 @@ PID=$!
 
 is_healthy=false
 for _ in {1..20}; do
-  # Add security options to prevent hanging and limit response size
-  # shellcheck disable=SC2086  # Word splitting is intentional for curl options
-  if curl -s $CURL_SECURITY_OPTS $CURL_TIMEOUT_SHORT "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
+  # Use array expansion for safe curl option handling
+  if curl "${CURL_BASE_OPTS[@]}" "${CURL_TIMEOUT_SHORT[@]}" "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
     is_healthy=true
     break
   fi
@@ -59,14 +65,12 @@ if ! $is_healthy; then
 fi
 
 echo "✅ /health response:"
-# shellcheck disable=SC2086  # Word splitting is intentional for curl options
-curl -s $CURL_SECURITY_OPTS $CURL_TIMEOUT_SHORT "http://127.0.0.1:${PORT}/health"
+curl "${CURL_BASE_OPTS[@]}" "${CURL_TIMEOUT_SHORT[@]}" "http://127.0.0.1:${PORT}/health"
 echo
 
 if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   printf "\n💬 /chat smoke test:\n"
-  # shellcheck disable=SC2086  # Word splitting is intentional for curl options
-  curl -s $CURL_SECURITY_OPTS $CURL_TIMEOUT_LONG -X POST "http://127.0.0.1:${PORT}/chat" \
+  curl "${CURL_BASE_OPTS[@]}" "${CURL_TIMEOUT_LONG[@]}" -X POST "http://127.0.0.1:${PORT}/chat" \
     -H 'Content-Type: application/json' \
     -d '{"message":"ping"}'
   echo
