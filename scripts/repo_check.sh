@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PORT="${CIT_PORT:-8979}"
-LOG_FILE="$(mktemp -t cit_server.XXXXXX.log)"
+LOG_FILE="$(mktemp "${TMPDIR:-/tmp}/cit_server.XXXXXX.log")"
 
 cd "$ROOT_DIR"
 
