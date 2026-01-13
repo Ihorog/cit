@@ -40,7 +40,8 @@ if ! $is_healthy; then
 fi
 
 echo "✅ /health response:"
-curl -s "http://127.0.0.1:${PORT}/health" || true
+curl -s "http://127.0.0.1:${PORT}/health"
+echo
 
 if [[ -n "${OPENAI_API_KEY:-}" ]]; then
   printf "\n💬 /chat smoke test:\n"
