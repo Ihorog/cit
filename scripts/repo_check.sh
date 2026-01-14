@@ -50,9 +50,13 @@ PID=$!
 
 is_healthy=false
 for _ in {1..20}; do
-  # Use array expansion for safe curl option handling
-  if curl "${CURL_BASE_OPTS[@]}" "${CURL_TIMEOUT_SHORT[@]}" "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
-    is_healthy=true
+  # Verify the spawned process is still alive
+  if ! kill -0 "$PID" 2>/dev/null; then
+    echo "❌ Server process died unexpectedly. Logs:"
+    cat "$LOG_FILE"
+    exit 1
+  fi
+  if curl -s "http://127.0.0.1:${PORT}/health" >/dev/null; then
     break
   fi
   sleep 0.2
