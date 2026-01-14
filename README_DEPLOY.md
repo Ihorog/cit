@@ -20,11 +20,11 @@
 │   │   └── styles/        # CSS стилі
 │   ├── public/            # Статичні файли
 │   ├── package.json       # Залежності
-│   └── next.config.cjs    # Конфігурація Next.js
+│   ├── vercel.json        # Конфігурація Vercel для Next.js
+│   └── next.config.mjs    # Конфігурація Next.js
 ├── server/                # Python API сервер
 │   └── cit_server.py      # HTTP сервер для OpenAI
 ├── ui/                    # Альтернативний HTML/JS UI
-├── vercel.json            # Конфігурація Vercel
 └── package.json           # Root package.json
 ```
 
@@ -170,34 +170,26 @@ vercel --prod
 
 ## 🔧 Конфігурація
 
-### vercel.json
+### Структура Vercel
+
+Проєкт використовує монорепо структуру з Next.js додатком у директорії `web/`.
+
+**Важливо:** При налаштуванні проєкту на Vercel:
+- Встановіть **Root Directory** на `web` у налаштуваннях проєкту
+- Або використовуйте Vercel CLI з `web/` як робочою директорією (як у CI/CD workflow)
+
+Конфігурація фреймворку знаходиться в `web/vercel.json`:
 
 ```json
 {
-  "builds": [
-    {
-      "src": "web/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(_next|static)(.*)",
-      "dest": "web/$0"
-    },
-    {
-      "src": "/(favicon.ico|manifest.json|icons/.*)",
-      "dest": "web/$0"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "web/$1"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs"
 }
 ```
 
-### next.config.cjs
+**Примітка:** Кореневий `vercel.json` був видалений, оскільки використовував застарілий синтаксис `builds`, що викликав попередження. Сучасний підхід Vercel - налаштовувати Root Directory безпосередньо в проєкті або через CLI.
+
+### next.config.mjs
 
 ```javascript
 const nextConfig = {
@@ -205,7 +197,7 @@ const nextConfig = {
   poweredByHeader: false,
 }
 
-module.exports = nextConfig
+export default nextConfig
 ```
 
 ## 🧪 Тестування
@@ -309,8 +301,9 @@ npm install
 ### Проблема: "Build failed on Vercel"
 
 1. Перевірте логи у Vercel Dashboard
-2. Переконайтеся, що `vercel.json` правильно налаштований
-3. Перевірте, що всі залежності у `package.json`
+2. Переконайтеся, що Root Directory встановлено на `web` у налаштуваннях проєкту Vercel
+3. Перевірте, що всі залежності у `web/package.json` коректні
+4. Перевірте конфігурацію у `web/vercel.json`
 
 ### Проблема: "Speech recognition not working"
 
