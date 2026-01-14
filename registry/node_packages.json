@@ -1,0 +1,14 @@
+{
+  "node_packages": {
+    "version": "1.0",
+    "nodes": [
+      {"node_id":"ci","title":"Ci","capabilities":["actions.state.get","actions.state.set","actions.event.emit","actions.registry.get"],"processes":[{"id":"cit_api","entry":"server/cit_server.py","port":8790}]},
+      {"node_id":"kazkar","title":"Казкар","capabilities":["actions.state.get","actions.state.set","actions.module.call"],"subnodes":[{"node_id":"legend_ci","title":"✨Легенда Ci","capabilities":["actions.state.get","actions.state.set"]}]},
+      {"node_id":"podija","title":"ПоДія","capabilities":["actions.event.emit","actions.state.set","actions.schedule.set"]},
+      {"node_id":"nastrij","title":"Настрій","capabilities":["actions.state.get","actions.state.set"]},
+      {"node_id":"malya","title":"Маля","capabilities":["actions.module.call","actions.event.emit"]},
+      {"node_id":"calendar","title":"Календар","capabilities":["actions.schedule.get","actions.schedule.set","actions.state.get","actions.state.set"]},
+      {"node_id":"gallery","title":"Галерея","capabilities":["actions.asset.get","actions.asset.put","actions.state.get","actions.state.set"]}
+    ]
+  }
+}

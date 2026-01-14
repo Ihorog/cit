@@ -1,0 +1,173 @@
+# Technical Specification for GitHub Copilot: ElevenLabs Voice API Integration
+
+This technical specification outlines the requirements for integrating ElevenLabs Voice API into the existing chat application using GitHub Copilot assistance.
+
+## Project Overview
+
+Integrate ElevenLabs voice capabilities into the conversational chat application at https://github.com/Ihorog/cim to enable voice-based interactions alongside text chat.
+
+## Requirements for GitHub Copilot
+
+### 1. API Integration
+
+```
+@copilot Please implement ElevenLabs voice API integration with the following requirements:
+- Use the multi-context WebSocket API for real-time voice interactions
+- Support both text-to-speech and speech-to-text capabilities
+- Handle user interruptions gracefully by implementing context switching
+- Implement proper error handling and connection management
+- Add voice streaming capabilities with minimal latency
+```
+
+### 2. Authentication Setup
+
+```
+@copilot Create a secure authentication system for ElevenLabs API with:
+- Environment variable configuration for API keys
+- Server-side token generation for private agents
+- Implementation of signed URL generation for secure connections
+- Proper error handling for authentication failures
+```
+
+### 3. UI Components
+
+```
+@copilot Develop the following UI components for voice interaction:
+- Voice activation button with appropriate state indicators
+- Visual feedback for speaking/listening states
+- Volume control for voice output
+- Connection status indicator
+- Accessibility features for voice interactions
+```
+
+### 4. Voice Context Management
+
+```
+@copilot Implement multi-context voice management with:
+- Context creation and switching based on conversation flow
+- Proper handling of conversation turns
+- Context timeout management (keeping contexts alive when needed)
+- Graceful closing of unused contexts
+```
+
+### 5. WebSocket Implementation
+
+```
+@copilot Create a WebSocket connection manager with:
+- Connection establishment with proper headers and authentication
+- Message handling for different event types
+- Binary audio data processing
+- Reconnection logic with exponential backoff
+- Proper connection cleanup on page unload
+```
+
+### 6. Audio Processing
+
+```
+@copilot Implement audio processing functionality:
+- Convert received audio chunks to playable format
+- Handle streaming audio with minimal buffering
+- Implement audio queue management for smooth playback
+- Add support for different audio formats (mp3, wav)
+```
+
+### 7. Configuration Options
+
+```
+@copilot Create a configuration system for voice settings:
+- Voice selection interface
+- Speech rate and pitch controls
+- Model selection (eleven_flash_v2_5 for low latency)
+- Language selection options
+- Pronunciation dictionary support
+```
+
+## Technical Details
+
+### API Endpoints to Implement
+
+1. WebSocket connection: `wss://api.elevenlabs.io/v1/text-to-speech/{voice_id}/multi-stream-input`
+2. Authentication: `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url`
+
+### Required Dependencies
+
+```
+@copilot Add the following dependencies to the project:
+- @elevenlabs/client for JavaScript SDK integration
+- websocket libraries for real-time communication
+- audio processing libraries for handling streaming audio
+- proper TypeScript types for all integrations
+```
+
+### Code Structure
+
+```
+@copilot Organize the voice integration code with:
+- Separate modules for API communication, audio processing, and UI
+- Clear interfaces for all components
+- Proper TypeScript typing
+- Event-based architecture for handling voice state changes
+- Comprehensive error handling
+```
+
+## Implementation Guidelines
+
+### WebSocket Connection Management
+
+```
+@copilot Implement WebSocket connection with:
+- Single WebSocket connection per user session
+- Context IDs for managing different parts of conversation
+- Text streaming in smaller chunks with flush:true at sentence ends
+- Proper handling of inactivity timeouts (default 20 seconds)
+- Graceful connection closure
+```
+
+### Voice Context Handling
+
+```
+@copilot For voice context management:
+- Create new contexts with unique IDs for each conversation turn
+- Close contexts when they're no longer needed
+- Send empty text messages to reset timeout clocks when needed
+- Handle up to 5 concurrent contexts per connection
+- Implement context switching for user interruptions
+```
+
+### Error Handling
+
+```
+@copilot Implement comprehensive error handling:
+- Connection failures with retry logic
+- Authentication errors with clear user feedback
+- Audio playback issues with fallback mechanisms
+- Resource cleanup on errors
+- Detailed logging for debugging
+```
+
+## Testing Requirements
+
+```
+@copilot Create test cases for:
+- WebSocket connection establishment and maintenance
+- Audio streaming and playback
+- Context switching and management
+- Error scenarios and recovery
+- Performance testing for latency
+```
+
+## Documentation
+
+```
+@copilot Generate documentation for:
+- API integration details
+- Configuration options
+- Usage examples
+- Troubleshooting guide
+```
+
+This technical specification provides GitHub Copilot with comprehensive requirements for implementing ElevenLabs voice API integration into the existing chat application, focusing on the multi-context WebSocket approach for real-time voice interactions with proper context management [^1][^2][^3].
+
+[^1]: https://elevenlabs.io/docs/developers/guides/cookbooks/multi-context-web-socket
+[^2]: https://elevenlabs.io/docs/developers/websockets
+[^3]: https://elevenlabs.io/docs/api-reference/text-to-speech/v-1-text-to-speech-voice-id-multi-stream-input

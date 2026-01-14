@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Ihorog/cit/main/ui/icons/icon-512.png" alt="CIT Logo" width="180" />
+</p>
+
 # CIT (Ci Interface Terminal)
 
 [![Vercel Deployment](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml/badge.svg)](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml)
@@ -134,6 +138,8 @@ cit/
     ├── termux_bootstrap.sh    # optional helper to set up Termux environment
     └── termux_boot/cit_start.sh # script run by Termux Boot
 ```
+
+> **Note:** Operational scripts have been organized into `scripts/ops/` and vault/sync scripts into `scripts/vault/`. See README files in those directories for details.
 
 ## Web Interface (Cimeika)
 

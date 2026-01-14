@@ -2,6 +2,7 @@
 .env.*
 !.env.*.example
 *.bak
+*.bak.*
 *.backup*
 *.db
 data/
@@ -11,6 +12,20 @@ dist/
 __pycache__/
 *.pyc
 .DS_Store
+.cit.local.env
+
+# Runtime files
+*.log
+*.pid
+.ports.active
+
+# Backup directories
+_backup/
+_bak_ui/
+
+# Temporary files
+*_temp.py
+*_tmp.py
 
 # Next.js
 web/.next/
