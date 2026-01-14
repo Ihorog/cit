@@ -1,0 +1,608 @@
+:root{
+  --bg0:#050608;
+  --bg1:#070b12;
+  --stroke:rgba(255,255,255,.08);
+  --text:rgba(255,255,255,.92);
+  --muted:rgba(255,255,255,.55);
+  --ci-blue:#1FA4FF;
+  --ci-gold:#FFC34D;
+  --shadow: 0 18px 60px rgba(0,0,0,.55);
+  --glass: rgba(255,255,255,.06);
+  --glass2: rgba(255,255,255,.08);
+  --r: 22px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif;
+  color:var(--text);
+  background: radial-gradient(1100px 700px at 20% 20%, rgba(31,164,255,.18), transparent 60%),
+              radial-gradient(900px 650px at 80% 65%, rgba(255,195,77,.14), transparent 55%),
+              linear-gradient(180deg,var(--bg0),var(--bg1));
+  overflow:hidden;
+}
+
+a{color:inherit}
+small{color:var(--muted)}
+
+#app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  padding:18px;
+  gap:14px;
+}
+
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  gap:12px;
+  padding:14px 16px;
+  border:1px solid var(--stroke);
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+  border-radius:var(--r);
+  box-shadow: 0 10px 40px rgba(0,0,0,.35);
+  backdrop-filter: blur(10px);
+}
+
+.brand{
+  display:flex; align-items:center; gap:12px; min-width:240px;
+}
+.brand img{width:28px;height:28px;border-radius:10px}
+.brand .title{font-weight:800; letter-spacing:.2px}
+.brand .sub{font-size:12px; color:var(--muted); margin-top:2px}
+
+.pills{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end}
+.pill{
+  border:1px solid var(--stroke);
+  background:rgba(0,0,0,.22);
+  padding:8px 10px;
+  border-radius:999px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.shell{
+  flex:1;
+  display:grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap:14px;
+  min-height:0;
+}
+
+@media (max-width: 980px){
+  body{overflow:auto}
+  #app{padding:12px}
+  .shell{grid-template-columns:1fr}
+}
+
+.panel{
+  border:1px solid var(--stroke);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+  border-radius:var(--r);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  min-height:0;
+  overflow:hidden;
+  position:relative;
+}
+
+.panelHeader{
+  padding:16px 16px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+
+.h{
+  font-weight:800;
+  letter-spacing:.2px;
+}
+
+.grid{
+  padding:14px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+@media (max-width: 520px){
+  .grid{grid-template-columns:1fr}
+}
+
+.card{
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.22);
+  border-radius:18px;
+  padding:14px;
+  min-height:88px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  cursor:pointer;
+  position:relative;
+  transform:translateZ(0);
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.card:hover{
+  transform: translateY(-2px);
+  border-color: rgba(31,164,255,.35);
+  background: rgba(0,0,0,.28);
+}
+.card:active{transform: translateY(0px) scale(.99)}
+.card .k{font-weight:800}
+.card .d{color:var(--muted); font-size:12px; line-height:1.25}
+
+.tag{
+  position:absolute;
+  right:12px; top:12px;
+  font-size:12px;
+  color:rgba(255,255,255,.75);
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.18);
+  padding:5px 8px;
+  border-radius:999px;
+}
+
+.routeMark{
+  position:absolute;
+  right:14px;
+  bottom:10px;
+  font-size:12px;
+  color:rgba(255,255,255,.35);
+}
+
+.stage{
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+
+.stageBody{
+  padding:14px;
+  min-height:0;
+  overflow:auto;
+}
+
+.hero{
+  height:320px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.08);
+  background:
+    radial-gradient(680px 360px at 30% 40%, rgba(31,164,255,.20), transparent 65%),
+    radial-gradient(620px 360px at 70% 65%, rgba(255,195,77,.16), transparent 60%),
+    rgba(0,0,0,.18);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+  position:relative;
+  overflow:hidden;
+}
+
+.arc{
+  position:absolute;
+  width:760px;height:760px;
+  left:50%;top:50%;
+  transform:translate(-50%,-40%);
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.08);
+  opacity:.6;
+}
+.arc::after{
+  content:"";
+  position:absolute; inset:70px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.08);
+  opacity:.55;
+}
+
+.heroHint{
+  position:absolute;
+  left:14px; bottom:12px;
+  color:rgba(255,255,255,.40);
+  font-size:12px;
+}
+
+.centerCi{
+  position:absolute;
+  left:50%; top:50%;
+  transform:translate(-50%,-50%);
+  width:62px;height:62px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.10);
+  background: radial-gradient(16px 16px at 35% 30%, rgba(31,164,255,.9), rgba(31,164,255,.0)),
+              radial-gradient(18px 18px at 65% 72%, rgba(255,195,77,.85), rgba(255,195,77,.0)),
+              rgba(0,0,0,.25);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 18px 50px rgba(0,0,0,.55);
+  cursor:pointer;
+}
+
+.centerCi img{width:30px;height:30px;border-radius:10px}
+
+.fadeIn{
+  animation: fadeIn .24s ease-out both;
+}
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(6px)}
+  to{opacity:1; transform:translateY(0)}
+}
+
+/* Intro overlay */
+.intro{
+  position:fixed; inset:0;
+  background:linear-gradient(180deg,#040406,#070b12);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999;
+}
+.intro.hidden{display:none}
+.intro .slash{
+  position:absolute; inset:-20%;
+  background:linear-gradient(135deg, rgba(255,195,77,.0) 30%, rgba(255,195,77,.22) 52%, rgba(31,164,255,.18) 70%, rgba(31,164,255,.0) 90%);
+  transform:rotate(-12deg);
+  filter: blur(12px);
+  opacity:0;
+  animation: slash 1.15s ease both;
+}
+@keyframes slash{
+  0%{opacity:0; transform:rotate(-12deg) translateX(-12%)}
+  25%{opacity:1}
+  100%{opacity:0; transform:rotate(-12deg) translateX(12%)}
+}
+.intro .logo{
+  width:86px;height:86px;
+  border-radius:26px;
+  border:1px solid rgba(255,255,255,.10);
+  background: radial-gradient(22px 22px at 30% 30%, rgba(31,164,255,.95), rgba(31,164,255,0)),
+              radial-gradient(24px 24px at 70% 70%, rgba(255,195,77,.90), rgba(255,195,77,0)),
+              rgba(0,0,0,.20);
+  display:flex; align-items:center; justify-content:center;
+  box-shadow: 0 22px 70px rgba(0,0,0,.6);
+  opacity:0;
+  animation: pop 1.05s ease both;
+}
+@keyframes pop{
+  0%{opacity:0; transform:scale(.92)}
+  35%{opacity:1; transform:scale(1)}
+  100%{opacity:1; transform:scale(1)}
+}
+.intro .logo img{width:44px;height:44px;border-radius:14px}
+
+.drawer{
+  position:fixed;
+  top:0; right:0;
+  height:100%;
+  width:min(520px, 92vw);
+  background: rgba(0,0,0,.62);
+  border-left:1px solid rgba(255,255,255,.10);
+  backdrop-filter: blur(14px);
+  box-shadow: -18px 0 70px rgba(0,0,0,.55);
+  transform: translateX(105%);
+  transition: transform .20s ease;
+  z-index:9998;
+  display:flex;
+  flex-direction:column;
+}
+.drawer.open{transform: translateX(0)}
+.drawerHeader{
+  padding:14px 14px 10px;
+  display:flex; gap:10px; align-items:center; justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.drawerHeader .left{display:flex; gap:10px; align-items:center}
+.drawerHeader .ciDot{
+  width:34px;height:34px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background: radial-gradient(12px 12px at 35% 30%, rgba(31,164,255,.9), rgba(31,164,255,0)),
+              radial-gradient(12px 12px at 70% 75%, rgba(255,195,77,.85), rgba(255,195,77,0)),
+              rgba(0,0,0,.20);
+}
+.btn{
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.85);
+  padding:8px 10px;
+  border-radius:14px;
+  cursor:pointer;
+}
+.btn:hover{background: rgba(255,255,255,.08)}
+.drawerBody{
+  padding:12px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  min-height:0;
+  overflow:auto;
+}
+.kpi{
+  display:flex; gap:10px; flex-wrap:wrap;
+}
+.kpi .pill{background:rgba(255,255,255,.05)}
+
+/* === CI FIX: Drawer chat composer always visible (Android dynamic viewport) === */
+:root{
+  --ci-safe-b: env(safe-area-inset-bottom, 0px);
+  --ci-safe-t: env(safe-area-inset-top, 0px);
+}
+
+/* Drawer container: fixed overlay + dynamic viewport height */
+#ciDrawer,
+.ci-drawer,
+[data-ci="drawer"]{
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  padding-bottom: var(--ci-safe-b) !important;
+  padding-top: var(--ci-safe-t) !important;
+  overflow: hidden !important;
+  z-index: 9999 !important;
+}
+
+/* Drawer inner layout: header / body / composer */
+#ciDrawer .drawer-inner,
+#ciDrawer .ci-drawer-inner,
+.ci-drawer .drawer-inner,
+[data-ci="drawer"] .drawer-inner,
+[data-ci="drawer"] .ci-drawer-inner{
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+/* Header: no shrink */
+#ciDrawer .drawer-head,
+#ciDrawer .ci-drawer-head,
+.ci-drawer .drawer-head,
+[data-ci="drawer"] .drawer-head,
+[data-ci="drawer"] .ci-drawer-head{
+  flex: 0 0 auto !important;
+}
+
+/* Body: scroll area */
+#ciDrawer .drawer-body,
+#ciDrawer .ci-drawer-body,
+#ciDrawer .chat-body,
+.ci-drawer .drawer-body,
+[data-ci="drawer"] .drawer-body,
+[data-ci="drawer"] .ci-drawer-body,
+[data-ci="drawer"] .chat-body{
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  padding-bottom: calc(92px + var(--ci-safe-b)) !important; /* reserve space for composer */
+}
+
+/* Composer: sticky bottom, always visible */
+#ciDrawer .drawer-compose,
+#ciDrawer .ci-drawer-compose,
+#ciDrawer .chat-compose,
+.ci-drawer .drawer-compose,
+[data-ci="drawer"] .drawer-compose,
+[data-ci="drawer"] .ci-drawer-compose,
+[data-ci="drawer"] .chat-compose{
+  flex: 0 0 auto !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 10 !important;
+  padding-bottom: calc(10px + var(--ci-safe-b)) !important;
+  background: rgba(10,12,16,0.78) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Textarea/input: ensure visible and usable */
+#ciDrawer textarea,
+#ciDrawer input[type="text"],
+.ci-drawer textarea,
+.ci-drawer input[type="text"],
+[data-ci="drawer"] textarea,
+[data-ci="drawer"] input[type="text"]{
+  max-height: 140px !important;
+}
+
+/* === END CI FIX === */
+
+/* ======================= CI_LAUNCH_V1_BEGIN ======================= */
+/* Ціль: додати атмосферу day/night + глибину плиток + fullscreen overlay анімацію.
+   Не змінює layout/DOM, лише стилі та класи, які додає JS-патч. */
+
+:root{
+  --ci-navy: #0B2340;
+  --ci-azure: #1FA4FF;
+  --ci-sky: #87D3FF;
+  --ci-gold: #FFC34D;
+  --ci-amber:#FFA72B;
+
+  --ci-nightTop: #0B0614;   /* майже чорний фіолет */
+  --ci-nightMid: #120A22;
+  --ci-nightHaze: rgba(255,195,77,0.12); /* золота димка */
+  --ci-dayTop: #07121F;
+  --ci-dayMid: #0B2340;
+
+  --ci-depthShadow: 0 16px 40px rgba(0,0,0,0.30);
+  --ci-contactShadow: 0 10px 22px rgba(0,0,0,0.26);
+  --ci-edgeStroke: rgba(255,255,255,0.08);
+  --ci-specular: rgba(135,211,255,0.18);
+
+  --ci-overlayZ: 99999;
+}
+
+/* Нічний режим (вмикається JS-ом автоматично за часом або prefers-color-scheme) */
+body.ci-night, html.ci-night {
+  background: radial-gradient(1200px 700px at 50% -10%, rgba(31,164,255,0.10), rgba(0,0,0,0) 55%),
+              linear-gradient(180deg, var(--ci-nightTop) 0%, var(--ci-nightMid) 55%, rgba(255,195,77,0.06) 100%);
+  color: rgba(255,255,255,0.92);
+}
+
+/* Денний режим */
+body.ci-day, html.ci-day {
+  background: radial-gradient(900px 600px at 30% 0%, rgba(135,211,255,0.12), rgba(0,0,0,0) 55%),
+              linear-gradient(180deg, var(--ci-dayTop) 0%, var(--ci-dayMid) 60%, rgba(255,195,77,0.04) 100%);
+  color: rgba(255,255,255,0.92);
+}
+
+/* Зірки — тільки у night */
+.ci-starfield{
+  position: fixed;
+  inset: 0;
+  z-index: 1; /* під UI */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 450ms ease;
+  background:
+    radial-gradient(1px 1px at 12% 20%, rgba(255,255,255,0.85) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 38% 12%, rgba(255,255,255,0.75) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 62% 18%, rgba(255,255,255,0.70) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 78% 10%, rgba(255,255,255,0.65) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 22% 44%, rgba(255,255,255,0.55) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 66% 46%, rgba(255,255,255,0.58) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 86% 38%, rgba(255,255,255,0.52) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 10% 78%, rgba(255,255,255,0.45) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 54% 74%, rgba(255,255,255,0.42) 0, rgba(255,255,255,0) 70%),
+    radial-gradient(1px 1px at 90% 82%, rgba(255,255,255,0.40) 0, rgba(255,255,255,0) 70%);
+  filter: blur(0.1px);
+}
+body.ci-night .ci-starfield{ opacity: 0.55; }
+body.ci-day .ci-starfield{ opacity: 0; }
+
+/* Легкий specular/об’єм на плитках/кнопках (без зміни їх форми).
+   Працює по класу body.ci-depth (JS ставить його одразу). */
+body.ci-depth *{
+  -webkit-font-smoothing: antialiased;
+}
+body.ci-depth .tile,
+body.ci-depth .card,
+body.ci-depth .btn,
+body.ci-depth button,
+body.ci-depth [role="button"]{
+  box-shadow: var(--ci-depthShadow);
+  border: 1px solid var(--ci-edgeStroke);
+  position: relative;
+  overflow: hidden;
+}
+body.ci-depth .tile::after,
+body.ci-depth .card::after,
+body.ci-depth .btn::after,
+body.ci-depth button::after,
+body.ci-depth [role="button"]::after{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  pointer-events:none;
+  background: radial-gradient(520px 260px at 0% 30%, var(--ci-specular) 0%, rgba(0,0,0,0) 55%);
+  opacity: 0.9;
+  mix-blend-mode: screen;
+}
+
+/* Підсвіт з боку логотипу під час night (тонко) */
+body.ci-night.ci-depth .tile::after,
+body.ci-night.ci-depth .card::after{
+  opacity: 1.0;
+}
+
+/* Лого збільшити x2, без втручання у DOM:
+   JS знайде img з icon-192.png / alt=Ci і додасть class .ci-logo */
+img.ci-logo{
+  width: auto !important;
+  height: auto !important;
+  transform: scale(2);
+  transform-origin: center;
+}
+
+/* Launch overlay container */
+#ciLaunchOverlay{
+  position: fixed;
+  inset: 0;
+  z-index: var(--ci-overlayZ);
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+/* Flash layers */
+.ci-flash{
+  position:absolute;
+  inset:0;
+  background:#fff;
+  opacity:0;
+}
+.ci-flash.ci-flash-warm{
+  background:#FFF6E5;
+}
+
+/* Split regions */
+.ci-split-top, .ci-split-bottom{
+  position:absolute;
+  inset:0;
+}
+.ci-split-top{
+  clip-path: polygon(0 0, 100% 0, 100% 48%, 0 52%);
+  background: #05070C;
+}
+.ci-split-bottom{
+  clip-path: polygon(0 52%, 100% 48%, 100% 100%, 0 100%);
+  background: #FFFFFF;
+}
+
+/* Fracture wedge (diagonal crack) */
+.ci-fracture{
+  position:absolute;
+  width: 2px;
+  height: 160vh;
+  left: 0;
+  top: -30vh;
+  transform-origin: top left;
+  background: linear-gradient(180deg, rgba(255,255,255,0.0), rgba(255,255,255,0.70), rgba(255,255,255,0.0));
+  filter: drop-shadow(0 0 10px rgba(135,211,255,0.35)) drop-shadow(0 0 18px rgba(255,195,77,0.22));
+  opacity: 0.0;
+}
+
+/* Perimeter flows (SVG) */
+.ci-perimeter{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.ci-perimeter svg{
+  width:100%;
+  height:100%;
+}
+.ci-path{
+  fill:none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 10px rgba(31,164,255,0.35)) drop-shadow(0 0 14px rgba(255,195,77,0.18));
+}
+
+/* UI reveal helper: JS додає клас, ми легенько “витягуємо” об’єкти вперед */
+body.ci-reveal .tile,
+body.ci-reveal .card,
+body.ci-reveal .btn,
+body.ci-reveal button,
+body.ci-reveal [role="button"]{
+  transform: translateZ(0) translateY(0) scale(1);
+  opacity: 1;
+  transition: transform 520ms ease, opacity 420ms ease, box-shadow 520ms ease;
+  box-shadow: var(--ci-contactShadow);
+}
+
+/* Вхідний стан (тільки коли JS тимчасово ставить ci-preveal) */
+body.ci-preveal .tile,
+body.ci-preveal .card,
+body.ci-preveal .btn,
+body.ci-preveal button,
+body.ci-preveal [role="button"]{
+  transform: translateY(10px) scale(0.985);
+  opacity: 0.86;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .ci-starfield{ transition:none; }
+}
+/* ======================= CI_LAUNCH_V1_END ========================= */
+

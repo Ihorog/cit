@@ -1,6 +1,8 @@
 .env
 .env.*
+!.env.*.example
 *.bak
+*.bak.*
 *.backup*
 *.db
 data/
