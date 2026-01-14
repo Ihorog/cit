@@ -1,14 +1,15 @@
 """
 CIT (Ci Interface Terminal) — minimal HTTP server with:
-- GET  /health  -> {"ok": true, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini")}
+- GET  /health  -> {"ok": true, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"), "huggingface": bool}
 - GET  /ui      -> Web UI (chat + STT + TTS in browser)
 - GET  /        -> same as /ui
 - POST /chat    -> forwards to OpenAI Responses API (or Chat Completions fallback)
 
 Env:
-- OPENAI_API_KEY   (required)
-- CIT_MODEL        (optional, default: "gpt-4o-mini")
-- CIT_PORT         (optional, default: "8790")
+- OPENAI_API_KEY        (required)
+- HUGGINGFACE_API_TOKEN (optional, for ML model access, also accepts HF_TOKEN)
+- CIT_MODEL             (optional, default: "gpt-4o-mini")
+- CIT_PORT              (optional, default: "8790")
 """
 
 import sys
@@ -103,6 +104,30 @@ def _read_dotenv_key():
 def _get_openai_key():
     """Single source of truth. No recursion."""
     return (os.getenv("CIT_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or _read_dotenv_key() or "").strip()
+
+def _read_dotenv_hf_token():
+    """Read HuggingFace token from .env file."""
+    try:
+        base = Path(__file__).resolve().parents[1]
+        envp = base / ".env"
+        if not envp.exists():
+            return ""
+        for line in envp.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            kk, vv = line.split("=", 1)
+            kk = kk.strip()
+            vv = vv.strip().strip('"').strip("'")
+            if kk in ("HUGGINGFACE_API_TOKEN", "HF_TOKEN") and vv:
+                return vv
+        return ""
+    except Exception:
+        return ""
+
+def _get_huggingface_token():
+    """Single source of truth for HuggingFace token. No recursion."""
+    return (os.getenv("HUGGINGFACE_API_TOKEN") or os.getenv("HF_TOKEN") or _read_dotenv_hf_token() or "").strip()
 # --- /CIT_SINGLE_KEY_RESOLVER_V1 ---
 
 
@@ -894,7 +919,13 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             if self.path.startswith("/health"):
-                _send_json(self, 200, {"ok": True, "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"), "ts": now_utc_iso()})
+                hf_token = _get_huggingface_token()
+                _send_json(self, 200, {
+                    "ok": True,
+                    "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"),
+                    "ts": now_utc_iso(),
+                    "huggingface": bool(hf_token)
+                })
                 return
 
             _send_json(self, 404, {"ok": False, "error": "not_found"})
