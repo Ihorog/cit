@@ -28,15 +28,19 @@
 
 **Примітка:** Новіша версія Vercel CLI автоматично визначає проект за допомогою файлу `web/vercel.json` та конфігурації в проекті Vercel, тому `VERCEL_ORG_ID` та `VERCEL_PROJECT_ID` більше не потрібні.
 
-## 🎯 Крок 3: Налаштування змінних оточення в Vercel
+## 🎯 Крок 3: Налаштування проєкту на Vercel
 
 1. Перейдіть на [Vercel Dashboard](https://vercel.com/dashboard)
-2. Виберіть ваш проект
-3. `Settings` → `Environment Variables`
-4. Додайте змінну:
+2. Виберіть ваш проект (або створіть новий, імпортувавши з GitHub)
+3. **Важливо:** У `Settings` → `General` → `Root Directory` встановіть значення `web`
+   - Це необхідно, оскільки Next.js додаток знаходиться в підпапці монорепо
+4. `Settings` → `Environment Variables`
+5. Додайте змінну:
    - **Name:** `NEXT_PUBLIC_CIT_API_URL`
    - **Value:** URL вашого CIT API (наприклад: `https://your-api.example.com/chat`)
    - **Environment:** Production, Preview, Development
+
+**Примітка:** Кореневий `vercel.json` був видалений з репозиторію, оскільки використовував застарілий синтаксис `builds`. Сучасна конфігурація знаходиться в `web/vercel.json` та налаштуваннях Root Directory проєкту.
 
 ## ✅ Крок 4: Перевірка автоматизації
 
