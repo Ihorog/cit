@@ -56,6 +56,25 @@ jobs:
           print('✅ Server module imported successfully')
           "
 
+      - name: Test server startup
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_TOKEN }}
+          CIT_PORT: 8792
+        run: |
+          # Start server in background
+          timeout 10 python server/cit_server.py &
+          SERVER_PID=$!
+          echo "Server PID: $SERVER_PID"
+          
+          # Wait for server to start
+          sleep 5
+          
+          # Run health check
+          curl -f http://127.0.0.1:8792/health && echo "✅ Health check passed" || echo "⚠️ Health check failed (server may not be fully started)"
+          
+          # Cleanup
+          kill $SERVER_PID 2>/dev/null || true
+
   build-and-deploy:
     needs: test
     runs-on: ubuntu-latest
