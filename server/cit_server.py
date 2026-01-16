@@ -20,6 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from server.cit_ui_pwa import UI_HTML_PWA
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from server.jobs import JobManager
 import json
 import pathlib
 import os
@@ -235,6 +236,8 @@ OPENAI_MODEL = os.getenv("CIT_OPENAI_MODEL", "gpt-4.1-mini")
 MODEL = os.getenv("CIT_MODEL", "gpt-4o-mini")
 PORT = int(os.getenv("CIT_PORT", "8790"))
 
+# Initialize Job Manager
+JOB_MANAGER = JobManager()
 
 BIND = os.getenv("CIT_BIND", "127.0.0.1")
 # --- CIT_FILES_API_V1 ---
@@ -928,6 +931,30 @@ class Handler(BaseHTTPRequestHandler):
                 })
                 return
 
+            # --- v1/jobs GET endpoints ---
+            if self.path.startswith("/v1/jobs/"):
+                # Extract job_id from path
+                parts = self.path.split("/")
+                if len(parts) >= 4:
+                    job_id = parts[3]
+                    
+                    # Check if requesting logs
+                    if len(parts) >= 5 and parts[4] == "logs":
+                        result = JOB_MANAGER.get_job_logs(job_id)
+                        if result is None:
+                            _send_json(self, 404, {"ok": False, "error": "job_not_found"})
+                        else:
+                            _send_json(self, 200, result)
+                        return
+                    else:
+                        # Status request
+                        result = JOB_MANAGER.get_job_status(job_id)
+                        if result is None:
+                            _send_json(self, 404, {"ok": False, "error": "job_not_found"})
+                        else:
+                            _send_json(self, 200, result)
+                        return
+
             _send_json(self, 404, {"ok": False, "error": "not_found"})
 
         # --- CIT_SAFE_POST_WRAPPER_V1 ---
@@ -1083,6 +1110,17 @@ class Handler(BaseHTTPRequestHandler):
             except Exception:
                 pass
             # --- /PING ---
+            
+            # --- v1/jobs POST endpoint ---
+            if self.path == "/v1/jobs":
+                data = _read_json(self)
+                job_type = data.get("job_type", "generic")
+                payload = data.get("payload", {})
+                
+                result = JOB_MANAGER.create_job(job_type, payload)
+                _send_json(self, 201, result)
+                return
+            
             if self.path.startswith("/chat"):
                 data = _read_json(self)
                 msg = (data.get("message") or "").strip()

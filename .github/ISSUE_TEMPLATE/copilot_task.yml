@@ -1,0 +1,78 @@
+name: Copilot Task Spec
+description: Structured task for GitHub Copilot execution
+labels: ["copilot", "task"]
+body:
+  - type: input
+    id: repo
+    attributes:
+      label: Repo
+      description: Target repo (Ihorog/cit, Ihorog/cimeika-app, Ihorog/ciwiki)
+      placeholder: Ihorog/cit
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Target component
+      description: Component directory (server/, ui/, scripts/, docs/, src/ ...)
+      placeholder: server/
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Files (exact paths)
+      description: One per line
+      placeholder: |
+        server/cit_server.py
+        scripts/cit_git_task.sh
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: Requirements (MUST)
+      description: Checklist of mandatory requirements
+      placeholder: |
+        - [ ] Add /v1/jobs endpoints
+        - [ ] Add job status + logs
+    validations:
+      required: true
+
+  - type: textarea
+    id: forbidden
+    attributes:
+      label: Forbidden (MUST NOT)
+      description: Checklist of forbidden actions
+      placeholder: |
+        - [ ] No new dependencies
+        - [ ] No secrets
+        - [ ] No breaking changes
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance (DONE WHEN)
+      description: Checklist that defines completion
+      placeholder: |
+        - [ ] API returns request_id
+        - [ ] Job status query works
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Output format
+      description: How Copilot should respond
+      placeholder: |
+        - Edited files list
+        - Unified diff
+        - Acceptance checklist
+    validations:
+      required: true
