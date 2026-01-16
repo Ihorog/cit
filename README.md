@@ -10,6 +10,8 @@ CIT (Ci Interface Terminal) is a lightweight API gateway that sits between your 
 It exposes a minimal HTTP interface and forwards chat requests to OpenAI using Python's standard library.  
 The service is designed to run locally on Android through Termux and can be connected to other systems over a LAN.  
 
+> **Note:** For conceptual understanding of Ci and its underlying framework, see the [Legend Ci documentation](Legend%20ci/README.md). This README focuses on technical implementation.
+
 ## Features
 
 * **Health check** – `GET /health` returns a simple JSON object to verify the service is running.  
