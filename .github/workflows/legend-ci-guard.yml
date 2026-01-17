@@ -30,10 +30,33 @@ jobs:
           fi
           
           # Check for multiple Legend Ci markdown files (excluding LEGEND_CI.md redirect)
-          LEGEND_FILES=$(find . -type f \( -name "*legend*ci*.md" -o -name "*01-definition*.md" -o -name "*02-ontology*.md" \) ! -name "LEGEND_CI.md" ! -path "./.git/*" | wc -l)
+          # Look for specific patterns that indicate Legend Ci chapter files
+          LEGEND_FILES=$(find . -type f \( \
+            -name "*legend-ci*.md" -o \
+            -name "*legendci*.md" -o \
+            -name "00-summary.md" -o \
+            -name "01-definition.md" -o \
+            -name "02-ontology.md" -o \
+            -name "03-narrative-layers.md" -o \
+            -name "04-buloiebude.md" -o \
+            -name "05-functions.md" -o \
+            -name "06-practice.md" -o \
+            -name "07-critique.md" \
+            \) ! -name "LEGEND_CI.md" ! -path "./.git/*" | wc -l)
           if [ "$LEGEND_FILES" -gt 0 ]; then
             echo "❌ ERROR: Found $LEGEND_FILES suspicious Legend Ci markdown files!"
-            find . -type f \( -name "*legend*ci*.md" -o -name "*01-definition*.md" -o -name "*02-ontology*.md" \) ! -name "LEGEND_CI.md" ! -path "./.git/*"
+            find . -type f \( \
+              -name "*legend-ci*.md" -o \
+              -name "*legendci*.md" -o \
+              -name "00-summary.md" -o \
+              -name "01-definition.md" -o \
+              -name "02-ontology.md" -o \
+              -name "03-narrative-layers.md" -o \
+              -name "04-buloiebude.md" -o \
+              -name "05-functions.md" -o \
+              -name "06-practice.md" -o \
+              -name "07-critique.md" \
+              \) ! -name "LEGEND_CI.md" ! -path "./.git/*"
             echo ""
             echo "Only LEGEND_CI.md redirect is allowed."
             echo "See: .github/LEGEND_CI_GUARD.md"
@@ -41,8 +64,9 @@ jobs:
           fi
           
           # Check for large blocks of Legend Ci conceptual text in markdown files
-          if grep -rn --include="*.md" --exclude="LEGEND_CI.md" --exclude="LEGEND_CI_GUARD.md" -i "було.*є.*буде" . | grep -v ".git" | head -1; then
-            echo "⚠️  WARNING: Found potential Legend Ci conceptual content."
+          # Looking for the specific "було → є → буде" pattern (with arrows) that's unique to Legend Ci
+          if grep -rn --include="*.md" --exclude="LEGEND_CI.md" --exclude="LEGEND_CI_GUARD.md" "було.*→.*є.*→.*буде\|Було.*→.*Є.*→.*Буде" . | grep -v ".git" | head -1; then
+            echo "⚠️  WARNING: Found Legend Ci temporal framework pattern (було → є → буде)."
             echo "Ensure this is not duplicating ciwiki/Legend ci/ documentation."
             echo "See: .github/LEGEND_CI_GUARD.md"
             # Warning only, not failing the build
