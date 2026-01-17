@@ -1168,6 +1168,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
         
+        # All remaining endpoints expect JSON content
+        # Note: /config and /upload are handled above with early returns
+        # Only JSON-based endpoints (chat, jobs, ping) reach _do_POST_impl
             try:
 
                 return self._do_POST_impl()
@@ -1207,6 +1210,8 @@ class Handler(BaseHTTPRequestHandler):
 
         def _do_POST_impl(self):
             # Read JSON data once at the beginning
+            # This function only handles JSON-based endpoints (chat, jobs, ping)
+            # Multipart endpoints like /upload are handled before this function is called
             data = _read_json(self)
             
             # --- CHAT ALIASES (CIT_CHAT_ALIASES_V1) ---
