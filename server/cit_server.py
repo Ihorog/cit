@@ -39,6 +39,23 @@ from pathlib import Path
 import subprocess
 import traceback
 from io import BytesIO
+import logging
+
+# Configure logging to server.log
+BASE_DIR_LOG = Path(__file__).resolve().parent.parent
+LOGS_DIR = BASE_DIR_LOG / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+SERVER_LOG_FILE = LOGS_DIR / "server.log"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler(SERVER_LOG_FILE, encoding='utf-8'),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # --- MULTIPART PARSER (replaces deprecated cgi.FieldStorage) ---
 def _parse_multipart_form(fp, headers):
@@ -48,6 +65,7 @@ def _parse_multipart_form(fp, headers):
     """
     content_type = headers.get("Content-Type", "")
     if "boundary=" not in content_type:
+        logger.warning("Multipart form data missing boundary in Content-Type")
         return {}
     
     # Extract boundary from content type
@@ -59,6 +77,7 @@ def _parse_multipart_form(fp, headers):
             break
     
     if not boundary:
+        logger.warning("Failed to extract boundary from Content-Type header")
         return {}
     
     # Read all data
@@ -115,6 +134,7 @@ def _parse_multipart_form(fp, headers):
             
             result[field_name] = FormField(field_name, body_part, filename)
     
+    logger.info(f"Parsed multipart form with {len(result)} field(s)")
     return result
 
 # --- /MULTIPART PARSER ---
@@ -654,6 +674,7 @@ def _openai_request(url: str, payload: dict) -> dict:
         # --- CIT_KEY_GUARD_AT_332_V1 ---
         k = _get_openai_key()
         if not k:
+            logger.error("OpenAI API key not found in environment or .env file")
             return {"error": "OPENAI_API_KEY is not set"}
         os.environ["OPENAI_API_KEY"] = k
         os.environ["CIT_OPENAI_API_KEY"] = k
@@ -669,15 +690,18 @@ def _openai_request(url: str, payload: dict) -> dict:
         method="POST",
     )
     try:
+        logger.debug(f"Making OpenAI request to {url}")
         with urllib.request.urlopen(req, timeout=60) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
+        logger.error(f"OpenAI API HTTP error {e.code}: {url}")
         try:
             body = e.read().decode("utf-8", errors="ignore")
         except Exception:
             body = ""
         return {"error": f"HTTPError {e.code}", "body": body}
     except Exception as e:
+        logger.error(f"OpenAI API request exception: {str(e)}", exc_info=True)
         return {"error": str(e)}
 
 def call_openai(message: str) -> dict:
@@ -810,13 +834,16 @@ class Handler(BaseHTTPRequestHandler):
           cfg = _load_cfg()
           mode = _storage_mode(cfg)
           safe = _safe_name(name)
+          logger.info(f"GET /file request: name={name}, safe={safe}, mode={mode}")
           if mode == "local":
             vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
             fp = vd / safe
             if not fp.exists() or not fp.is_file():
+              logger.warning(f"File not found: {fp}")
               return _json(self, 404, {"ok": False, "err": "not found"})
             data = fp.read_bytes()
             ctype = mimetypes.guess_type(fp.name)[0] or "application/octet-stream"
+            logger.info(f"Serving file: {fp.name}, size={len(data)} bytes, type={ctype}")
             return _bin(self, 200, data, ctype=ctype, extra_headers={"Content-Disposition": f'inline; filename="{fp.name}"'})
           # webdav get: minimal via GET pass-through
           wd = _webdav(cfg)
@@ -1059,10 +1086,13 @@ class Handler(BaseHTTPRequestHandler):
             cfg = _load_cfg()
             mode = _storage_mode(cfg)
             ctype = self.headers.get("Content-Type","")
+            logger.info(f"POST /upload request: mode={mode}, content-type={ctype}")
             if "multipart/form-data" not in ctype:
+              logger.error("Upload failed: multipart/form-data required")
               return _json(self, 400, {"ok": False, "err": "multipart/form-data required"})
             form = _parse_multipart_form(self.rfile, self.headers)
             if "file" not in form:
+              logger.error("Upload failed: file field missing in form")
               return _json(self, 400, {"ok": False, "err": "file field missing"})
             f = form["file"]
             kind = form.get("kind")
@@ -1072,15 +1102,19 @@ class Handler(BaseHTTPRequestHandler):
               kind = "file"
             filename = _safe_name(getattr(f, "filename", "") or "file")
             data = f.file.read() if getattr(f, "file", None) else b""
+            logger.info(f"Upload: filename={filename}, size={len(data)} bytes, kind={kind}")
             if mode == "local":
               vd = _vault_dir(cfg); vd.mkdir(parents=True, exist_ok=True)
               out = vd / filename
               out.write_bytes(data)
+              logger.info(f"File uploaded successfully to local storage: {out}")
               return _json(self, 200, {"ok": True, "mode": mode, "kind": kind, "name": filename, "path": str(out), "size": len(data)})
             # webdav
             st = _webdav_put(cfg, filename, data)
+            logger.info(f"File uploaded successfully to WebDAV: {filename}, status={st}")
             return _json(self, 200, {"ok": True, "mode": mode, "kind": kind, "name": filename, "path": ( (_webdav(cfg)["url"].rstrip("/") + "/" + filename) if _webdav(cfg)["url"] else filename ), "status": st, "size": len(data)})
           except Exception as e:
+            logger.error(f"Upload failed: {str(e)}", exc_info=True)
             return _json(self, 500, {"ok": False, "err": str(e)})
 
 
@@ -1244,9 +1278,21 @@ def main():
     host = "0.0.0.0"
     HTTPServer.allow_reuse_address = True
     httpd = HTTPServer((host, PORT), Handler)
+    logger.info(f"CIT server starting on http://{host}:{PORT}")
+    logger.info(f"UI available at: http://127.0.0.1:{PORT}/ui")
+    logger.info(f"Logs directory: {LOGS_DIR}")
+    logger.info(f"Server log file: {SERVER_LOG_FILE}")
     print(f"[CIT] listening on http://{host}:{PORT}")
     print(f"[CIT] UI: http://127.0.0.1:{PORT}/ui")
-    httpd.serve_forever()
+    print(f"[CIT] Logs: {SERVER_LOG_FILE}")
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        logger.info("Server stopped by user (KeyboardInterrupt)")
+        print("\n[CIT] Server stopped")
+    except Exception as e:
+        logger.error(f"Server error: {str(e)}", exc_info=True)
+        raise
 
 if __name__ == "__main__":
     main()
