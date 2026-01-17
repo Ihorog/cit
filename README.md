@@ -196,6 +196,17 @@ vercel --prod
 
 Детальна документація: [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)
 
+## Copilot
+
+GitHub Copilot development follows the canonical instructions defined in the [ciwiki repository](https://github.com/Ihorog/ciwiki/blob/main/.github/copilot-instructions.md).
+
+Key principles:
+- Anti-repeat: eliminate repeated actions
+- Single execution path through PR → verification → approval
+- Documentation first
+
+See [.github/copilot-instructions.md](.github/copilot-instructions.md) for the full instructions synchronized from ciwiki.
+
 ## License
 
 This project is released under the MIT License.  See `LICENSE` for details.
