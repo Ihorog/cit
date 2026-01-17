@@ -57,6 +57,7 @@ for _ in {1..20}; do
     exit 1
   fi
   if curl -s "http://127.0.0.1:${PORT}/health" >/dev/null; then
+    is_healthy=true
     break
   fi
   sleep 0.2

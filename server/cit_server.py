@@ -27,7 +27,6 @@ import os
 import urllib.request
 import urllib.error
 import base64
-import cgi
 import mimetypes
 import shutil
 from pathlib import Path
@@ -39,6 +38,86 @@ from datetime import datetime, timezone
 from pathlib import Path
 import subprocess
 import traceback
+from io import BytesIO
+
+# --- MULTIPART PARSER (replaces deprecated cgi.FieldStorage) ---
+def _parse_multipart_form(fp, headers):
+    """
+    Parse multipart/form-data without using deprecated cgi module.
+    Returns a dict-like object with file fields.
+    """
+    content_type = headers.get("Content-Type", "")
+    if "boundary=" not in content_type:
+        return {}
+    
+    # Extract boundary from content type
+    boundary = None
+    for part in content_type.split(";"):
+        part = part.strip()
+        if part.startswith("boundary="):
+            boundary = part.split("=", 1)[1].strip('"')
+            break
+    
+    if not boundary:
+        return {}
+    
+    # Read all data
+    raw_data = fp.read()
+    
+    # Parse multipart using email module
+    # Construct a proper MIME message
+    boundary_bytes = boundary.encode('utf-8')
+    separator = b'--' + boundary_bytes
+    end_separator = b'--' + boundary_bytes + b'--'
+    
+    parts = raw_data.split(separator)
+    result = {}
+    
+    for part in parts:
+        if not part or part == b'\r\n' or part.startswith(b'--'):
+            continue
+        
+        # Split headers from body
+        if b'\r\n\r\n' in part:
+            headers_part, body_part = part.split(b'\r\n\r\n', 1)
+        elif b'\n\n' in part:
+            headers_part, body_part = part.split(b'\n\n', 1)
+        else:
+            continue
+        
+        # Remove trailing \r\n or \n
+        body_part = body_part.rstrip(b'\r\n')
+        
+        # Parse headers
+        headers_str = headers_part.decode('utf-8', errors='ignore')
+        field_name = None
+        filename = None
+        
+        for line in headers_str.split('\n'):
+            line = line.strip()
+            if line.lower().startswith('content-disposition:'):
+                # Extract name and filename from Content-Disposition header
+                for item in line.split(';'):
+                    item = item.strip()
+                    if item.startswith('name='):
+                        field_name = item.split('=', 1)[1].strip('"')
+                    elif item.startswith('filename='):
+                        filename = item.split('=', 1)[1].strip('"')
+        
+        if field_name:
+            # Create a simple object to mimic cgi.FieldStorage behavior
+            class FormField:
+                def __init__(self, name, data, filename=None):
+                    self.name = name
+                    self.filename = filename
+                    self.file = BytesIO(data)
+                    self.value = data
+            
+            result[field_name] = FormField(field_name, body_part, filename)
+    
+    return result
+
+# --- /MULTIPART PARSER ---
 
 # --- CIT_BILLING_REPLY_V2 ---
 def _inject_friendly_billing_reply(out):
@@ -761,201 +840,201 @@ class Handler(BaseHTTPRequestHandler):
 
         
 
-            # --- v2: GET /registry + /node-packages (SAFE)
+        # --- v2: GET /registry + /node-packages (SAFE)
 
-            if self.path == "/registry":
+        if self.path == "/registry":
 
-                try:
-
-                    j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
-
-                    out = (j.get("registry", j) if isinstance(j, dict) else j)
-
-                    _cit_send_json_safe(self, 200, out)
-
-                except Exception as e:
-
-                    _cit_send_json_safe(self, 500, _cit_error_payload("registry_get_crash", e))
-
-                return
-
-        
-
-            if self.path == "/node-packages":
-
-                try:
-
-                    j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
-
-                    out = (j.get("node_packages", j) if isinstance(j, dict) else j)
-
-                    _cit_send_json_safe(self, 200, out)
-
-                except Exception as e:
-
-                    _cit_send_json_safe(self, 500, _cit_error_payload("node_packages_get_crash", e))
-
-                return
-
-        
-
-            # --- REAL: GET /registry + /node-packages
-
-            if self.path == "/registry":
+            try:
 
                 j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
 
-                _send_json(self, 200, j.get("registry", j) if isinstance(j, dict) else j)
+                out = (j.get("registry", j) if isinstance(j, dict) else j)
 
-                return
+                _cit_send_json_safe(self, 200, out)
 
-            if self.path == "/node-packages":
+            except Exception as e:
+
+                _cit_send_json_safe(self, 500, _cit_error_payload("registry_get_crash", e))
+
+            return
+
+        
+
+        if self.path == "/node-packages":
+
+            try:
 
                 j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
 
-                _send_json(self, 200, j.get("node_packages", j) if isinstance(j, dict) else j)
+                out = (j.get("node_packages", j) if isinstance(j, dict) else j)
 
-                return
+                _cit_send_json_safe(self, 200, out)
+
+            except Exception as e:
+
+                _cit_send_json_safe(self, 500, _cit_error_payload("node_packages_get_crash", e))
+
+            return
 
         
-            p = (self.path or '/').split('?',1)[0]
-            if p in ('/', '/ui'):
-                return _serve_ui_html(self, 200)
 
-            # --- UI integrated routes ---
+        # --- REAL: GET /registry + /node-packages
 
-            # === PWA ROUTES ===
-            if self.path == "/manifest.webmanifest":
-                try:
-                    manifest_path = os.path.join(os.path.dirname(__file__), "..", "ui", "manifest.webmanifest")
-                    with open(manifest_path, "r", encoding="utf-8") as mf:
-                        body = mf.read().encode("utf-8")
-                    self.send_response(200)
-                    self.send_header("Content-Type", "application/manifest+json")
-                    self.send_header("Content-Length", str(len(body)))
-                    self.end_headers()
-                    self.wfile.write(body)
-                    return
-                except Exception as e:
-                    self.send_response(404)
-                    self.send_header("Content-Type", "text/plain")
-                    self.end_headers()
-                    self.wfile.write(f"Manifest not found: {e}".encode())
-                    return
+        if self.path == "/registry":
 
-            if self.path.startswith("/icons/"):
-                try:
-                    filename = self.path.split("/icons/")[1]
-                    icon_path = os.path.join(os.path.dirname(__file__), "..", "ui", "icons", filename)
-                    with open(icon_path, "rb") as icf:
-                        body = icf.read()
-                    self.send_response(200)
-                    self.send_header("Content-Type", "image/png")
-                    self.send_header("Content-Length", str(len(body)))
-                    self.end_headers()
-                    self.wfile.write(body)
-                    return
-                except Exception as e:
-                    self.send_response(404)
-                    self.send_header("Content-Type", "text/plain")
-                    self.end_headers()
-                    self.wfile.write(f"Icon not found: {e}".encode())
-                    return
+            j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/ci_registry.json")
 
-            if self.path == "/ui" or self.path == "/ui/":
+            _send_json(self, 200, j.get("registry", j) if isinstance(j, dict) else j)
 
-                body = UI_HTML_PWA.encode("utf-8")
+            return
 
+        if self.path == "/node-packages":
+
+            j = _cit_load_json_file("/data/data/com.termux/files/home/cimeika/cit/registry/node_packages.json")
+
+            _send_json(self, 200, j.get("node_packages", j) if isinstance(j, dict) else j)
+
+            return
+
+        
+        p = (self.path or '/').split('?',1)[0]
+        if p in ('/', '/ui'):
+            return _serve_ui_html(self, 200)
+
+        # --- UI integrated routes ---
+
+        # === PWA ROUTES ===
+        if self.path == "/manifest.webmanifest":
+            try:
+                manifest_path = os.path.join(os.path.dirname(__file__), "..", "ui", "manifest.webmanifest")
+                with open(manifest_path, "r", encoding="utf-8") as mf:
+                    body = mf.read().encode("utf-8")
                 self.send_response(200)
-
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-
+                self.send_header("Content-Type", "application/manifest+json")
                 self.send_header("Content-Length", str(len(body)))
-
                 self.end_headers()
-
                 self.wfile.write(body)
-
+                return
+            except Exception as e:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(f"Manifest not found: {e}".encode())
                 return
 
-            if self.path == "/ui/api/vault":
-
-                body = _ui_list_vault().encode("utf-8")
-
+        if self.path.startswith("/icons/"):
+            try:
+                filename = self.path.split("/icons/")[1]
+                icon_path = os.path.join(os.path.dirname(__file__), "..", "ui", "icons", filename)
+                with open(icon_path, "rb") as icf:
+                    body = icf.read()
                 self.send_response(200)
-
-                self.send_header("Content-Type", "text/plain; charset=utf-8")
-
+                self.send_header("Content-Type", "image/png")
                 self.send_header("Content-Length", str(len(body)))
-
                 self.end_headers()
-
                 self.wfile.write(body)
-
                 return
-
-            if self.path == "/ui/api/logs":
-
-                body = _ui_tail_log().encode("utf-8")
-
-                self.send_response(200)
-
-                self.send_header("Content-Type", "text/plain; charset=utf-8")
-
-                self.send_header("Content-Length", str(len(body)))
-
+            except Exception as e:
+                self.send_response(404)
+                self.send_header("Content-Type", "text/plain")
                 self.end_headers()
-
-                self.wfile.write(body)
-
+                self.wfile.write(f"Icon not found: {e}".encode())
                 return
 
-            # --- /UI integrated routes ---
-            if self.path in ("/", "/ui"):
-                raw = UI_HTML_PWA.encode("utf-8")
-                self.send_response(200)
-                self.send_header("Content-Type", "text/html; charset=utf-8")
-                self.send_header("Content-Length", str(len(raw)))
-                self.send_header("Access-Control-Allow-Origin", "*")
-                self.end_headers()
-                self.wfile.write(raw)
-                return
+        if self.path == "/ui" or self.path == "/ui/":
 
-            if self.path.startswith("/health"):
-                hf_token = _get_huggingface_token()
-                _send_json(self, 200, {
-                    "ok": True,
-                    "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"),
-                    "ts": now_utc_iso(),
-                    "huggingface": bool(hf_token)
-                })
-                return
+            body = UI_HTML_PWA.encode("utf-8")
 
-            # --- v1/jobs GET endpoints ---
-            if self.path.startswith("/v1/jobs/"):
-                # Extract job_id from path
-                parts = self.path.split("/")
-                if len(parts) >= 4:
-                    job_id = parts[3]
-                    
-                    # Check if requesting logs
-                    if len(parts) >= 5 and parts[4] == "logs":
-                        result = JOB_MANAGER.get_job_logs(job_id)
-                        if result is None:
-                            _send_json(self, 404, {"ok": False, "error": "job_not_found"})
-                        else:
-                            _send_json(self, 200, result)
-                        return
+            self.send_response(200)
+
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+
+            self.send_header("Content-Length", str(len(body)))
+
+            self.end_headers()
+
+            self.wfile.write(body)
+
+            return
+
+        if self.path == "/ui/api/vault":
+
+            body = _ui_list_vault().encode("utf-8")
+
+            self.send_response(200)
+
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+
+            self.send_header("Content-Length", str(len(body)))
+
+            self.end_headers()
+
+            self.wfile.write(body)
+
+            return
+
+        if self.path == "/ui/api/logs":
+
+            body = _ui_tail_log().encode("utf-8")
+
+            self.send_response(200)
+
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+
+            self.send_header("Content-Length", str(len(body)))
+
+            self.end_headers()
+
+            self.wfile.write(body)
+
+            return
+
+        # --- /UI integrated routes ---
+        if self.path in ("/", "/ui"):
+            raw = UI_HTML_PWA.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(raw)))
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(raw)
+            return
+
+        if self.path.startswith("/health"):
+            hf_token = _get_huggingface_token()
+            _send_json(self, 200, {
+                "ok": True,
+                "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"),
+                "ts": now_utc_iso(),
+                "huggingface": bool(hf_token)
+            })
+            return
+
+        # --- v1/jobs GET endpoints ---
+        if self.path.startswith("/v1/jobs/"):
+            # Extract job_id from path
+            parts = self.path.split("/")
+            if len(parts) >= 4:
+                job_id = parts[3]
+                
+                # Check if requesting logs
+                if len(parts) >= 5 and parts[4] == "logs":
+                    result = JOB_MANAGER.get_job_logs(job_id)
+                    if result is None:
+                        _send_json(self, 404, {"ok": False, "error": "job_not_found"})
                     else:
-                        # Status request
-                        result = JOB_MANAGER.get_job_status(job_id)
-                        if result is None:
-                            _send_json(self, 404, {"ok": False, "error": "job_not_found"})
-                        else:
-                            _send_json(self, 200, result)
-                        return
+                        _send_json(self, 200, result)
+                    return
+                else:
+                    # Status request
+                    result = JOB_MANAGER.get_job_status(job_id)
+                    if result is None:
+                        _send_json(self, 404, {"ok": False, "error": "job_not_found"})
+                    else:
+                        _send_json(self, 200, result)
+                    return
 
-            _send_json(self, 404, {"ok": False, "error": "not_found"})
+        _send_json(self, 404, {"ok": False, "error": "not_found"})
 
         # --- CIT_SAFE_POST_WRAPPER_V1 ---
 
@@ -982,14 +1061,15 @@ class Handler(BaseHTTPRequestHandler):
             ctype = self.headers.get("Content-Type","")
             if "multipart/form-data" not in ctype:
               return _json(self, 400, {"ok": False, "err": "multipart/form-data required"})
-            form = cgi.FieldStorage(fp=self.rfile, headers=self.headers, environ={
-              "REQUEST_METHOD":"POST",
-              "CONTENT_TYPE": ctype,
-            })
+            form = _parse_multipart_form(self.rfile, self.headers)
             if "file" not in form:
               return _json(self, 400, {"ok": False, "err": "file field missing"})
             f = form["file"]
-            kind = (form.getfirst("kind") or "file").strip()
+            kind = form.get("kind")
+            if kind:
+              kind = kind.value.decode('utf-8', errors='ignore').strip() if isinstance(kind.value, bytes) else str(kind.value).strip()
+            else:
+              kind = "file"
             filename = _safe_name(getattr(f, "filename", "") or "file")
             data = f.file.read() if getattr(f, "file", None) else b""
             if mode == "local":
