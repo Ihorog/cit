@@ -113,7 +113,7 @@ npm run dev
 **Термінал 1 — API сервер:**
 ```bash
 # Експортуйте OpenAI ключ
-export OPENAI_API_KEY=sk-your-key-here
+export OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 
 # Запустіть Python API
 python server/cit_server.py

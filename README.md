@@ -40,9 +40,9 @@ Follow these three steps to install and run CIT on your Android device using Ter
 3. **Run the server**
    ```bash
    # Export your OpenAI API key (required)
-   export OPENAI_API_KEY=sk-...
+   export OPENAI_API_KEY=YOUR_OPENAI_API_KEY
    # Optional: Export your HuggingFace token for ML model access
-   export HUGGINGFACE_API_TOKEN=hf_...
+   export HUGGINGFACE_API_TOKEN=YOUR_HUGGINGFACE_TOKEN
    # Start the server on port 8790
    python server/cit_server.py
    ```
@@ -161,7 +161,7 @@ In addition to the embedded UI served by the CIT server, there's a modern **Next
 **Quick start:**
 ```bash
 # Start CIT server (required)
-export OPENAI_API_KEY=sk-...
+export OPENAI_API_KEY=YOUR_OPENAI_API_KEY
 python server/cit_server.py
 
 # In another terminal, start web app
