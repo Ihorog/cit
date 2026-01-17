@@ -1206,6 +1206,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
         def _do_POST_impl(self):
+            # Read JSON data once at the beginning
+            data = _read_json(self)
+            
             # --- CHAT ALIASES (CIT_CHAT_ALIASES_V1) ---
             # accept common client endpoints and route them to /chat handler
             if self.path in ("/api/chat", "/v1/chat", "/api/message", "/message"):
@@ -1227,7 +1230,6 @@ class Handler(BaseHTTPRequestHandler):
             
             # --- v1/jobs POST endpoint ---
             if self.path == "/v1/jobs":
-                data = _read_json(self)
                 job_type = data.get("job_type", "generic")
                 payload = data.get("payload", {})
                 
@@ -1236,7 +1238,6 @@ class Handler(BaseHTTPRequestHandler):
                 return
             
             if self.path.startswith("/chat"):
-                data = _read_json(self)
                 msg = (data.get("message") or "").strip()
                 if not msg:
                     _send_json(self, 400, {"error": "missing_message"})
