@@ -6,13 +6,10 @@ This repository is the canonical runtime for the CIT Family Assistant. It contai
 
 ## Ci System Philosophy (1-11-111)
 
-The Ci System represents a philosophy of simplicity, modularity, and efficiency:
+**For full conceptual documentation, see:** [Legend Ci canonical source](https://github.com/Ihorog/ciwiki/tree/main/Legend%20ci)
 
-1. **One Core Principle**: Keep it simple and focused
-11. **Eleven Disciplines**: Modularity, readability, testability, maintainability, security, performance, documentation, versioning, logging, error handling, and backward compatibility
-111. **Triple Unity**: Code, comments, and documentation must work together in harmony
+The Ci System represents a philosophy of simplicity, modularity, and efficiency. Key implementation principles:
 
-This philosophy emphasizes:
 - **Lightweight code** suitable for mobile server environments (Termux)
 - **Modular design** where each component has a single, clear responsibility
 - **Professional Ukrainian** for all user-facing content and comments
