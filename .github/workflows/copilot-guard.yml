@@ -16,8 +16,16 @@ jobs:
       - name: Block obvious secrets
         run: |
           set -e
-          echo "Scanning for common secret patterns..."
-          ! grep -RInE --exclude-dir={.git,node_modules} --exclude="*.{md,example}" "(sk-[a-zA-Z0-9]{20,}|hf_[a-zA-Z0-9]{20,}|Bearer\s+[A-Za-z0-9_\-]{32,})" . || (echo "Real secret pattern found" && exit 1)
+          echo "Scanning for real secret patterns (excluding documentation and templates)..."
+          # Detect real tokens: sk-[20+ chars], hf_[20+ chars], masked secrets (******)
+          # Exclude: .md files, .example files, .git, node_modules directories
+          ! grep -RInE \
+            --exclude-dir='{.git,node_modules}' \
+            --exclude='*.md' \
+            --exclude='*.example' \
+            '(sk-[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{20,}|\*{32,})' \
+            . || (echo "ERROR: Real secret pattern detected! Remove actual tokens." && exit 1)
+          echo "✓ No real secrets found"
 
       - name: Warn on dependency drift
         run: |

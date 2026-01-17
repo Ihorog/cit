@@ -52,7 +52,7 @@ npm run dev
 
 ```bash
 # У кореневій директорії проекту
-export OPENAI_API_KEY=YOUR_OPENAI_API_KEY
+export OPENAI_API_KEY="your-api-key-here"
 python server/cit_server.py
 ```
 
