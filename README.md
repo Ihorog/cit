@@ -198,9 +198,14 @@ vercel --prod
 
 ## Copilot
 
-This repository follows the [Cimeika GitHub Copilot Instructions](https://github.com/Ihorog/ciwiki/blob/main/.github/copilot-instructions.md) — the canonical source of truth for all Copilot interactions across the Cimeika ecosystem.
+GitHub Copilot development follows the canonical instructions defined in the [ciwiki repository](https://github.com/Ihorog/ciwiki/blob/main/.github/copilot-instructions.md).
 
-For repository-specific development guidelines, see [LEGEND_CI.md](LEGEND_CI.md).
+Key principles:
+- Anti-repeat: eliminate repeated actions
+- Single execution path through PR → verification → approval
+- Documentation first
+
+See [.github/copilot-instructions.md](.github/copilot-instructions.md) for the full instructions synchronized from ciwiki.
 
 ## License
 
