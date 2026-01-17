@@ -1,0 +1,69 @@
+name: Legend Ci Guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  check-legend-ci-duplication:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for Legend Ci duplication
+        run: |
+          set -e
+          echo "🔍 Checking for Legend Ci documentation duplication..."
+          
+          # Check for forbidden directories
+          if [ -d "Legend ci" ] || [ -d "legend-ci" ] || [ -d "Legend-Ci" ]; then
+            echo "❌ ERROR: Legend Ci directory found!"
+            echo "Legend Ci documentation must only exist in ciwiki repository."
+            echo "See: .github/LEGEND_CI_GUARD.md"
+            exit 1
+          fi
+          
+          # Check for multiple Legend Ci markdown files (excluding LEGEND_CI.md redirect)
+          LEGEND_FILES=$(find . -type f \( -name "*legend*ci*.md" -o -name "*01-definition*.md" -o -name "*02-ontology*.md" \) ! -name "LEGEND_CI.md" ! -path "./.git/*" | wc -l)
+          if [ "$LEGEND_FILES" -gt 0 ]; then
+            echo "❌ ERROR: Found $LEGEND_FILES suspicious Legend Ci markdown files!"
+            find . -type f \( -name "*legend*ci*.md" -o -name "*01-definition*.md" -o -name "*02-ontology*.md" \) ! -name "LEGEND_CI.md" ! -path "./.git/*"
+            echo ""
+            echo "Only LEGEND_CI.md redirect is allowed."
+            echo "See: .github/LEGEND_CI_GUARD.md"
+            exit 1
+          fi
+          
+          # Check for large blocks of Legend Ci conceptual text in markdown files
+          if grep -rn --include="*.md" --exclude="LEGEND_CI.md" --exclude="LEGEND_CI_GUARD.md" -i "було.*є.*буде" . | grep -v ".git" | head -1; then
+            echo "⚠️  WARNING: Found potential Legend Ci conceptual content."
+            echo "Ensure this is not duplicating ciwiki/Legend ci/ documentation."
+            echo "See: .github/LEGEND_CI_GUARD.md"
+            # Warning only, not failing the build
+          fi
+          
+          echo "✅ No Legend Ci duplication detected"
+      
+      - name: Verify LEGEND_CI.md redirect exists
+        run: |
+          set -e
+          if [ ! -f "LEGEND_CI.md" ]; then
+            echo "❌ ERROR: LEGEND_CI.md redirect file is missing!"
+            echo "This file must exist to provide canonical reference to ciwiki."
+            exit 1
+          fi
+          
+          # Verify it contains link to ciwiki
+          if ! grep -q "ciwiki" "LEGEND_CI.md"; then
+            echo "❌ ERROR: LEGEND_CI.md does not reference ciwiki!"
+            echo "The redirect must point to the canonical source."
+            exit 1
+          fi
+          
+          echo "✅ LEGEND_CI.md redirect is valid"
