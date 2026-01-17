@@ -4,6 +4,33 @@
 
 This repository is the canonical runtime for the CIT Family Assistant. It contains server/API, PWA/UI, storage, and orchestration scripts.
 
+## Ci System Philosophy (1-11-111)
+
+The Ci System represents a philosophy of simplicity, modularity, and efficiency:
+
+1. **One Core Principle**: Keep it simple and focused
+11. **Eleven Disciplines**: Modularity, readability, testability, maintainability, security, performance, documentation, versioning, logging, error handling, and backward compatibility
+111. **Triple Unity**: Code, comments, and documentation must work together in harmony
+
+This philosophy emphasizes:
+- **Lightweight code** suitable for mobile server environments (Termux)
+- **Modular design** where each component has a single, clear responsibility
+- **Professional Ukrainian** for all user-facing content and comments
+- **Minimalist approach** using standard libraries whenever possible
+
+## Language Requirements
+
+- **Code comments**: Write in clear, professional Ukrainian when explaining logic or documenting functions
+- **User-facing messages**: All error messages, UI text, and logs should be in Ukrainian
+- **Documentation**: Technical documentation and API specs in English, user guides in Ukrainian
+- **Example**:
+  ```python
+  # Завантаження конфігурації з файлу
+  def _load_cfg():
+      """Load configuration from config.json file."""
+      ...
+  ```
+
 ## Non-negotiable rules (hard constraints)
 
 1. **Do NOT change overall architecture** unless explicitly requested in a Task Spec.
@@ -36,6 +63,9 @@ This repository is the canonical runtime for the CIT Family Assistant. It contai
 - Prefer standard library over new dependencies.
 - Keep backward compatibility; if legacy endpoints exist, preserve them.
 - Ensure deterministic behavior; avoid hidden side effects.
+- Design for Termux/mobile server environments (lightweight, efficient, minimal dependencies).
+- Use pathlib for file operations consistently.
+- Add comprehensive logging for debugging and monitoring.
 
 ## Testing & validation requirements
 
