@@ -1,78 +1,147 @@
-# GitHub Copilot Instructions — Ihorog/cit (CIT Family Assistant)
+# Cimeika — Global GitHub Copilot Instructions
 
-## Role of this repository
+## PURPOSE
+These instructions define the mandatory rules for GitHub Copilot across the entire Cimeika ecosystem.
 
-This repository is the canonical runtime for the CIT Family Assistant. It contains server/API, PWA/UI, storage, and orchestration scripts.
+Goal:
+- eliminate repeated actions,
+- enforce a single execution path,
+- ensure all changes flow through PR → verification → human approval.
 
-## Ci System Philosophy (1-11-111)
+Copilot acts as a controlled execution agent, not an autonomous decision-maker.
 
-**For full conceptual documentation, see:** [Legend Ci canonical source](https://github.com/Ihorog/ciwiki/tree/main/Legend%20ci)
+---
 
-The Ci System represents a philosophy of simplicity, modularity, and efficiency. Key implementation principles:
+## SOURCE OF TRUTH
+- Repository: `ciwiki`
+- This file is the canonical reference.
+- Any uncertainty MUST be resolved by documentation updates in `ciwiki` first.
 
-- **Lightweight code** suitable for mobile server environments (Termux)
-- **Modular design** where each component has a single, clear responsibility
-- **Professional Ukrainian** for all user-facing content and comments
-- **Minimalist approach** using standard libraries whenever possible
+If something is not defined here:
+- do NOT guess,
+- create a documentation PR in `ciwiki`,
+- wait for approval.
 
-## Language Requirements
+---
 
-- **Code comments**: Write in clear, professional Ukrainian when explaining logic or documenting functions
-- **User-facing messages**: All error messages, UI text, and logs should be in Ukrainian
-- **Documentation**: Technical documentation and API specs in English, user guides in Ukrainian
-- **Example**:
-  ```python
-  # Завантаження конфігурації з файлу
-  def _load_cfg():
-      """Load configuration from config.json file."""
-      ...
-  ```
+## SCOPE (REPOSITORIES)
+Copilot instructions apply to:
+- `ciwiki`
+- `cit`
+- `cimeika-unified`
+- `citt`
+- `media` (restricted: docs only)
 
-## Non-negotiable rules (hard constraints)
+Repository `cit_versel`:
+- strictly frozen,
+- no changes,
+- no deployment,
+- no workflows.
 
-1. **Do NOT change overall architecture** unless explicitly requested in a Task Spec.
+---
 
-2. **Do NOT add dependencies** unless the Task Spec explicitly allows it.
+## HARD CONSTRAINTS
+- No direct commits to `main`.
+- All changes go through branches and Pull Requests.
+- No deployment, no production actions.
+- No secrets committed to repository.
+- No architectural rewrites unless explicitly authorized.
 
-3. **Do NOT commit or output secrets/tokens/keys.** Never hardcode secrets.
+---
 
-4. **Do NOT introduce a second runtime/server elsewhere** (e.g., in toolbox repos).
+## ANTI-REPEAT PRINCIPLE (CORE RULE)
+Any repeated action is a system failure.
 
-5. **Do NOT change API behavior without versioning.**
+A repeat includes:
+- the same manual command executed more than once,
+- the same error occurring more than once,
+- the same sequence of steps repeated to achieve a standard outcome.
 
-## Code boundaries
+When a repeat is detected, Copilot MUST:
+1. identify the root cause,
+2. introduce a mechanism that prevents repetition,
+3. document the resolution,
+4. ensure the issue cannot reoccur under the same conditions.
 
-- **Server/API:** `server/`
-- **UI/PWA:** `ui/`, `ui_dashboard/`, `web/`
-- **Storage/logs/artifacts:** `storage/`
-- **Orchestration:** `scripts/`, `bin/`
-- **CI:** `.github/workflows/`
+Repeats must be eliminated permanently unless system conditions change.
 
-## API standards
+---
 
-- Use versioned endpoints under `/v1/...` for new functionality.
-- Long-running operations MUST be implemented as Jobs (queue/store + status + logs).
-- Every response must include `ok` and `request_id`.
+## STANDARD INTENT CLASSES
+Copilot MUST use only standard intent categories.
+No custom magic words or invented markers.
 
-## Preferred implementation style
+Allowed intents:
+- status
+- health
+- analyze
+- fix
+- refactor
+- document
+- sync
+- run_tests
+- make_pr
 
-- Minimal, readable changes; smallest viable diff.
-- Prefer standard library over new dependencies.
-- Keep backward compatibility; if legacy endpoints exist, preserve them.
-- Ensure deterministic behavior; avoid hidden side effects.
-- Design for Termux/mobile server environments (lightweight, efficient, minimal dependencies).
-- Use pathlib for file operations consistently.
-- Add comprehensive logging for debugging and monitoring.
+Each intent must have:
+- clear trigger condition,
+- deterministic outcome,
+- explicit approval boundary.
 
-## Testing & validation requirements
+---
 
-- Provide a short checklist to verify changes.
-- If you add new code paths, add minimal smoke tests or validation steps.
-- Do not propose "TODO" placeholders unless the Task Spec allows it.
+## EXECUTION FLOW (SINGLE PATH)
+All work must follow this sequence:
 
-## Output format for every task
+1. Plan (what and why).
+2. Implement in a branch.
+3. Verify (tests / checks / validation).
+4. Create Pull Request.
+5. Await human approval.
+6. Merge.
 
-- List of edited files
-- Unified diff (or patch-like excerpt)
-- Acceptance checklist
-- Short changelog
+There are no alternative paths.
+
+---
+
+## PULL REQUEST REQUIREMENTS
+Each PR must include:
+- What changed
+- Why it changed (root cause)
+- How it was verified
+- Risk assessment
+- Rollback plan
+
+PRs without verification or explanation are invalid.
+
+---
+
+## DOCUMENTATION FIRST
+If behavior, process, or contract is unclear:
+- update documentation in `ciwiki` first,
+- only then proceed to implementation.
+
+---
+
+## SECURITY & SAFETY
+- Principle of least privilege.
+- Secrets only via GitHub Secrets or environment configuration.
+- No credentials in code or markdown.
+
+---
+
+## MINIMALISM RULE
+Change only what is necessary.
+Do not refactor broadly.
+Do not rewrite systems without explicit authorization.
+
+But: always eliminate repetition when found.
+
+---
+
+## FINAL AUTHORITY
+Human approval is mandatory before any merge.
+
+Copilot prepares.
+Human decides.
+
+END OF INSTRUCTIONS

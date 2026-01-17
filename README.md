@@ -196,6 +196,12 @@ vercel --prod
 
 Детальна документація: [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)
 
+## Copilot
+
+This repository follows the [Cimeika GitHub Copilot Instructions](https://github.com/Ihorog/ciwiki/blob/main/.github/copilot-instructions.md) — the canonical source of truth for all Copilot interactions across the Cimeika ecosystem.
+
+For repository-specific development guidelines, see [LEGEND_CI.md](LEGEND_CI.md).
+
 ## License
 
 This project is released under the MIT License.  See `LICENSE` for details.
