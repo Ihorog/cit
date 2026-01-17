@@ -152,7 +152,7 @@ All versioned endpoints use the `/v1/` prefix to enable future evolution.
 ```json
 {
   "model": "gpt-4o-mini",
-  "openai_api_key": "YOUR_OPENAI_API_KEY",
+  "openai_api_key": "your-api-key-here",
   "storage_mode": "webdav",
   "webdav_url": "https://example.com/webdav",
   "webdav_user": "user",
