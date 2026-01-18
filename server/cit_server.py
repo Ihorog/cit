@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from server.cit_ui_pwa import UI_HTML_PWA
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from server.jobs import JobManager
+from server.openai_client import OpenAIClient
 import json
 import pathlib
 import os
@@ -335,8 +336,9 @@ OPENAI_MODEL = os.getenv("CIT_OPENAI_MODEL", "gpt-4.1-mini")
 MODEL = os.getenv("CIT_MODEL", "gpt-4o-mini")
 PORT = int(os.getenv("CIT_PORT", "8790"))
 
-# Initialize Job Manager
+# Initialize Job Manager and OpenAI Client (v2.1)
 JOB_MANAGER = JobManager()
+OPENAI_CLIENT = OpenAIClient()
 
 BIND = os.getenv("CIT_BIND", "127.0.0.1")
 # --- CIT_FILES_API_V1 ---
@@ -708,33 +710,16 @@ def call_openai(message: str) -> dict:
     """
     Primary: Responses API
     Fallback: Chat Completions API
+    Uses OpenAIClient (v2.1)
     """
-    # 1) Responses API
-    resp = _openai_request(
-        "https://api.openai.com/v1/responses",
-        {
-            "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"),
-            "input": message,
-        },
-    )
-
-    # extract output_text if present
-    if isinstance(resp, dict) and "output_text" in resp and resp.get("output_text"):
-        return {"reply": resp["output_text"], "raw": resp, "api": "responses"}
-
-    # 2) Fallback: Chat Completions
-    resp2 = _openai_request(
-        "https://api.openai.com/v1/chat/completions",
-        {
-            "model": os.getenv("CIT_OPENAI_MODEL","gpt-4.1-mini"),
-            "messages": [{"role": "user", "content": message}],
-        },
-    )
-    try:
-        reply = resp2["choices"][0]["message"]["content"]
-        return {"reply": reply, "raw": resp2, "api": "chat.completions"}
-    except Exception:
-        return {"reply": "", "raw": resp2, "api": "chat.completions"}
+    # Ensure API key is set
+    if not OPENAI_CLIENT.api_key:
+        k = _get_openai_key()
+        if k:
+            OPENAI_CLIENT.set_api_key(k)
+    
+    # Use OpenAIClient for the request
+    return OPENAI_CLIENT.chat(message)
 
 def _serve_ui_html(handler, code=200):
     try:
