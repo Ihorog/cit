@@ -1,6 +1,8 @@
 # CIT Architecture
 
-The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge between a local Cimeika device and remote AI services.  The current version exposes HTTP endpoints for health checking, a web-based chat UI, and a chat API that intelligently routes requests to OpenAI using only Python's standard library.
+**Version:** 2.1.0
+
+The Ci Interface Terminal (CIT) is designed to be the simplest possible bridge between a local Cimeika device and remote AI services. Version 2.1 introduces autonomous components for better modularity and reusability while maintaining zero external dependencies.
 
 > **Note:** This document describes the technical architecture of CIT. For conceptual understanding of Ci and its underlying framework, see the [Legend Ci documentation](../LEGEND_CI.md) (canonical source: [ciwiki/Legend ci](https://github.com/Ihorog/ciwiki/tree/main/Legend%20ci)).
 
