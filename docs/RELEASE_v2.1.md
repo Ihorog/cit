@@ -182,6 +182,13 @@ cit/
 - Same environment variables as v2.0
 - No configuration file changes needed
 
+### Technical Notes
+
+**Responses API Endpoint:**  
+The code attempts to use `https://api.openai.com/v1/responses` as a primary endpoint, falling back to Chat Completions API. This endpoint may not exist in OpenAI's current API, so in practice the fallback is always used. This behavior is maintained from v2.0 for compatibility.
+
+If you want to use only Chat Completions API directly, you can modify the `chat()` method in `server/openai_client.py` to skip the Responses API attempt.
+
 ---
 
 ## 🎯 Completion Status

@@ -88,8 +88,12 @@ class OpenAIClient:
         """
         Send chat message with intelligent API routing.
         
-        Primary: Responses API (simplified)
-        Fallback: Chat Completions API
+        Primary: Responses API (simplified) - NOTE: This endpoint may not exist in OpenAI's API.
+                 The implementation maintains backward compatibility with existing CIT behavior.
+        Fallback: Chat Completions API (standard, always works)
+        
+        In practice, the fallback is always used, but the primary attempt is maintained
+        for compatibility with existing CIT architecture.
         
         Args:
             message: User message
@@ -101,7 +105,7 @@ class OpenAIClient:
             - api: API used ("responses" or "chat.completions")
             - raw: Raw API response
         """
-        # Try Responses API first
+        # Try Responses API first (may not be a real endpoint, but maintains compatibility)
         resp = self._request(
             "https://api.openai.com/v1/responses",
             {
