@@ -20,6 +20,13 @@ Write-Host "--- [2/6] ПЕРЕВІРКА ТА ОНОВЛЕННЯ БІБЛІОТ�
 if (!(Get-Command python -ErrorAction SilentlyContinue)) { winget install --id Python.Python.3.11 --silent }
 pip install PyYAML requests flask jinja2 --quiet
 Write-Host "Python середовище готове." -ForegroundColor Green
+# Додайте в Крок [2/6] вашого run_ci.ps1
+pip install pyTelegramBotAPI --quiet
+Write-Host "Клавіатуру вузлів чату оновлено." -ForegroundColor Green
+
+Write-Host "--- [2.5/6] МЕДІА-КОМПЛЕКТАЦІЯ ТА СТИСКАННЯ ---" -ForegroundColor Cyan
+pip install Pillow --quiet
+python media_orchestrator.py
 
 Write-Host "--- [3/6] ГЕНЕРАЦІЯ SEO-МАТРИЦІ ТА АСТРО-ТЕМ ---" -ForegroundColor Cyan
 cd $PROJECT_DIR
