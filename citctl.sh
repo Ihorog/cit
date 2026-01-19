@@ -58,7 +58,7 @@ CIT_OPENAI_MODEL=${CIT_OPENAI_MODEL:-gpt-4.1-mini}
 ${KEY_LINE:-OPENAI_API_KEY=}
 EOF
     chmod 600 .env
-    export $(grep -v '^#' .env | xargs) || true
+    export "$(grep -v '^#' .env | xargs)" || true
 
     if pid_running >/dev/null; then
       echo "ALREADY: PID=$(pid_running)"

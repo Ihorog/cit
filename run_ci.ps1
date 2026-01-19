@@ -6,6 +6,10 @@
 
 $ErrorActionPreference = "Stop"
 $PROJECT_DIR = "D:\git\cit"
+# Додайте на самому початку скрипта після $PROJECT_DIR
+Write-Host "--- [0/6] СИНХРОНІЗАЦІЯ З ХМАРОЮ (GIT PULL) ---" -ForegroundColor Cyan
+git pull origin main --rebase
+Write-Host "Локальна копія актуальна." -ForegroundColor Green
 $UNIFIED_DIR = "D:\git\cimeika-unified"
 $MATRIX_FILE = "cimeika_matrix.yaml"
 
