@@ -1,15 +1,37 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Ihorog/cit/main/ui/icons/icon-512.png" alt="CIT Logo" width="180" />
+</p>
+
 # CIT (Ci Interface Terminal)
+
+[![Vercel Deployment](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml/badge.svg)](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml)
+
+**Version:** 2.1.0 (Final Release) 🏁
 
 CIT (Ci Interface Terminal) is a lightweight API gateway that sits between your Cimeika devices and the OpenAI API.  
 It exposes a minimal HTTP interface and forwards chat requests to OpenAI using Python's standard library.  
-The service is designed to run locally on Android through Termux and can be connected to other systems over a LAN.  
+The service is designed to run locally on Android through Termux and can be connected to other systems over a LAN.
+
+> **🆕 v2.1 Features:** Autonomous OpenAI client, enhanced Job Manager, memory optimization (~80MB vs ~150MB), and complete API documentation. See [Release Notes](docs/RELEASE_v2.1.md) for details.
+
+> **Note:** For conceptual understanding of Ci and its underlying framework, see the [Legend Ci documentation](LEGEND_CI.md) (canonical source: [ciwiki/Legend ci](https://github.com/Ihorog/ciwiki/tree/main/Legend%20ci)). This README focuses on technical implementation.
 
 ## Features
 
+### Core (v2.1)
+* **Autonomous OpenAI Client** – Standalone `OpenAIClient` class for programmatic API access with intelligent routing
+* **Job Management System** – Create and track long-running tasks via `/v1/jobs/*` endpoints
+* **Memory Optimized** – ~80MB memory usage (47% reduction from v2.0) through streaming multipart parsing
+
+### API Endpoints
 * **Health check** – `GET /health` returns a simple JSON object to verify the service is running.  
 * **Web UI** – `GET /ui` (or `/`) provides a browser-based chat interface with Speech-to-Text (STT) and Text-to-Speech (TTS) support.
 * **Chat proxy** – `POST /chat` forwards your chat messages to OpenAI and returns the response.  
 * **Intelligent API routing** – uses OpenAI's Responses API with automatic fallback to Chat Completions API.
+* **File operations** – Upload, download, and manage files via `/files`, `/file`, `/upload` endpoints
+* **Configuration** – Runtime configuration via `/config` endpoint
+
+### Technical
 * **No external dependencies** – implemented with Python's built‑in modules, so it works out of the box in Termux.  
 * **Simple deployment** – start the server with a single script or integrate it into Termux Boot for auto‑start.
 
@@ -32,7 +54,9 @@ Follow these three steps to install and run CIT on your Android device using Ter
 3. **Run the server**
    ```bash
    # Export your OpenAI API key (required)
-   export OPENAI_API_KEY=sk-...
+   export OPENAI_API_KEY="your-api-key-here"
+   # Optional: Export your HuggingFace token for ML model access
+   export HUGGINGFACE_API_TOKEN="your-token-here"
    # Start the server on port 8790
    python server/cit_server.py
    ```
@@ -108,6 +132,16 @@ Or open the Web UI in your browser:
 # - Dark theme optimized for mobile
 ```
 
+## Repository check
+
+Run a lightweight repo verification (syntax + /health probe) without external dependencies:
+
+```bash
+./scripts/repo_check.sh
+```
+
+The script starts a temporary server on port `8979` by default. Set `OPENAI_API_KEY` if you want to include the `/chat` smoke test.
+
 ## Repository layout
 
 ```
@@ -122,6 +156,8 @@ cit/
     ├── termux_bootstrap.sh    # optional helper to set up Termux environment
     └── termux_boot/cit_start.sh # script run by Termux Boot
 ```
+
+> **Note:** Operational scripts have been organized into `scripts/ops/` and vault/sync scripts into `scripts/vault/`. See README files in those directories for details.
 
 ## Web Interface (Cimeika)
 
@@ -139,7 +175,7 @@ In addition to the embedded UI served by the CIT server, there's a modern **Next
 **Quick start:**
 ```bash
 # Start CIT server (required)
-export OPENAI_API_KEY=sk-...
+export OPENAI_API_KEY="your-api-key-here"
 python server/cit_server.py
 
 # In another terminal, start web app
@@ -150,6 +186,40 @@ npm run dev
 ```
 
 See [`web/README_WEB.md`](web/README_WEB.md) for detailed documentation, deployment guides, and PWA setup.
+
+## 🚀 Автоматичне розгортання
+
+Веб-інтерфейс автоматично розгортається на Vercel при кожному push до `main` гілки.
+
+### Швидкий старт
+
+1. **Налаштуйте Vercel токени** — див. [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)
+2. **Push код** — деплой відбудеться автоматично
+3. **Створіть PR** — отримаєте preview URL для тестування
+
+### Локальне тестування
+
+```bash
+# Перевірити що збірка працює
+./scripts/test-vercel-deploy.sh
+
+# Деплой вручну (потрібен Vercel CLI)
+npm install -g vercel
+vercel --prod
+```
+
+Детальна документація: [docs/VERCEL_SETUP.md](docs/VERCEL_SETUP.md)
+
+## Copilot
+
+GitHub Copilot development follows the canonical instructions defined in the [ciwiki repository](https://github.com/Ihorog/ciwiki/blob/main/.github/copilot-instructions.md).
+
+Key principles:
+- Anti-repeat: eliminate repeated actions
+- Single execution path through PR → verification → approval
+- Documentation first
+
+See [.github/copilot-instructions.md](.github/copilot-instructions.md) for the full instructions synchronized from ciwiki.
 
 ## License
 

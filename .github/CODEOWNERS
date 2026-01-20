@@ -1,0 +1,12 @@
+# Require reviews for critical runtime
+/server/ @Ihorog
+/scripts/ @Ihorog
+/bin/ @Ihorog
+
+# UI can be lighter (adjust as needed)
+/ui/ @Ihorog
+/ui_dashboard/ @Ihorog
+/web/ @Ihorog
+
+# Docs
+/docs/ @Ihorog

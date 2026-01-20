@@ -1,6 +1,8 @@
 .env
 .env.*
+!.env.*.example
 *.bak
+*.bak.*
 *.backup*
 *.db
 data/
@@ -10,13 +12,10 @@ dist/
 __pycache__/
 *.pyc
 .DS_Store
+node_modules/
+package-lock.json
+storage/jobs/
 
-# Next.js
-web/.next/
-web/out/
-web/node_modules/
-web/.vercel
-web/npm-debug.log*
-web/yarn-debug.log*
-web/yarn-error.log*
-web/tsconfig.tsbuildinfo
+.vs/
+__pycache__/
+*.pyc

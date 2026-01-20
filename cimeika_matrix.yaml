@@ -1,0 +1,16 @@
+states:
+  - fatigue
+  - strength
+  - search
+  - discovery
+  - calm
+  - storm
+  - void
+intents:
+  - understand
+  - fix
+  - create
+  - observe
+  - share
+  - protect
+  - evolve

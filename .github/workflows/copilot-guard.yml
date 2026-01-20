@@ -1,0 +1,46 @@
+name: Copilot Guardrails
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Block obvious secrets
+        run: |
+          set -e
+          echo "Scanning for real secret patterns (excluding documentation and templates)..."
+          # Detect real tokens: sk-[20+ chars], hf_[20+ chars], masked secrets (******)
+          # Exclude: .md files, .example files, .git, node_modules directories
+          ! grep -RInE \
+            --exclude-dir='{.git,node_modules}' \
+            --exclude='*.md' \
+            --exclude='*.example' \
+            '(sk-[A-Za-z0-9]{20,}|hf_[A-Za-z0-9]{20,}|\*{32,})' \
+            . || (echo "ERROR: Real secret pattern detected! Remove actual tokens." && exit 1)
+          echo "✓ No real secrets found"
+
+      - name: Warn on dependency drift
+        run: |
+          set -e
+          echo "Checking dependency file changes..."
+          if git diff --name-only origin/${{ github.base_ref }}... | grep -E "(package\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|requirements\.txt|poetry\.lock)"; then
+            echo "Dependency files changed. Ensure Task Spec allows it."
+          fi
+
+      - name: Ensure PR is focused
+        run: |
+          set -e
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}... | wc -l | tr -d ' ')
+          echo "Files changed: $CHANGED"
+          if [ "$CHANGED" -gt 60 ]; then
+            echo "Too many files changed. Split PR into smaller concerns."
+            exit 1
+          fi

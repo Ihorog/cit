@@ -1,0 +1,48 @@
+name: CIT AutoSync
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: "0 4 * * *"  # щодня о 04:00 UTC
+  workflow_dispatch:
+
+jobs:
+  autosync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install deps
+        run: |
+          sudo apt update
+          sudo apt install -y jq
+          pip install fastapi uvicorn python-multipart
+
+      - name: Commit & Push
+        run: |
+          git config --global user.email "ci@cimeika.com"
+          git config --global user.name "Cimeika-CI"
+          git pull --rebase origin main || true
+          git add -A
+          git commit -m "🤖 AutoSync — CIT scheduled update" || echo "No changes"
+          git push origin main || echo "Push skipped"
+
+      - name: Archive logs
+        run: |
+          mkdir -p artifacts
+          cp -r storage/ logs/ || true
+          tar -czf artifacts/cit_logs_$(date +%Y%m%d%H%M%S).tar.gz artifacts || true
+
+      - name: Upload logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: cit-sync-logs
+          path: artifacts/

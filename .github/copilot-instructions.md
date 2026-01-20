@@ -1,81 +1,147 @@
-# Copilot Instructions — CIT (Ci Interface Terminal)
+# Cimeika — Global GitHub Copilot Instructions
 
-## 0) What this repo is
-CIT is a lightweight local/LAN HTTP service running on Android (Samsung Tab) via Termux.
-It exposes minimal endpoints for health and chat; it must remain stable, predictable, and safe.
+## PURPOSE
+These instructions define the mandatory rules for GitHub Copilot across the entire Cimeika ecosystem.
 
-Primary runtime is Termux on Android.
-Keep everything minimal, stdlib-first, and reproducible.
+Goal:
+- eliminate repeated actions,
+- enforce a single execution path,
+- ensure all changes flow through PR → verification → human approval.
 
-## 1) Hard constraints (non-negotiable)
-- **Python stdlib-only** for the server. Do not introduce pip dependencies unless explicitly requested.
-- Must run in Termux without compiling native deps (no Rust/Cargo build steps).
-- Default service port: `8790`.
-- Keep logs and secrets out of git.
-- Do not change product intent: CIT = single entry point / gateway for Ci chat & later integrations.
+Copilot acts as a controlled execution agent, not an autonomous decision-maker.
 
-## 2) Known environment (facts)
-- Device: Samsung Galaxy Tab (Android) + Termux
-- Base dir: `$HOME/cimeika/cit` (typical Termux path: `/data/data/com.termux/files/home/cimeika/cit`)
-- Server: `server/cit_server.py`
-- Logs: `logs/`
-- Local health check: `http://127.0.0.1:8790/health`
-- LAN usage exists (service may bind `0.0.0.0`)
+---
 
-## 3) API contract (keep stable)
-- `GET /health` -> JSON with `{ ok, service, time, port, model, openai }`
-- `POST /chat` -> request JSON `{ message, system? }`, response JSON `{ ok, cit, time, model, reply }`
+## SOURCE OF TRUTH
+- Repository: `ciwiki`
+- This file is the canonical reference.
+- Any uncertainty MUST be resolved by documentation updates in `ciwiki` first.
 
-Notes:
-- If `message` empty -> return a short "CIT online …" hint response.
-- On upstream error -> return `502` with structured error payload.
+If something is not defined here:
+- do NOT guess,
+- create a documentation PR in `ciwiki`,
+- wait for approval.
 
-## 4) Source-of-truth files & structure
-Repository layout should remain:
-- `server/` — HTTP server and handler logic
-- `scripts/` — Termux bootstrap, boot scripts, operational helpers
-- `docs/` — architecture, ops, security notes
-- `data/` — runtime data (ignored by git)
-- `logs/` — runtime logs (ignored by git)
+---
 
-If you add files, keep them in the correct area above.
+## SCOPE (REPOSITORIES)
+Copilot instructions apply to:
+- `ciwiki`
+- `cit`
+- `cimeika-unified`
+- `citt`
+- `media` (restricted: docs only)
 
-## 5) Security & secrets
-- Never commit `.env` or any key material.
-- Ensure `.gitignore` includes `.env`, `logs/`, `data/`, `__pycache__/`.
-- Avoid writing sensitive data into logs (no API keys, tokens, headers).
+Repository `cit_versel`:
+- strictly frozen,
+- no changes,
+- no deployment,
+- no workflows.
 
-## 6) How to run locally (Termux)
-Preferred:
-- `cd $HOME/cimeika/cit`
-- `export $(grep -v '^#' .env | xargs) || true`
-- `python server/cit_server.py`
+---
 
-Or background:
-- `nohup python server/cit_server.py > logs/cit_8790.log 2>&1 &`
+## HARD CONSTRAINTS
+- No direct commits to `main`.
+- All changes go through branches and Pull Requests.
+- No deployment, no production actions.
+- No secrets committed to repository.
+- No architectural rewrites unless explicitly authorized.
 
-## 7) Change policy (how to work on tasks)
-When implementing an issue:
-- Make the smallest change that satisfies acceptance criteria.
-- Update docs when behavior changes.
-- Add a quick manual test command snippet to the PR description.
+---
 
-Do not do broad refactors unless the issue explicitly requests it.
+## ANTI-REPEAT PRINCIPLE (CORE RULE)
+Any repeated action is a system failure.
 
-## 8) PR rules & iteration
-- Expect iteration via PR review comments. If you are asked to change something, implement exactly that and push again.
-- Batch review comments where possible (avoid many tiny cycles).
+A repeat includes:
+- the same manual command executed more than once,
+- the same error occurring more than once,
+- the same sequence of steps repeated to achieve a standard outcome.
 
-Important:
-- Copilot coding agent pushes only to `copilot/*` branches. Do not assume direct pushes to main. (GitHub policy)
+When a repeat is detected, Copilot MUST:
+1. identify the root cause,
+2. introduce a mechanism that prevents repetition,
+3. document the resolution,
+4. ensure the issue cannot reoccur under the same conditions.
 
-## 9) Quality gates (must pass)
-- Server still starts with Python stdlib only.
-- `/health` returns expected JSON.
-- `/chat` returns `{ reply }` for a normal prompt.
-- Error paths return structured JSON and non-200 status.
+Repeats must be eliminated permanently unless system conditions change.
 
-## 10) What NOT to do
-- Do not add frameworks (FastAPI/Flask) unless explicitly requested.
-- Do not add heavy frontends or UI scaffolding unless the issue is specifically "/ui".
-- Do not change API shapes without a versioning decision documented in `docs/`.
+---
+
+## STANDARD INTENT CLASSES
+Copilot MUST use only standard intent categories.
+No custom magic words or invented markers.
+
+Allowed intents:
+- status
+- health
+- analyze
+- fix
+- refactor
+- document
+- sync
+- run_tests
+- make_pr
+
+Each intent must have:
+- clear trigger condition,
+- deterministic outcome,
+- explicit approval boundary.
+
+---
+
+## EXECUTION FLOW (SINGLE PATH)
+All work must follow this sequence:
+
+1. Plan (what and why).
+2. Implement in a branch.
+3. Verify (tests / checks / validation).
+4. Create Pull Request.
+5. Await human approval.
+6. Merge.
+
+There are no alternative paths.
+
+---
+
+## PULL REQUEST REQUIREMENTS
+Each PR must include:
+- What changed
+- Why it changed (root cause)
+- How it was verified
+- Risk assessment
+- Rollback plan
+
+PRs without verification or explanation are invalid.
+
+---
+
+## DOCUMENTATION FIRST
+If behavior, process, or contract is unclear:
+- update documentation in `ciwiki` first,
+- only then proceed to implementation.
+
+---
+
+## SECURITY & SAFETY
+- Principle of least privilege.
+- Secrets only via GitHub Secrets or environment configuration.
+- No credentials in code or markdown.
+
+---
+
+## MINIMALISM RULE
+Change only what is necessary.
+Do not refactor broadly.
+Do not rewrite systems without explicit authorization.
+
+But: always eliminate repetition when found.
+
+---
+
+## FINAL AUTHORITY
+Human approval is mandatory before any merge.
+
+Copilot prepares.
+Human decides.
+
+END OF INSTRUCTIONS
