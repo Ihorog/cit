@@ -1,0 +1,25 @@
+--- CI SYSTEM SNAPSHOT ---
+{
+    "system_name": "Cimeika (Ci / CIT)",
+    "timestamp": "2026-01-20 23:21",
+    "status": "In Resonance",
+    "architecture": "7x7 Matrix (98 nodes: 49 UK, 49 EN)",
+    "modules": [
+        "ПоДія (Intent)",
+        "Казкар (Memory)",
+        "Маля (Possibility)",
+        "Настрій (Resonance)"
+    ],
+    "stack": {
+        "frontend": "React/Vite",
+        "backend": "Python Flask (Port 5000)",
+        "storage": "JSON Database (ci_asset_db.json)"
+    },
+    "coding_standard": [
+        "One-Shot PowerShell/Bash scripts only",
+        "Absolute paths: D:/git/cit/ or ~/cit/",
+        "Total file overwrite for config errors",
+        "Strict Git hygiene (no venv/node_modules)"
+    ]
+}
+--- END OF SNAPSHOT ---
