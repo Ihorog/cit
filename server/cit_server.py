@@ -1,16 +1,3 @@
-"""
-CIT (Ci Interface Terminal) — minimal HTTP server with:
-- GET  /health  -> {"ok": true, "model": "..."}
-- GET  /ui      -> Web UI (chat + STT + TTS in browser)
-- GET  /        -> same as /ui
-- POST /chat    -> forwards to OpenAI Responses API (or Chat Completions fallback)
-
-Env:
-- OPENAI_API_KEY   (required)
-- CIT_MODEL        (optional, default: "gpt-4o-mini")
-- CIT_PORT         (optional, default: "8790")
-"""
-
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
 import os
@@ -18,324 +5,186 @@ import urllib.request
 import urllib.error
 from datetime import datetime, timezone
 
+API_KEY = os.getenv("OPENAI_API_KEY", "")
 MODEL = os.getenv("CIT_MODEL", "gpt-4o-mini")
 PORT = int(os.getenv("CIT_PORT", "8790"))
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 UI_HTML = """<!doctype html>
 <html lang="uk">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CIT</title>
+  <title>CIT - ChatGPT</title>
   <style>
     :root { color-scheme: dark; }
     * { box-sizing: border-box; }
     body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b0f14; color:#e8eef6; }
     .wrap { max-width: 900px; margin: 0 auto; padding: 14px; }
-    .top { display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom: 12px; }
-    .badge { font-size:12px; opacity:.8; transition: opacity 0.3s ease; }
+    .header { margin-bottom: 20px; }
+    .header h1 { margin: 0; font-size: 24px; color: #10a37f; }
+    .header p { margin: 5px 0 0; font-size: 12px; opacity: 0.7; }
     .chat { border:1px solid rgba(255,255,255,.08); border-radius:16px; overflow:hidden; background:rgba(255,255,255,.03); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
-    .log { height: 62vh; overflow:auto; padding: 16px; scroll-behavior: smooth; }
-    .m { margin: 12px 0; line-height: 1.45; white-space: pre-wrap; padding: 8px 12px; border-radius: 8px; }
-    .me { color:#cfe6ff; background:rgba(79,137,255,.08); }
-    .ai { color:#e8eef6; background:rgba(255,255,255,.03); }
+    .log { height: 60vh; overflow:auto; padding: 16px; scroll-behavior: smooth; }
+    .m { margin: 12px 0; line-height: 1.5; white-space: pre-wrap; padding: 12px; border-radius: 8px; word-wrap: break-word; }
+    .me { color:#cfe6ff; background:rgba(100,150,255,.12); border-left: 3px solid rgba(100,150,255,.6); }
+    .ai { color:#e8eef6; background:rgba(16,163,127,.08); border-left: 3px solid rgba(16,163,127,.4); }
     .bar { display:flex; gap:10px; padding: 14px; border-top:1px solid rgba(255,255,255,.08); background:rgba(0,0,0,.2); }
-    textarea { flex:1; resize:none; height: 48px; border-radius: 12px; border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.3); color:#e8eef6; padding:12px; outline:none; font-size: 14px; line-height: 1.5;
-      transition: border-color 0.2s ease, background-color 0.2s ease; }
-    textarea:focus { border-color: rgba(79,137,255,.4); background:rgba(0,0,0,.4); }
-    button { border-radius: 12px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.08);
-      color:#e8eef6; padding: 11px 14px; cursor:pointer; font-size: 14px; font-weight: 500;
-      transition: all 0.2s ease; }
-    button:hover:not(:disabled) { background:rgba(255,255,255,.14); border-color: rgba(255,255,255,.24); transform: translateY(-1px); }
-    button:active:not(:disabled) { transform: translateY(0); }
-    button:disabled { opacity:.4; cursor:not-allowed; }
-    .row { display:flex; gap:10px; }
-    .hint { font-size: 12px; opacity: .65; margin-top: 10px; line-height: 1.4; }
-    .small { font-size: 12px; opacity: .75; margin-top: 2px; }
-    @media (max-width: 600px) {
-      .wrap { padding: 10px; }
-      .top { flex-wrap: wrap; }
-      .bar { flex-direction: column; }
-      textarea { height: 56px; }
-      button { width: 100%; justify-content: center; }
-    }
+    textarea { flex:1; resize:none; height: 50px; border-radius: 12px; border:1px solid rgba(255,255,255,.12); background:rgba(0,0,0,.3); color:#e8eef6; padding:12px; outline:none; font-size:14px; line-height:1.4; }
+    textarea:focus { border-color: rgba(16,163,127,.6); background:rgba(0,0,0,.4); }
+    button { border-radius: 12px; border:1px solid rgba(255,255,255,.16); background:rgba(16,163,127,.15); color:#10a37f; padding: 12px 20px; cursor:pointer; font-weight:500; }
+    button:hover { background:rgba(16,163,127,.3); }
+    .status { padding: 10px; font-size: 12px; opacity: 0.7; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="top">
-      <div>
-        <div style="font-weight:700;">CIT</div>
-        <div class="badge" id="status">offline</div>
-        <div class="small" id="model"></div>
-      </div>
-      <div class="row">
-        <button id="btnMic">🎙️ STT</button>
-        <button id="btnSpeak" disabled>🔊 TTS</button>
-        <button id="btnClear">🧹</button>
-      </div>
+    <div class="header">
+      <h1>🤖 CIT - ChatGPT Interface</h1>
+      <p id="model-name">Model: Loading...</p>
     </div>
-
     <div class="chat">
       <div class="log" id="log"></div>
       <div class="bar">
-        <textarea id="inp" placeholder="Напиши або натисни 🎙️ і продиктуй..."></textarea>
-        <button id="btnSend">Send</button>
+        <textarea id="msg" placeholder="Напиши щось..." autocomplete="off"></textarea>
+        <button onclick="send()">Відправити</button>
       </div>
     </div>
-
-    <div class="hint">
-      Якщо STT недоступний у WebView/браузері — робимо Android wrapper (SpeechRecognizer → WebView, TTS → Android).
+    <div class="status">
+      API Status: <span id="status">✓ Connected</span>
     </div>
   </div>
+  <script>
+    let isLoading = false;
 
-<script>
-const logEl = document.getElementById('log');
-const inp = document.getElementById('inp');
-const btnSend = document.getElementById('btnSend');
-const btnMic = document.getElementById('btnMic');
-const btnSpeak = document.getElementById('btnSpeak');
-const btnClear = document.getElementById('btnClear');
-const statusEl = document.getElementById('status');
-const modelEl = document.getElementById('model');
+    fetch('/health')
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById('model-name').textContent = 'Model: ' + d.model;
+      })
+      .catch(e => console.log(e));
 
-let lastAssistantText = "";
-
-function addMsg(text, cls){
-  const div = document.createElement('div');
-  div.className = 'm ' + cls;
-  div.textContent = text;
-  logEl.appendChild(div);
-  logEl.scrollTop = logEl.scrollHeight;
-}
-
-async function health(){
-  try{
-    const r = await fetch('/health');
-    const j = await r.json();
-    statusEl.textContent = j.ok ? 'online' : 'offline';
-    modelEl.textContent = j.model ? ('model: ' + j.model) : '';
-  }catch(e){
-    statusEl.textContent = 'offline';
-    modelEl.textContent = '';
-  }
-}
-
-async function send(){
-  const text = (inp.value || "").trim();
-  if(!text) return;
-  inp.value = "";
-  addMsg("You: " + text, "me");
-  btnSend.disabled = true;
-  btnMic.disabled = true;
-  btnSpeak.disabled = true;
-
-  try{
-    const r = await fetch('/chat', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ message: text })
-    });
-    const j = await r.json();
-    const reply = (j.reply || "").trim();
-    lastAssistantText = reply;
-    addMsg("Ci: " + reply, "ai");
-    btnSpeak.disabled = !reply;
-  }catch(e){
-    addMsg("Ci: (error)", "ai");
-  }finally{
-    btnSend.disabled = false;
-    btnMic.disabled = false;
-  }
-}
-
-btnSend.onclick = send;
-inp.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter' && !e.shiftKey){
-    e.preventDefault();
-    send();
-  }
-});
-btnClear.onclick = ()=>{
-  logEl.innerHTML = "";
-  lastAssistantText = "";
-  btnSpeak.disabled = true;
-};
-
-btnSpeak.onclick = ()=>{
-  if(!lastAssistantText) return;
-  if(!('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(lastAssistantText);
-  u.lang = 'uk-UA';
-  window.speechSynthesis.speak(u);
-};
-
-btnMic.onclick = ()=>{
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){
-    addMsg("Ci: STT недоступний у цьому WebView. Робимо Android wrapper.", "ai");
-    return;
-  }
-  const rec = new SR();
-  rec.lang = 'uk-UA';
-  rec.interimResults = false;
-  rec.maxAlternatives = 1;
-
-  btnMic.disabled = true;
-  addMsg("Ci: (слухаю…)", "ai");
-
-  rec.onresult = (ev)=>{
-    const t = ev.results[0][0].transcript || "";
-    inp.value = t;
-  };
-  rec.onerror = ()=>{
-    addMsg("Ci: (STT error)", "ai");
-  };
-  rec.onend = ()=>{
-    btnMic.disabled = false;
-  };
-  rec.start();
-};
-
-health();
-setInterval(health, 4000);
-</script>
+    async function send() {
+      if (isLoading) return;
+      const msg = document.getElementById('msg').value.trim();
+      if (!msg) return;
+      const log = document.getElementById('log');
+      log.innerHTML += '<div class="m me">👤 ' + msg.replace(/</g, '&lt;') + '</div>';
+      document.getElementById('msg').value = '';
+      log.scrollTop = log.scrollHeight;
+      isLoading = true;
+      const btn = document.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'Чекаю...';
+      try {
+        const resp = await fetch('/chat', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({message: msg})
+        });
+        const data = await resp.json();
+        let reply = data.reply || (data.raw && data.raw.error ? 'Ошибка: ' + data.raw.error : 'Помилка');
+        if (reply) {
+          log.innerHTML += '<div class="m ai">🤖 ' + reply.replace(/</g, '&lt;') + '</div>';
+        }
+      } catch (e) {
+        log.innerHTML += '<div class="m ai">🤖 Помилка: ' + e.message + '</div>';
+      }
+      log.scrollTop = log.scrollHeight;
+      isLoading = false;
+      btn.disabled = false;
+      btn.textContent = 'Відправити';
+    }
+    
+    document.getElementById('msg').onkeydown = (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !isLoading) {
+        e.preventDefault();
+        send();
+      }
+    };
+    document.getElementById('msg').focus();
+  </script>
 </body>
-</html>
-"""
+</html>"""
 
-def now_utc_iso():
-    return datetime.now(timezone.utc).isoformat()
-
-def _json_bytes(obj) -> bytes:
-    return json.dumps(obj, ensure_ascii=False).encode("utf-8")
-
-def _read_json(handler: BaseHTTPRequestHandler):
-    length = int(handler.headers.get("Content-Length", "0") or "0")
-    raw = handler.rfile.read(length) if length > 0 else b"{}"
-    try:
-        return json.loads(raw.decode("utf-8"))
-    except Exception:
-        return {}
-
-def _send_json(handler: BaseHTTPRequestHandler, code: int, obj):
-    raw = _json_bytes(obj)
-    handler.send_response(code)
-    handler.send_header("Content-Type", "application/json; charset=utf-8")
-    handler.send_header("Content-Length", str(len(raw)))
-    handler.send_header("Access-Control-Allow-Origin", "*")
-    handler.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-    handler.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-    handler.end_headers()
-    handler.wfile.write(raw)
-
-def _openai_request(url: str, payload: dict) -> dict:
-    if not OPENAI_API_KEY:
-        return {"error": "OPENAI_API_KEY is not set"}
-
-    req = urllib.request.Request(
-        url=url,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            return json.loads(resp.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        try:
-            body = e.read().decode("utf-8", errors="ignore")
-        except Exception:
-            body = ""
-        return {"error": f"HTTPError {e.code}", "body": body}
-    except Exception as e:
-        return {"error": str(e)}
-
-def call_openai(message: str) -> dict:
-    """
-    Primary: Responses API
-    Fallback: Chat Completions API
-    """
-    # 1) Responses API
-    resp = _openai_request(
-        "https://api.openai.com/v1/responses",
-        {
-            "model": MODEL,
-            "input": message,
-        },
-    )
-
-    # extract output_text if present
-    if isinstance(resp, dict) and "output_text" in resp and resp.get("output_text"):
-        return {"reply": resp["output_text"], "raw": resp, "api": "responses"}
-
-    # 2) Fallback: Chat Completions
-    resp2 = _openai_request(
-        "https://api.openai.com/v1/chat/completions",
-        {
-            "model": MODEL,
-            "messages": [{"role": "user", "content": message}],
-        },
-    )
-    try:
-        reply = resp2["choices"][0]["message"]["content"]
-        return {"reply": reply, "raw": resp2, "api": "chat.completions"}
-    except Exception:
-        return {"reply": "", "raw": resp2, "api": "chat.completions"}
-
-class Handler(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        self.send_header("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
-        self.end_headers()
-
+class CITHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path in ("/", "/ui"):
-            raw = UI_HTML.encode("utf-8")
+        if self.path in ['/', '/ui']:
             self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
-            self.send_header("Content-Length", str(len(raw)))
-            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.end_headers()
-            self.wfile.write(raw)
-            return
-
-        if self.path.startswith("/health"):
-            _send_json(self, 200, {"ok": True, "model": MODEL, "ts": now_utc_iso()})
-            return
-
-        _send_json(self, 404, {"ok": False, "error": "not_found"})
+            self.wfile.write(UI_HTML.encode())
+        elif self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "ok": True,
+                "model": MODEL,
+                "api": "openai",
+                "ts": datetime.now(timezone.utc).isoformat()
+            }).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
 
     def do_POST(self):
-        if self.path.startswith("/chat"):
-            data = _read_json(self)
-            msg = (data.get("message") or "").strip()
-            if not msg:
-                _send_json(self, 400, {"error": "missing_message"})
-                return
+        if self.path == '/chat':
+            content_length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(content_length)
+            try:
+                req_data = json.loads(body)
+                user_msg = req_data.get('message', '')
+                api_req = urllib.request.Request(
+                    'https://api.openai.com/v1/chat/completions',
+                    headers={
+                        'Authorization': f'Bearer {API_KEY}',
+                        'Content-Type': 'application/json'
+                    },
+                    data=json.dumps({
+                        'model': MODEL,
+                        'messages': [
+                            {'role': 'system', 'content': 'Ти помічник. Відповідай українською.'},
+                            {'role': 'user', 'content': user_msg}
+                        ],
+                        'max_tokens': 1024,
+                        'temperature': 0.7
+                    }).encode()
+                )
+                reply = ""
+                raw_response = None
+                try:
+                    with urllib.request.urlopen(api_req, timeout=30) as resp:
+                        resp_data = json.loads(resp.read().decode())
+                        if resp_data.get('choices') and len(resp_data['choices']) > 0:
+                            reply = resp_data['choices'][0].get('message', {}).get('content', '')
+                        raw_response = resp_data
+                except urllib.error.HTTPError as e:
+                    raw_response = {"error": f"HTTPError {e.code}", "body": e.read().decode()}
+                except Exception as e:
+                    raw_response = {"error": str(e)}
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                resp_json = {'reply': reply, 'api': 'openai', 'model': MODEL}
+                if raw_response and not reply:
+                    resp_json['raw'] = raw_response
+                self.wfile.write(json.dumps(resp_json).encode())
+            except Exception as e:
+                self.send_response(500)
+                self.send_header('Content-Type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps({'error': str(e)}).encode())
+        else:
+            self.send_response(404)
+            self.end_headers()
 
-            out = call_openai(msg)
-            # normalize
-            reply = (out.get("reply") or "").strip()
-            _send_json(self, 200, {"reply": reply, "api": out.get("api"), "raw": out.get("raw")})
-            return
+    def log_message(self, format, *args):
+        pass
 
-        _send_json(self, 404, {"ok": False, "error": "not_found"})
-
-def main():
-    host = "0.0.0.0"
-    httpd = HTTPServer((host, PORT), Handler)
-    print(f"[CIT] listening on http://{host}:{PORT}")
-    print(f"[CIT] UI: http://127.0.0.1:{PORT}/ui")
-    httpd.serve_forever()
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    print(f"╔════════════════════════════════════════╗")
+    print(f"║  CIT запущений на http://127.0.0.1:{PORT}      ║")
+    print(f"║  Model: {MODEL:<32} ║")
+    print(f"╚════════════════════════════════════════╝")
+    server = HTTPServer(('127.0.0.1', PORT), CITHandler)
+    server.serve_forever()
