@@ -1,0 +1,34 @@
+{
+  "system_name": "Cimeika",
+  "version": "1.1.0",
+  "global_owner": "Ihorog",
+  "last_resonance": "2026-01-22",
+  "nodes": {
+    "NODE-TMX-ADMIN": {
+      "role": "Admin/Gateway",
+      "runtime": "Termux/Android-13",
+      "authorized_links": ["github.com", "huggingface.co", "localhost:5000"],
+      "lhc_policy": "Full_Repair",
+      "data_scopes": ["root", "storage/*", "core/*"]
+    },
+    "NODE-HF-API": {
+      "role": "Public/API",
+      "runtime": "Hugging Face Spaces",
+      "authorized_links": ["github.com"],
+      "lhc_policy": "Reboot_Only",
+      "data_scopes": ["public/*"]
+    },
+    "NODE-TG-BOT": {
+      "role": "Interface/Agent",
+      "runtime": "Python/Core",
+      "authorized_links": ["api.telegram.org", "NODE-TMX-ADMIN"],
+      "lhc_policy": "Escalate_On_Fail",
+      "data_scopes": ["core/telegram_bot.py"]
+    }
+  },
+  "policies": {
+    "GEC-2": "Strict_Least_Privilege",
+    "GEC-3": "Automated_Repair_Enabled",
+    "GEC-4": "Push_Protection_Active"
+  }
+}
