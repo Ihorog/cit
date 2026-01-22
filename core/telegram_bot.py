@@ -1,41 +1,28 @@
 import os
 import json
-import requests
+import time
 from datetime import datetime
 
-# Налаштування доступу (використовуйте свої змінні середовища)
-TELEGRAM_TOKEN = os.getenv("TG_TOKEN")
-ADMIN_CHAT_ID = os.getenv("TG_ADMIN_ID")
+def get_smart_menu(file_name):
+    ext = file_name.split('.')[-1].lower()
+    if ext in ['jpg', 'jpeg', 'png', 'webp']:
+        return ["🖼️ Галерея", "👤 Аватар", "🎨 AI Обробка", "🗑️ Видалити"]
+    elif ext in ['mp4', 'mkv', 'mov']:
+        return ["🎬 Кінотека", "📱 Short-архів", "🎬 На монтаж", "🗑️ Видалити"]
+    elif ext in ['mp3', 'wav', 'ogg']:
+        return ["🎵 Аудіотека", "🎤 Нотатка", "🎹 Ci-Sound", "🗑️ Видалити"]
+    else:
+        return ["📚 Канони Ci", "📂 Wiki-база", "📑 Архів", "🗑️ Видалити"]
 
-def send_to_admin(message):
-    """Надсилає сервісне повідомлення власнику системи"""
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-    payload = {
-        "chat_id": ADMIN_CHAT_ID,
-        "text": f"⚠️ [Ciт GEC-3 REPORT]\n{message}",
-        "parse_mode": "Markdown"
-    }
-    try:
-        requests.post(url, json=payload)
-    except Exception as e:
-        print(f"Помилка ескалації: {e}")
-
-def handle_repair_signal(signal_path="storage/last_repair_request.json"):
-    """Перевіряє наявність нових запитів на ремонт"""
-    if os.path.exists(signal_path):
-        with open(signal_path, "r") as f:
-            data = json.load(f)
-        
-        report = (
-            f"*Вузол:* {data['node_id']}\n"
-            f"*Статус:* {data['status']}\n"
-            f"*Помилка:* `{data['error']}`\n"
-            f"*Дія:* {data['action']}"
-        )
-        send_to_admin(report)
-        # Архівуємо запит після обробки
-        os.rename(signal_path, f"storage/archive/repair_{datetime.now().timestamp()}.json")
+def main_loop():
+    print(f"--- [Ciт] СИСТЕМА Ci: РОЗУМНИЙ РОУТЕР АКТИВНИЙ ---")
+    while True:
+        # Логіка очікування файлу від Telegram API
+        # 1. Отримання файлу -> Ідентифікація розширення
+        # 2. Виклик get_smart_menu(file_name)
+        # 3. Вивід кнопок користувачу
+        # 4. Очікування вибору + текстового коментаря
+        time.sleep(60)
 
 if __name__ == "__main__":
-    print(f"--- [Ciт] БОТ АКТИВОВАНО: {datetime.now()} ---")
-    # Тут запускається основний цикл бота
+    main_loop()
