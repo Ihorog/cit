@@ -17,7 +17,7 @@ Default approach: minimal diffs, reversible changes, stable endpoints.
 ## Testing (manual)
 Always include at least:
 - `curl http://127.0.0.1:8790/health`
-- `curl -s -X POST http://127.0.0.1:8790/chat -H 'Content-Type: application/json' -d '{"message":"ping"}'`
+- `curl -s -X POST http://127.0.0.1:8790/chat -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"ping"}]}'`
 
 ## Output policy
 - Never print secrets.

@@ -19,17 +19,22 @@ Reviewed all 5 open issues in the repository. Repository is confirmed to be in o
 ---
 
 ### Issue #71: Codex Review - API Contract Mismatch
-**Status**: Already Resolved / Not Applicable
+**Status**: Partially Valid - Fixed
 **Analysis**:
 - The issue claims mismatch between copilot-instructions.md and server implementation
 - Investigation shows:
   - `copilot-instructions.md` does NOT document `/health` or `/chat` endpoints (general Copilot rules only)
   - `AGENTS.md` documents these endpoints for testing
   - `ci.py` correctly implements both endpoints on port 8790
-  - Server is operational and responds correctly:
-    - `/health` → `{"status": "ok", "api_configured": false, "model": "gpt-4o-mini"}`
-    - `/chat` → Works (returns error when API key not configured, as expected)
-**Recommendation**: Close as resolved/no longer applicable
+  - **Found minor documentation issue**: AGENTS.md test command used wrong payload format
+  
+**Action Taken**:
+- Fixed AGENTS.md to use correct API format: `{"messages":[{"role":"user","content":"ping"}]}` instead of `{"message":"ping"}`
+- Verified server works correctly:
+  - `/health` → `{"status": "ok", "api_configured": false, "model": "gpt-4o-mini"}` ✅
+  - `/chat` → Returns proper error when API key not configured ✅
+
+**Recommendation**: Close as fixed
 
 ---
 
