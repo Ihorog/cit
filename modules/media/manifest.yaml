@@ -1,0 +1,7 @@
+id: media
+type: assets
+source: Ihorog/media
+mount: /public/media
+static: true
+dependencies: []
+description: "Медіа ресурси: іконки, зображення, візуальна пам'ять"

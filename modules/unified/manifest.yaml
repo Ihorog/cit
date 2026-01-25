@@ -1,0 +1,9 @@
+id: cimeika-unified
+type: platform
+source: Ihorog/cimeika-unified
+mount: /api
+entry: backend/main.py
+frontend: frontend/
+dependencies:
+  - media
+description: "Уніфікована платформа з 7 модулями (Ci, Kazkar, Podija, Nastrij, Malya, Gallery, Calendar)"

@@ -7,6 +7,7 @@ This directory contains tests for CIT components.
 ### All Tests
 ```bash
 python3 tests/test_v21_components.py
+python3 tests/test_modular_engine.py
 ```
 
 ## Test Coverage
@@ -17,12 +18,20 @@ python3 tests/test_v21_components.py
   - Job creation, lifecycle management
   - Job persistence and logging
 
+### Modular Engine (Unified Architecture)
+- `test_modular_engine.py` - Tests for modular engine and plugin system
+  - PluginRegistry initialization and module loading
+  - Manifest validation against JSON Schema
+  - Dependency resolution
+  - Registry structure validation
+
 ## Test Requirements
 
-Tests use only Python standard library modules:
+Tests use only Python standard library modules plus:
 - `unittest` or simple assertions
 - `tempfile` for temporary storage
-- No external dependencies required
+- `pyyaml` for YAML parsing
+- `jsonschema` for manifest validation
 
 ## Adding New Tests
 
@@ -38,5 +47,7 @@ When adding new features, create corresponding test files:
 Tests can be integrated into GitHub Actions workflows:
 ```yaml
 - name: Run tests
-  run: python3 tests/test_v21_components.py
+  run: |
+    python3 tests/test_v21_components.py
+    python3 tests/test_modular_engine.py
 ```

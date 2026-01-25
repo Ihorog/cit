@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CIT Module Manifest Schema",
+  "description": "JSON Schema for validating CIT module manifests",
+  "type": "object",
+  "required": ["id", "type", "source", "mount"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique module identifier"
+    },
+    "type": {
+      "enum": ["documentation", "platform", "assets", "deployment"],
+      "description": "Module type"
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^[^/]+/[^/]+$",
+      "description": "GitHub repository in format owner/repo"
+    },
+    "mount": {
+      "type": "string",
+      "pattern": "^/.*$",
+      "description": "Mount path starting with /"
+    },
+    "entry": {
+      "type": "string",
+      "description": "Entry point file or script"
+    },
+    "frontend": {
+      "type": "string",
+      "description": "Frontend directory path"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of module dependencies"
+    },
+    "static": {
+      "type": "boolean",
+      "description": "Whether module contains only static assets"
+    },
+    "serverless": {
+      "type": "boolean",
+      "description": "Whether module uses serverless deployment"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable module description"
+    }
+  }
+}

@@ -14,3 +14,16 @@ intents:
   - share
   - protect
   - evolve
+modules:
+  ciwiki:
+    type: documentation
+    priority: high
+  cimeika-unified:
+    type: platform
+    priority: critical
+  media:
+    type: assets
+    priority: normal
+  vercel:
+    type: deployment
+    priority: normal

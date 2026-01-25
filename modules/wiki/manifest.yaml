@@ -1,0 +1,7 @@
+id: ciwiki
+type: documentation
+source: Ihorog/ciwiki
+mount: /docs
+entry: mkdocs.yml
+dependencies: []
+description: "Центральна документація та правила екосистеми Cimeika"
