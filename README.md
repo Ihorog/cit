@@ -251,6 +251,37 @@ Key principles:
 
 See [.github/copilot-instructions.md](.github/copilot-instructions.md) for the full instructions synchronized from ciwiki.
 
+## Development Process
+
+### Implementation Proposals
+
+For significant features or architectural changes, CIT uses a structured proposal process:
+
+1. **Create Proposal** - Use the [implementation proposal template](docs/IMPLEMENTATION_PROPOSAL_TEMPLATE.md)
+2. **Review** - Submit PR for team review and feedback
+3. **Implement** - Build according to the approved proposal
+4. **Verify** - Test against acceptance criteria
+5. **Document** - Update CHANGELOG and documentation
+
+**Quick start:**
+```bash
+# Create a new proposal
+cp docs/IMPLEMENTATION_PROPOSAL_TEMPLATE.md docs/proposals/IMPL-$(date +%Y-%m-%d)-my-feature.md
+
+# Edit the proposal and submit for review
+git checkout -b proposal/my-feature
+git add docs/proposals/IMPL-*-my-feature.md
+git commit -m "Proposal: Add my feature"
+git push origin proposal/my-feature
+```
+
+**Resources:**
+- [Implementation Proposal Template](docs/IMPLEMENTATION_PROPOSAL_TEMPLATE.md) - Template for new proposals
+- [Proposal Guide](docs/PROPOSAL_GUIDE.md) - Step-by-step guide with examples
+- [Active Proposals](docs/proposals/) - Current proposals under review
+
+See [docs/PROPOSAL_GUIDE.md](docs/PROPOSAL_GUIDE.md) for detailed instructions.
+
 ## License
 
 This project is released under the MIT License.  See `LICENSE` for details.
