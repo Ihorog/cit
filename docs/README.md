@@ -40,6 +40,12 @@ Welcome to the CIT documentation! This index helps you find the right documentat
 - [UNIFIED_API.md](UNIFIED_API.md) - Unified API specification
 
 ### Development Process
+- [PROPOSAL_QUICKREF.md](PROPOSAL_QUICKREF.md) - ⚡ **Quick reference** (5-minute guide)
+  - When to write proposals
+  - Quick start commands
+  - Key sections explained
+  - Common patterns and templates
+
 - [PROPOSAL_GUIDE.md](PROPOSAL_GUIDE.md) - **Implementation proposal guide**
   - When to write proposals
   - Step-by-step guide

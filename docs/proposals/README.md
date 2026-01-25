@@ -77,8 +77,9 @@ See [archive/](archive/) for historical proposals.
 
 ## Resources
 
+- [Quick Reference](../PROPOSAL_QUICKREF.md) - ⚡ Fast 5-minute guide
 - [Implementation Proposal Template](../IMPLEMENTATION_PROPOSAL_TEMPLATE.md)
-- [Proposal Guide](../PROPOSAL_GUIDE.md)
+- [Proposal Guide](../PROPOSAL_GUIDE.md) - Complete guide with examples
 - [CIT Architecture](../ARCHITECTURE.md)
 - [Copilot Instructions](../../.github/copilot-instructions.md)
 
