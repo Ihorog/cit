@@ -147,7 +147,11 @@ def validate_manifests():
     print("\n🔍 Validating manifests...")
     
     try:
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).parent.parent))
         from core.plugin_loader import PluginRegistry
+        
         registry = PluginRegistry()
         
         modules_dir = Path('modules')
@@ -170,8 +174,8 @@ def validate_manifests():
         print(f"\n📊 Validation: {valid} valid, {invalid} invalid")
         return invalid == 0
         
-    except ImportError:
-        print("  ⚠️  Could not import PluginRegistry for validation")
+    except ImportError as e:
+        print(f"  ⚠️  Could not import PluginRegistry for validation: {e}")
         return True
 
 
