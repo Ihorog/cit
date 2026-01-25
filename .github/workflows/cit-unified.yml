@@ -24,7 +24,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyyaml jsonschema
       
       - name: Validate manifests
         run: |
@@ -55,7 +54,7 @@ jobs:
                   print(f'✓ {manifest_file}')
                   valid += 1
               except jsonschema.ValidationError as e:
-                  print(f'✗ {manifest_file}: {e.message}')
+                  print(f'✗ {manifest_file}: {str(e)}')
                   invalid += 1
               except Exception as e:
                   print(f'❌ {manifest_file}: {e}')

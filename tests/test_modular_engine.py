@@ -7,10 +7,14 @@ import json
 import yaml
 from pathlib import Path
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from core.plugin_loader import PluginRegistry
+# Add project root to path only if module not importable
+try:
+    from core.plugin_loader import PluginRegistry
+except ImportError:
+    parent_dir = Path(__file__).parent.parent
+    if str(parent_dir) not in sys.path:
+        sys.path.insert(0, str(parent_dir))
+    from core.plugin_loader import PluginRegistry
 
 
 def test_plugin_registry():

@@ -31,7 +31,7 @@ class PluginRegistry:
             jsonschema.validate(manifest, schema)
             return True
         except jsonschema.ValidationError as e:
-            print(f"❌ Validation error: {e.message}")
+            print(f"❌ Validation error: {str(e)}")
             return False
         except Exception as e:
             print(f"❌ Error loading schema: {e}")

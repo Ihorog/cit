@@ -147,9 +147,13 @@ def validate_manifests():
     print("\n🔍 Validating manifests...")
     
     try:
+        # Додати батьківську директорію до sys.path для імпорту
         import sys
         from pathlib import Path
-        sys.path.insert(0, str(Path(__file__).parent.parent))
+        parent_dir = Path(__file__).parent.parent
+        if str(parent_dir) not in sys.path:
+            sys.path.insert(0, str(parent_dir))
+        
         from core.plugin_loader import PluginRegistry
         
         registry = PluginRegistry()

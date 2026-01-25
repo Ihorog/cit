@@ -12,11 +12,11 @@ from typing import Dict, Optional
 import subprocess
 
 # Імпортувати PluginRegistry
-try:
-    from core.plugin_loader import PluginRegistry
-except ImportError:
+# Додати батьківську директорію до sys.path якщо запущено як скрипт
+if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from core.plugin_loader import PluginRegistry
+
+from core.plugin_loader import PluginRegistry
 
 
 class CiEngine:
