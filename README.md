@@ -5,12 +5,15 @@
 # CIT (Ci Interface Terminal)
 
 [![Vercel Deployment](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml/badge.svg)](https://github.com/Ihorog/cit/actions/workflows/vercel-deploy.yml)
+[![Unified CIT](https://github.com/Ihorog/cit/actions/workflows/cit-unified.yml/badge.svg)](https://github.com/Ihorog/cit/actions/workflows/cit-unified.yml)
 
 **Version:** 2.1.0 (Final Release) 🏁
 
 CIT (Ci Interface Terminal) is a lightweight API gateway that sits between your Cimeika devices and the OpenAI API.  
 It exposes a minimal HTTP interface and forwards chat requests to OpenAI using Python's standard library.  
 The service is designed to run locally on Android through Termux and can be connected to other systems over a LAN.
+
+> **🧬 Unified Architecture:** CIT now serves as the core of a modular ecosystem that unifies 5 repositories (`cit`, `ciwiki`, `cimeika-unified`, `media`, `cit_versel`) following the **111 density principle** (1 core, 1 registry, 1 entry point). See [Unification Documentation](docs/UNIFICATION.md) for details.
 
 > **🆕 v2.1 Features:** Autonomous OpenAI client, enhanced Job Manager, memory optimization (~80MB vs ~150MB), and complete API documentation. See [Release Notes](docs/RELEASE_v2.1.md) for details.
 
@@ -65,6 +68,33 @@ The service will listen on all interfaces (port `8790` by default).
 You can add the start command to `scripts/termux_boot/cit_start.sh` and enable Termux Boot to run CIT automatically after a reboot.
 
 Access the Web UI at `http://127.0.0.1:8790/ui` in your browser to use the chat interface with voice capabilities.
+
+## Modular Engine
+
+CIT now includes a modular engine that unifies multiple repositories into a single system. Use the engine CLI for advanced operations:
+
+### Build & Validate
+```bash
+# Validate all modules and their dependencies
+python core/engine.py build
+```
+
+### Run Server
+```bash
+# Start the HTTP server (alternative to python ci.py)
+python core/engine.py run
+```
+
+### Module Management
+```bash
+# Run a specific module
+python core/engine.py module <module-id>
+
+# Show system status
+python core/engine.py status
+```
+
+For detailed information about the modular architecture, see [Unification Documentation](docs/UNIFICATION.md).
 
 ## Example requests
 
@@ -220,6 +250,37 @@ Key principles:
 - Documentation first
 
 See [.github/copilot-instructions.md](.github/copilot-instructions.md) for the full instructions synchronized from ciwiki.
+
+## Development Process
+
+### Implementation Proposals
+
+For significant features or architectural changes, CIT uses a structured proposal process:
+
+1. **Create Proposal** - Use the [implementation proposal template](docs/IMPLEMENTATION_PROPOSAL_TEMPLATE.md)
+2. **Review** - Submit PR for team review and feedback
+3. **Implement** - Build according to the approved proposal
+4. **Verify** - Test against acceptance criteria
+5. **Document** - Update CHANGELOG and documentation
+
+**Quick start:**
+```bash
+# Create a new proposal
+cp docs/IMPLEMENTATION_PROPOSAL_TEMPLATE.md docs/proposals/IMPL-$(date +%Y-%m-%d)-my-feature.md
+
+# Edit the proposal and submit for review
+git checkout -b proposal/my-feature
+git add docs/proposals/IMPL-*-my-feature.md
+git commit -m "Proposal: Add my feature"
+git push origin proposal/my-feature
+```
+
+**Resources:**
+- [Implementation Proposal Template](docs/IMPLEMENTATION_PROPOSAL_TEMPLATE.md) - Template for new proposals
+- [Proposal Guide](docs/PROPOSAL_GUIDE.md) - Step-by-step guide with examples
+- [Active Proposals](docs/proposals/) - Current proposals under review
+
+See [docs/PROPOSAL_GUIDE.md](docs/PROPOSAL_GUIDE.md) for detailed instructions.
 
 ## License
 

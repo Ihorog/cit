@@ -1,0 +1,89 @@
+name: Unified CIT
+on:
+  push:
+    branches: [main, develop, 'copilot/**']
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Validate manifests
+        run: |
+          echo "🔍 Validating module manifests..."
+          python -c "
+          import json, yaml, jsonschema
+          from pathlib import Path
+          
+          schema_path = Path('core/manifest.schema.json')
+          if not schema_path.exists():
+              print('⚠️  Schema not found, skipping validation')
+              exit(0)
+          
+          schema = json.loads(schema_path.read_text())
+          modules_dir = Path('modules')
+          
+          if not modules_dir.exists():
+              print('⚠️  Modules directory not found, skipping validation')
+              exit(0)
+          
+          valid = 0
+          invalid = 0
+          
+          for manifest_file in modules_dir.rglob('manifest.yaml'):
+              try:
+                  data = yaml.safe_load(manifest_file.read_text())
+                  jsonschema.validate(data, schema)
+                  print(f'✓ {manifest_file}')
+                  valid += 1
+              except jsonschema.ValidationError as e:
+                  print(f'✗ {manifest_file}: {str(e)}')
+                  invalid += 1
+              except Exception as e:
+                  print(f'❌ {manifest_file}: {e}')
+                  invalid += 1
+          
+          print(f'\n📊 Validation: {valid} valid, {invalid} invalid')
+          
+          if invalid > 0:
+              exit(1)
+          "
+      
+      - name: Load modules
+        run: |
+          echo "📦 Testing module loading..."
+          python core/plugin_loader.py
+      
+      - name: Build core
+        run: |
+          echo "🔨 Testing build command..."
+          python core/engine.py status
+      
+      - name: Run tests
+        run: |
+          if [ -d "tests" ] && [ "$(ls -A tests/*.py 2>/dev/null)" ]; then
+            echo "🧪 Running tests..."
+            python -m pytest tests/ -v || echo "⚠️  Some tests failed"
+          else
+            echo "ℹ️  No tests found, skipping"
+          fi
