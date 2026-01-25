@@ -1,0 +1,7 @@
+id: vercel
+type: deployment
+source: Ihorog/cit_versel
+mount: /deploy
+serverless: true
+dependencies: []
+description: "Хмарна конфігурація для Vercel deployment"

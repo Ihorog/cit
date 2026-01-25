@@ -1,0 +1,26 @@
+{
+  "version": "1.0.0",
+  "core": "Ihorog/cit",
+  "modules": [
+    {
+      "id": "ciwiki",
+      "status": "active",
+      "requires": []
+    },
+    {
+      "id": "cimeika-unified",
+      "status": "active",
+      "requires": ["media"]
+    },
+    {
+      "id": "media",
+      "status": "static",
+      "requires": []
+    },
+    {
+      "id": "vercel",
+      "status": "cloud",
+      "requires": []
+    }
+  ]
+}
