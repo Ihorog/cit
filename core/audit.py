@@ -102,7 +102,7 @@ class CITAudit:
             "path": path,
             "client_ip": client_ip,
             "user_agent": user_agent,
-            "client_type": self._classify_client(user_agent)
+            "client_type": self.classify_client(user_agent)
         }
         
         if status_code is not None:
@@ -208,7 +208,7 @@ class CITAudit:
         
         return summary
     
-    def _classify_client(self, user_agent: str) -> str:
+    def classify_client(self, user_agent: str) -> str:
         """Класифікувати тип клієнта за User-Agent"""
         ua_lower = user_agent.lower()
         if any(x in ua_lower for x in ["python", "curl", "wget", "httpie"]):
@@ -252,7 +252,12 @@ class CITAudit:
 _audit_instance = None
 
 def get_audit_instance(storage_path: str = None) -> CITAudit:
-    """Отримати глобальний інстанс аудиту (singleton pattern)"""
+    """
+    Отримати глобальний інстанс аудиту (singleton pattern)
+    
+    Note: storage_path використовується лише при першому виклику.
+    Наступні виклики повертають існуючий інстанс незалежно від storage_path.
+    """
     global _audit_instance
     if _audit_instance is None:
         _audit_instance = CITAudit(storage_path)

@@ -1105,7 +1105,7 @@ class CiHandler(BaseHTTPRequestHandler):
         
         try:
             data = json.loads(body) if body else {}
-        except:
+        except json.JSONDecodeError:
             status_code = 400
             self.send_json({"error": "Invalid JSON"}, 400)
             return
@@ -1192,9 +1192,16 @@ class CiHandler(BaseHTTPRequestHandler):
             # Отримати параметри з query string
             hours = 24
             if "?" in self.path:
-                query = self.path.split("?")[1]
-                params = dict(qc.split("=") for qc in query.split("&") if "=" in qc)
-                hours = int(params.get("hours", 24))
+                try:
+                    query = self.path.split("?")[1]
+                    params = {}
+                    for qc in query.split("&"):
+                        if "=" in qc:
+                            key, value = qc.split("=", 1)
+                            params[key] = value
+                    hours = int(params.get("hours", 24))
+                except (ValueError, TypeError, AttributeError):
+                    hours = 24  # Використати за замовчуванням при невірному значенні
             
             summary = audit.get_audit_summary(hours=hours)
             self.send_json(summary)

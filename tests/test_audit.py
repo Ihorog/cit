@@ -195,7 +195,7 @@ def test_client_classification():
         ]
         
         for user_agent, expected_type in test_cases:
-            result = audit._classify_client(user_agent)
+            result = audit.classify_client(user_agent)
             assert result == expected_type, f"Невірна класифікація для {user_agent}: {result} != {expected_type}"
         
         print("✓ Класифікація клієнтів пройшла успішно")
