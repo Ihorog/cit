@@ -20,6 +20,16 @@ from urllib.request import Request, urlopen
 from urllib.error import URLError
 from pathlib import Path
 import base64
+import time
+
+# Імпорт модуля аудиту
+try:
+    sys.path.insert(0, str(Path(__file__).parent))
+    from core.audit import get_audit_instance
+    AUDIT_ENABLED = True
+except ImportError:
+    AUDIT_ENABLED = False
+    print("[WARNING] Audit module not available")
 
 # ============ Конфігурація ============
 HOST = "0.0.0.0"
@@ -1042,32 +1052,76 @@ class CiHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == "/" or self.path == "/index.html":
-            self.send_html(HTML_TEMPLATE)
-        elif self.path == "/icon.png":
-            self.send_response(200)
-            self.send_header("Content-Type", "image/png")
-            self.end_headers()
-            self.wfile.write(base64.b64decode(ICON_BASE64))
-        elif self.path == "/health":
-            self.send_json({
-                "status": "ok",
-                "api_configured": bool(OPENAI_API_KEY),
-                "model": OPENAI_MODEL
-            })
-        else:
-            self.send_response(404)
-            self.end_headers()
+        start_time = time.time()
+        status_code = 200
+        
+        try:
+            if self.path == "/" or self.path == "/index.html":
+                self.send_html(HTML_TEMPLATE)
+            elif self.path == "/icon.png":
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.end_headers()
+                self.wfile.write(base64.b64decode(ICON_BASE64))
+            elif self.path == "/health":
+                self.send_json({
+                    "status": "ok",
+                    "api_configured": bool(OPENAI_API_KEY),
+                    "model": OPENAI_MODEL
+                })
+            elif self.path == "/audit":
+                self.handle_audit_report()
+            elif self.path == "/audit/resources":
+                self.handle_audit_resources()
+            else:
+                status_code = 404
+                self.send_response(404)
+                self.end_headers()
+        finally:
+            # Аудит запиту
+            if AUDIT_ENABLED:
+                try:
+                    audit = get_audit_instance()
+                    response_time = (time.time() - start_time) * 1000
+                    audit.audit_api_request(
+                        method="GET",
+                        path=self.path,
+                        client_ip=self.client_address[0],
+                        user_agent=self.headers.get("User-Agent", ""),
+                        status_code=status_code,
+                        response_time_ms=response_time
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Audit logging failed: {e}")
 
     def do_POST(self):
+        start_time = time.time()
+        status_code = 200
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         
         try:
             data = json.loads(body) if body else {}
         except:
+            status_code = 400
             self.send_json({"error": "Invalid JSON"}, 400)
             return
+        finally:
+            # Аудит запиту
+            if AUDIT_ENABLED:
+                try:
+                    audit = get_audit_instance()
+                    response_time = (time.time() - start_time) * 1000
+                    audit.audit_api_request(
+                        method="POST",
+                        path=self.path,
+                        client_ip=self.client_address[0],
+                        user_agent=self.headers.get("User-Agent", ""),
+                        status_code=status_code,
+                        response_time_ms=response_time
+                    )
+                except Exception as e:
+                    print(f"[WARNING] Audit logging failed: {e}")
 
         if self.path == "/chat":
             self.handle_chat(data)
@@ -1122,6 +1176,40 @@ class CiHandler(BaseHTTPRequestHandler):
             save_config()
         
         self.send_json({"status": "ok"})
+    
+    def handle_audit_report(self):
+        """Обробник для /audit - повний звіт аудиту"""
+        if not AUDIT_ENABLED:
+            self.send_json({"error": "Audit module not available"}, 503)
+            return
+        
+        try:
+            audit = get_audit_instance()
+            
+            # Отримати параметри з query string
+            hours = 24
+            if "?" in self.path:
+                query = self.path.split("?")[1]
+                params = dict(qc.split("=") for qc in query.split("&") if "=" in qc)
+                hours = int(params.get("hours", 24))
+            
+            summary = audit.get_audit_summary(hours=hours)
+            self.send_json(summary)
+        except Exception as e:
+            self.send_json({"error": f"Audit failed: {str(e)}"}, 500)
+    
+    def handle_audit_resources(self):
+        """Обробник для /audit/resources - аудит ресурсів"""
+        if not AUDIT_ENABLED:
+            self.send_json({"error": "Audit module not available"}, 503)
+            return
+        
+        try:
+            audit = get_audit_instance()
+            result = audit.audit_resources()
+            self.send_json(result)
+        except Exception as e:
+            self.send_json({"error": f"Resource audit failed: {str(e)}"}, 500)
 
 # ============ Config Management ============
 def load_config():
