@@ -1055,23 +1055,26 @@ class CiHandler(BaseHTTPRequestHandler):
         start_time = time.time()
         status_code = 200
         
+        # Отримати шлях без query string для порівняння
+        path_only = self.path.split("?")[0]
+        
         try:
-            if self.path == "/" or self.path == "/index.html":
+            if path_only == "/" or path_only == "/index.html":
                 self.send_html(HTML_TEMPLATE)
-            elif self.path == "/icon.png":
+            elif path_only == "/icon.png":
                 self.send_response(200)
                 self.send_header("Content-Type", "image/png")
                 self.end_headers()
                 self.wfile.write(base64.b64decode(ICON_BASE64))
-            elif self.path == "/health":
+            elif path_only == "/health":
                 self.send_json({
                     "status": "ok",
                     "api_configured": bool(OPENAI_API_KEY),
                     "model": OPENAI_MODEL
                 })
-            elif self.path == "/audit":
+            elif path_only == "/audit":
                 self.handle_audit_report()
-            elif self.path == "/audit/resources":
+            elif path_only == "/audit/resources":
                 self.handle_audit_resources()
             else:
                 status_code = 404

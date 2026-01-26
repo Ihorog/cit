@@ -25,6 +25,7 @@ The service is designed to run locally on Android through Termux and can be conn
 * **Autonomous OpenAI Client** – Standalone `OpenAIClient` class for programmatic API access with intelligent routing
 * **Job Management System** – Create and track long-running tasks via `/v1/jobs/*` endpoints
 * **Memory Optimized** – ~80MB memory usage (47% reduction from v2.0) through streaming multipart parsing
+* **Audit System** – Comprehensive logging and monitoring of resources, API requests, and security (see [Audit Documentation](docs/AUDIT.md))
 
 ### API Endpoints
 * **Health check** – `GET /health` returns a simple JSON object to verify the service is running.  
@@ -33,6 +34,7 @@ The service is designed to run locally on Android through Termux and can be conn
 * **Intelligent API routing** – uses OpenAI's Responses API with automatic fallback to Chat Completions API.
 * **File operations** – Upload, download, and manage files via `/files`, `/file`, `/upload` endpoints
 * **Configuration** – Runtime configuration via `/config` endpoint
+* **Audit** – `GET /audit` and `GET /audit/resources` provide comprehensive system auditing (see [Audit Documentation](docs/AUDIT.md))
 
 ### Technical
 * **No external dependencies** – implemented with Python's built‑in modules, so it works out of the box in Termux.  
