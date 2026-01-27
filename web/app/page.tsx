@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-const API_URL = 'http://localhost:8791'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8791'
 const DB_NAME = 'cimeika_db'
 
 class CimeikoDB {
