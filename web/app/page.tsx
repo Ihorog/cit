@@ -1,50 +1,57 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import './App.css';
+'use client'
 
-const API_URL = 'http://localhost:8791';
-const DB_NAME = 'cimeika_db';
+import { useState, useEffect, useCallback } from 'react'
+
+const API_URL = 'http://localhost:8791'
+const DB_NAME = 'cimeika_db'
 
 class CimeikoDB {
-  constructor() {
-    this.db = null;
-  }
+  db: IDBDatabase | null = null
 
   async init() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, 1);
-      request.onerror = () => reject(request.error);
+    return new Promise<void>((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1)
+      request.onerror = () => reject(request.error)
       request.onsuccess = () => {
-        this.db = request.result;
-        resolve();
-      };
+        this.db = request.result
+        resolve()
+      }
       request.onupgradeneeded = (e) => {
-        const db = e.target.result;
+        const db = (e.target as IDBOpenDBRequest).result
         if (!db.objectStoreNames.contains('messages')) {
-          db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
+          db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true })
         }
-      };
-    });
+      }
+    })
   }
 
-  async addMessage(message) {
+  async addMessage(message: any) {
     return new Promise((resolve, reject) => {
-      const tx = this.db.transaction('messages', 'readwrite');
-      const store = tx.objectStore('messages');
-      const request = store.add(message);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
+      if (!this.db) return reject('DB not initialized')
+      const tx = this.db.transaction('messages', 'readwrite')
+      const store = tx.objectStore('messages')
+      const request = store.add(message)
+      request.onerror = () => reject(request.error)
+      request.onsuccess = () => resolve(request.result)
+    })
   }
 
   async getMessages() {
     return new Promise((resolve, reject) => {
-      const tx = this.db.transaction('messages', 'readonly');
-      const store = tx.objectStore('messages');
-      const request = store.getAll();
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-    });
+      if (!this.db) return reject('DB not initialized')
+      const tx = this.db.transaction('messages', 'readonly')
+      const store = tx.objectStore('messages')
+      const request = store.getAll()
+      request.onerror = () => reject(request.error)
+      request.onsuccess = () => resolve(request.result)
+    })
   }
+}
+
+interface Message {
+  role: string
+  content: string
+  timestamp: string
 }
 
 const ModuleCI = () => (
@@ -62,9 +69,9 @@ const ModuleCI = () => (
       </div>
     </div>
   </div>
-);
+)
 
-const ModuleKazkar = ({ messages, onSendMessage }) => (
+const ModuleKazkar = ({ messages, onSendMessage }: { messages: Message[], onSendMessage: (text: string) => void }) => (
   <div className="module">
     <h2>📚 Казкар - Памʼять і легенди</h2>
     <p>Спілкування з GPT-4.1</p>
@@ -80,7 +87,7 @@ const ModuleKazkar = ({ messages, onSendMessage }) => (
       <MessageInput onSend={onSendMessage} />
     </div>
   </div>
-);
+)
 
 const ModulePodia = () => (
   <div className="module">
@@ -92,7 +99,7 @@ const ModulePodia = () => (
       </div>
     </div>
   </div>
-);
+)
 
 const ModuleNastrij = () => (
   <div className="module">
@@ -104,7 +111,7 @@ const ModuleNastrij = () => (
       </div>
     </div>
   </div>
-);
+)
 
 const ModuleMalia = () => (
   <div className="module">
@@ -116,7 +123,7 @@ const ModuleMalia = () => (
       </div>
     </div>
   </div>
-);
+)
 
 const ModuleKalendar = () => (
   <div className="module">
@@ -128,7 +135,7 @@ const ModuleKalendar = () => (
       </div>
     </div>
   </div>
-);
+)
 
 const ModuleGalerea = () => (
   <div className="module">
@@ -140,17 +147,17 @@ const ModuleGalerea = () => (
       </div>
     </div>
   </div>
-);
+)
 
-const MessageInput = ({ onSend }) => {
-  const [text, setText] = useState('');
+const MessageInput = ({ onSend }: { onSend: (text: string) => void }) => {
+  const [text, setText] = useState('')
 
   const handleSend = () => {
     if (text.trim()) {
-      onSend(text);
-      setText('');
+      onSend(text)
+      setText('')
     }
-  };
+  }
 
   return (
     <div className="message-input">
@@ -162,10 +169,10 @@ const MessageInput = ({ onSend }) => {
       />
       <button onClick={handleSend}>Отправити</button>
     </div>
-  );
-};
+  )
+}
 
-const Navigation = ({ activeModule, onSelectModule }) => {
+const Navigation = ({ activeModule, onSelectModule }: { activeModule: string, onSelectModule: (id: string) => void }) => {
   const modules = [
     { id: 'ci', emoji: '🔄' },
     { id: 'kazkar', emoji: '📚' },
@@ -174,7 +181,7 @@ const Navigation = ({ activeModule, onSelectModule }) => {
     { id: 'malia', emoji: '💡' },
     { id: 'kalendar', emoji: '📅' },
     { id: 'galerea', emoji: '🖼️' },
-  ];
+  ]
 
   return (
     <nav className="navigation">
@@ -194,10 +201,10 @@ const Navigation = ({ activeModule, onSelectModule }) => {
         ))}
       </div>
     </nav>
-  );
-};
+  )
+}
 
-const StatusBar = ({ isOnline, lastSync }) => (
+const StatusBar = ({ isOnline, lastSync }: { isOnline: boolean, lastSync: Date | null }) => (
   <div className="status-bar">
     <div>
       <span className={`status-dot ${isOnline ? 'online' : ''}`}></span>
@@ -209,49 +216,56 @@ const StatusBar = ({ isOnline, lastSync }) => (
       Синх: {lastSync ? new Date(lastSync).toLocaleTimeString('uk-UA') : 'Ніколи'}
     </div>
   </div>
-);
+)
 
-export default function App() {
-  const [activeModule, setActiveModule] = useState('ci');
-  const [messages, setMessages] = useState([]);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [lastSync, setLastSync] = useState(null);
-  const [db, setDb] = useState(null);
+export default function Home() {
+  const [activeModule, setActiveModule] = useState('ci')
+  const [messages, setMessages] = useState<Message[]>([])
+  const [isOnline, setIsOnline] = useState(false)
+  const [lastSync, setLastSync] = useState<Date | null>(null)
+  const [db, setDb] = useState<CimeikoDB | null>(null)
+
+  useEffect(() => {
+    // Check if we're in the browser
+    if (typeof window !== 'undefined') {
+      setIsOnline(navigator.onLine)
+    }
+  }, [])
 
   useEffect(() => {
     const initDB = async () => {
-      const database = new CimeikoDB();
-      await database.init();
-      setDb(database);
-      const savedMessages = await database.getMessages();
-      setMessages(savedMessages);
-    };
-    initDB();
-  }, []);
+      const database = new CimeikoDB()
+      await database.init()
+      setDb(database)
+      const savedMessages = await database.getMessages() as Message[]
+      setMessages(savedMessages || [])
+    }
+    initDB()
+  }, [])
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
 
   const handleSendMessage = useCallback(
-    async (text) => {
-      const userMessage = {
+    async (text: string) => {
+      const userMessage: Message = {
         role: 'user',
         content: text,
         timestamp: new Date().toISOString(),
-      };
+      }
 
       if (db) {
-        await db.addMessage(userMessage);
+        await db.addMessage(userMessage)
       }
-      setMessages((prev) => [...prev, userMessage]);
+      setMessages((prev) => [...prev, userMessage])
 
       if (isOnline) {
         try {
@@ -259,38 +273,38 @@ export default function App() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: text }),
-          });
-          const data = await response.json();
-          const aiMessage = {
+          })
+          const data = await response.json()
+          const aiMessage: Message = {
             role: 'assistant',
             content: data.reply || 'Помилка',
             timestamp: new Date().toISOString(),
-          };
-          if (db) {
-            await db.addMessage(aiMessage);
           }
-          setMessages((prev) => [...prev, aiMessage]);
-          setLastSync(new Date());
+          if (db) {
+            await db.addMessage(aiMessage)
+          }
+          setMessages((prev) => [...prev, aiMessage])
+          setLastSync(new Date())
         } catch (error) {
-          console.error('API Error:', error);
+          console.error('API Error:', error)
         }
       }
     },
     [db, isOnline]
-  );
+  )
 
   const renderModule = () => {
     switch (activeModule) {
-      case 'ci': return <ModuleCI />;
-      case 'kazkar': return <ModuleKazkar messages={messages} onSendMessage={handleSendMessage} />;
-      case 'podia': return <ModulePodia />;
-      case 'nastrij': return <ModuleNastrij />;
-      case 'malia': return <ModuleMalia />;
-      case 'kalendar': return <ModuleKalendar />;
-      case 'galerea': return <ModuleGalerea />;
-      default: return <ModuleCI />;
+      case 'ci': return <ModuleCI />
+      case 'kazkar': return <ModuleKazkar messages={messages} onSendMessage={handleSendMessage} />
+      case 'podia': return <ModulePodia />
+      case 'nastrij': return <ModuleNastrij />
+      case 'malia': return <ModuleMalia />
+      case 'kalendar': return <ModuleKalendar />
+      case 'galerea': return <ModuleGalerea />
+      default: return <ModuleCI />
     }
-  };
+  }
 
   return (
     <div className="app">
@@ -298,5 +312,5 @@ export default function App() {
       <main className="main-content">{renderModule()}</main>
       <StatusBar isOnline={isOnline} lastSync={lastSync} />
     </div>
-  );
+  )
 }

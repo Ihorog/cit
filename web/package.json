@@ -3,29 +3,21 @@
   "version": "1.0.0",
   "description": "CIMEIKA - Українська персональна система управління",
   "private": true,
-  "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-<<<<<<< HEAD
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.0.0",
-    "vite": "^4.4.0"
-=======
-    "next": "14.1.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
-  },
-  "devDependencies": {
-    "@types/node": "25.0.3",
-    "@types/react": "19.2.7",
-    "typescript": "5.9.3"
->>>>>>> e769aa23b65aced5c3853b2aa831e373438cde82
+    "@types/node": "22.10.2",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "typescript": "5.7.3"
   }
 }
