@@ -1,0 +1,222 @@
+# CIMEIKA PROVIDER POLICY v1.0
+# Source of truth for AI provider routing, capabilities, and fallback logic.
+# This file is consumed by cit-local Internal APIRouter.
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PROVIDER REGISTRY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+providers:
+  openai:
+    enabled: true
+    capabilities:
+      - chat
+      - reasoning
+      - code
+      - vision
+      - function_calling
+    cost_level: high          # Token cost tier
+    latency: medium           # Expected response time
+    priority: 20              # Higher = preferred when multiple match
+    max_context: 128000       # Max tokens
+    timeout_sec: 30
+    retry: 2
+    models:
+      default: gpt-4o
+      reasoning: o1
+      vision: gpt-4o
+
+  google:
+    enabled: true
+    capabilities:
+      - chat
+      - search
+      - long_context
+      - multimodal
+    cost_level: medium
+    latency: low
+    priority: 10
+    max_context: 2000000      # Gemini 2.0 Flash experimental limit
+    timeout_sec: 20
+    retry: 2
+    models:
+      default: gemini-2.0-flash-exp
+      long_context: gemini-2.0-flash-exp
+      search: gemini-2.0-flash-exp
+
+  local:
+    enabled: true
+    capabilities:
+      - cache
+      - memory
+      - rules
+      - persona_context
+    cost_level: zero
+    latency: instant
+    priority: 100             # Always try local first if applicable
+    max_context: 999999
+    timeout_sec: 5
+    retry: 0
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ROUTING POLICY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+routing:
+  default_provider: auto      # auto | openai | google | local
+  fallback: true              # Enable provider fallback on failure
+  offline_behavior: queue     # queue | reject | local_only
+  cache_first: true           # Check semantic cache before external call
+  audit_all: true             # Log every provider call to audit
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# INTENT-BASED ROUTING
+# Maps user intent → preferred provider order
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+intents:
+  reasoning:
+    prefer: [openai, google]
+    model_override:
+      openai: o1
+    fallback_chain: [openai, google]
+
+  factual:
+    prefer: [google, openai]
+    fallback_chain: [google, openai]
+
+  creative:
+    prefer: [openai, google]
+    fallback_chain: [openai, google]
+
+  search:
+    prefer: [google]
+    fallback_chain: [google, openai]
+    require_capability: search
+
+  code:
+    prefer: [openai]
+    model_override:
+      openai: gpt-4o
+    fallback_chain: [openai, google]
+
+  planning:
+    prefer: [openai, google]
+    fallback_chain: [openai, google]
+
+  private:
+    prefer: [local]
+    fallback_chain: [local]
+    external_forbidden: true  # Never route to external providers
+
+  multimodal:
+    prefer: [google, openai]
+    require_capability: vision
+    fallback_chain: [google, openai]
+
+  long_context:
+    prefer: [google]
+    require_capability: long_context
+    fallback_chain: [google, openai]
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# SEMANTIC CACHE POLICY
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+cache:
+  enabled: true
+  ttl_seconds: 3600           # 1 hour default
+  hash_components:
+    - intent
+    - persona
+    - normalized_message
+    - context_version
+  invalidate_on:
+    - context_update
+    - user_preference_change
+  max_entries: 10000
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# DEFERRED EXECUTION (OFFLINE QUEUE)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+deferred:
+  enabled: true
+  max_queue_size: 1000
+  retry_on_network: true
+  retry_interval_sec: 60
+  max_age_hours: 24           # Drop jobs older than 24h
+  attach_to_thread: true      # Attach result to original chat thread
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# SECURITY & SECRETS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+security:
+  secrets_location: env       # env | file | vault
+  required_env_vars:
+    - OPENAI_API_KEY
+    - GOOGLE_AI_API_KEY
+  audit_secrets: false        # Never log secrets in audit trail
+  rate_limit_per_minute:
+    openai: 50
+    google: 100
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# HEALTH CHECK
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+health:
+  check_interval_sec: 60
+  timeout_sec: 5
+  endpoints:
+    openai: https://api.openai.com/v1/models
+    google: https://generativelanguage.googleapis.com/v1beta/models
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# PERSONA OVERRIDES
+# Allow specific personas to force provider selection
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+personas:
+  default:
+    provider: auto
+  
+  researcher:
+    provider: google
+    intent: factual
+  
+  coder:
+    provider: openai
+    intent: code
+  
+  philosopher:
+    provider: openai
+    intent: reasoning
+  
+  local_guardian:
+    provider: local
+    intent: private
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# FEATURE FLAGS
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+features:
+  streaming: true             # Support streaming responses
+  function_calling: true      # Enable tool/function calling
+  vision: true                # Enable image input
+  audio: false                # Audio I/O (future)
+  context_memory: true        # Persist conversation context
+  auto_intent_detection: true # Infer intent from message
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# METADATA
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+meta:
+  version: 1.0.0
+  last_updated: "2026-01-27"
+  author: "Cimeika Core (CI)"
+  canonical_source: "Ihorog/cit/config/provider_policy.yaml"
+  enforcement: strict         # strict | advisory
