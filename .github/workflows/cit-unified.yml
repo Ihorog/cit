@@ -23,9 +23,12 @@ jobs:
         with:
           python-version: '3.12'
       
+      - name: Install build backend
+        run: |
+          pip install --upgrade pip setuptools wheel
+      
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
           pip install -r requirements.txt
       
       - name: Validate manifests
