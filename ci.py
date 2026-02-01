@@ -1155,8 +1155,8 @@ class CiHandler(BaseHTTPRequestHandler):
 
         messages = data.get("messages", [])
         
-        # Handle empty message gracefully
-        if not messages or (len(messages) == 1 and not messages[0].get("content", "").strip()):
+        # Handle empty message gracefully - check if all messages are empty
+        if not messages or all(not msg.get("content", "").strip() for msg in messages):
             self.send_json({
                 "ok": True,
                 "cit": "v1",
@@ -1197,7 +1197,7 @@ class CiHandler(BaseHTTPRequestHandler):
                     "time": now_utc_iso(),
                     "model": result.get("model", OPENAI_MODEL),
                     "reply": reply,
-                    "api": "responses" if "choices" in result else "unknown",
+                    "api": "openai",
                     "raw": result  # Keep raw response for backward compatibility
                 }
                 self.send_json(response)
