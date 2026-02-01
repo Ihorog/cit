@@ -21,6 +21,7 @@ from urllib.error import URLError
 from pathlib import Path
 import base64
 import time
+from datetime import datetime, timezone
 
 # Імпорт модуля аудиту
 try:
@@ -30,6 +31,11 @@ try:
 except ImportError:
     AUDIT_ENABLED = False
     print("[WARNING] Audit module not available")
+
+# ============ Утиліти ============
+def now_utc_iso():
+    """Return current UTC time in ISO 8601 format"""
+    return datetime.now(timezone.utc).isoformat()
 
 # ============ Конфігурація ============
 HOST = "0.0.0.0"
@@ -951,7 +957,8 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        const reply = data.choices?.[0]?.message?.content || 'Немає відповіді';
+        // Support both old format (data.choices) and new format (data.reply)
+        const reply = data.reply || data.choices?.[0]?.message?.content || 'Немає відповіді';
         chat.messages.push({ role: 'assistant', content: reply, timestamp: Date.now() });
         setStatus(true);
       } catch (err) {
@@ -969,7 +976,9 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
       try {
         const res = await fetch('/health');
         const data = await res.json();
-        if (data.api_configured) {
+        // Support both old format (api_configured) and new format (openai)
+        const apiConfigured = data.openai !== undefined ? data.openai : data.api_configured;
+        if (apiConfigured) {
           apiStatus.classList.remove('error');
           apiStatusText.textContent = `API: ${data.model}`;
           setStatus(true);
@@ -1068,9 +1077,12 @@ class CiHandler(BaseHTTPRequestHandler):
                 self.wfile.write(base64.b64decode(ICON_BASE64))
             elif path_only == "/health":
                 self.send_json({
-                    "status": "ok",
-                    "api_configured": bool(OPENAI_API_KEY),
-                    "model": OPENAI_MODEL
+                    "ok": True,
+                    "service": "cit",
+                    "time": now_utc_iso(),
+                    "port": PORT,
+                    "model": OPENAI_MODEL,
+                    "openai": bool(OPENAI_API_KEY)
                 })
             elif path_only == "/audit":
                 self.handle_audit_report()
@@ -1143,6 +1155,25 @@ class CiHandler(BaseHTTPRequestHandler):
 
         messages = data.get("messages", [])
         
+        # Handle empty message gracefully - check if no messages or all messages are empty
+        empty_message_response = {
+            "ok": True,
+            "cit": "v1",
+            "time": now_utc_iso(),
+            "model": OPENAI_MODEL,
+            "reply": "Send me a message to start chatting!",
+            "api": "system",
+            "raw": None
+        }
+        
+        if not messages:
+            self.send_json(empty_message_response)
+            return
+        
+        if all(not msg.get("content", "").strip() for msg in messages):
+            self.send_json(empty_message_response)
+            return
+        
         try:
             req_data = json.dumps({
                 "model": OPENAI_MODEL,
@@ -1161,7 +1192,25 @@ class CiHandler(BaseHTTPRequestHandler):
 
             with urlopen(req, timeout=60) as resp:
                 result = json.loads(resp.read())
-                self.send_json(result)
+                
+                # Extract reply from OpenAI response
+                choices = result.get("choices", [])
+                if not choices:
+                    reply = "No response received from API"
+                else:
+                    reply = choices[0].get("message", {}).get("content", "")
+                
+                # Return in documented format while maintaining backward compatibility
+                response = {
+                    "ok": True,
+                    "cit": "v1",
+                    "time": now_utc_iso(),
+                    "model": result.get("model", OPENAI_MODEL),
+                    "reply": reply,
+                    "api": "openai",
+                    "raw": result  # Keep raw response for backward compatibility
+                }
+                self.send_json(response)
 
         except URLError as e:
             self.send_json({"error": f"API помилка: {str(e)}"}, 500)
