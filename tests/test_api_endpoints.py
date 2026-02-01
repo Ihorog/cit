@@ -41,10 +41,10 @@ def test_health_endpoint():
         assert isinstance(data['model'], str), "model should be a string"
         assert isinstance(data['openai'], bool), "openai should be a boolean"
         
-        # Verify timestamp format (ISO 8601)
+        # Verify timestamp format (ISO 8601 with timezone)
         assert 'T' in data['time'], "time should be in ISO 8601 format"
-        assert data['time'].endswith('Z') or '+' in data['time'] or data['time'].endswith(':00'), \
-            "time should include timezone info"
+        assert data['time'].endswith('Z') or '+' in data['time'] or '-' in data['time'].split('T')[-1], \
+            "time should include timezone info (Z or offset)"
         
         print(f"✓ /health endpoint returns correct schema")
         print(f"  Response: {json.dumps(data, indent=2)}")

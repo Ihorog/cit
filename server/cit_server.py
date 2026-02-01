@@ -45,7 +45,7 @@ def register_subscriber(ip, user_agent):
         client_type = "AI_AGENT" if any(x in user_agent.lower() for x in ["python", "curl", "gpt", "gemini", "ai"]) else "WEB_USER"
         
         data["active_subscribers"][ip] = {
-            "last_seen": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_seen": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
             "client_type": client_type,
             "provisioning_status": "package_optimized"
         }

@@ -1,9 +1,9 @@
 {
-  "system_id": "Ci-Omega",
-  "last_audit": "2026-01-22",
-  "storage_map": {
-    "local": "~/cit/storage",
-    "remote": "/mnt/keenetic/cit"
-  },
-  "components": []
+    "active_subscribers": {
+        "127.0.0.1": {
+            "last_seen": "2026-02-01 17:34:30",
+            "client_type": "WEB_USER",
+            "provisioning_status": "package_optimized"
+        }
+    }
 }
