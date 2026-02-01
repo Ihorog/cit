@@ -1156,28 +1156,22 @@ class CiHandler(BaseHTTPRequestHandler):
         messages = data.get("messages", [])
         
         # Handle empty message gracefully - check if no messages or all messages are empty
+        empty_message_response = {
+            "ok": True,
+            "cit": "v1",
+            "time": now_utc_iso(),
+            "model": OPENAI_MODEL,
+            "reply": "Send me a message to start chatting!",
+            "api": "system",
+            "raw": None
+        }
+        
         if not messages:
-            self.send_json({
-                "ok": True,
-                "cit": "v1",
-                "time": now_utc_iso(),
-                "model": OPENAI_MODEL,
-                "reply": "Send me a message to start chatting!",
-                "api": "system",
-                "raw": None
-            })
+            self.send_json(empty_message_response)
             return
         
         if all(not msg.get("content", "").strip() for msg in messages):
-            self.send_json({
-                "ok": True,
-                "cit": "v1",
-                "time": now_utc_iso(),
-                "model": OPENAI_MODEL,
-                "reply": "Send me a message to start chatting!",
-                "api": "system",
-                "raw": None
-            })
+            self.send_json(empty_message_response)
             return
         
         try:
@@ -1202,7 +1196,7 @@ class CiHandler(BaseHTTPRequestHandler):
                 # Extract reply from OpenAI response
                 choices = result.get("choices", [])
                 if not choices:
-                    reply = ""
+                    reply = "No response received from API"
                 else:
                     reply = choices[0].get("message", {}).get("content", "")
                 
