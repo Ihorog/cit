@@ -4,6 +4,8 @@
 *.bak
 *.bak.*
 *.backup*
+*_bak_*
+*.old
 *.db
 data/
 db/
