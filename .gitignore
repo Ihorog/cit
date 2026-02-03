@@ -4,6 +4,8 @@
 *.bak
 *.bak.*
 *.backup*
+*_bak_*
+*.old
 *.db
 data/
 db/
@@ -15,6 +17,9 @@ __pycache__/
 node_modules/
 package-lock.json
 storage/jobs/
+*.log
+server_log.txt
+system_status.log
 
 .vs/
 __pycache__/
