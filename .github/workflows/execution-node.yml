@@ -25,6 +25,10 @@ env:
   NODE_ID: ${{ github.event.inputs.node_id }}
   NODE_TYPE: ${{ github.event.inputs.node_type }}
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   # ═══════════════════════════════════════════════════════
   # WAIT FOR DEPENDENCIES

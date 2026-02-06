@@ -27,6 +27,10 @@ env:
   MISSION: ${{ github.event.inputs.mission }}
   SCALE: ${{ github.event.inputs.scale }}
 
+permissions:
+  contents: read
+  actions: write
+
 jobs:
   # ═══════════════════════════════════════════════════════
   # PHASE 0: ANALYSIS AND PLANNING
