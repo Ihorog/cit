@@ -81,25 +81,10 @@ class ExecutionMonitor {
     for (const artifact of nodeArtifacts) {
       const nodeId = artifact.name.replace('node-', '');
 
-      try {
-        await this.octokit.actions.downloadArtifact({
-          owner: this.owner,
-          repo: this.repo,
-          artifact_id: artifact.id,
-          archive_format: 'zip'
-        });
-
-        statuses.push({
-          nodeId,
-          status: 'completed'
-        });
-      } catch (error) {
-        statuses.push({
-          nodeId,
-          status: 'failed',
-          error: error.message
-        });
-      }
+      statuses.push({
+        nodeId,
+        status: 'completed'
+      });
     }
 
     return statuses;

@@ -83,29 +83,40 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          TASK_TYPE: ${{ matrix.task.type }}
+          TASK_INPUT: ${{ matrix.task.input }}
+          TASK_TOOL: ${{ matrix.task.tool }}
         run: |
+          # Validate tool name contains only alphanumeric chars, hyphens, underscores
+          if [ -n "$TASK_TOOL" ]; then
+            if ! echo "$TASK_TOOL" | grep -qE '^[a-zA-Z0-9_-]+$'; then
+              echo "Invalid tool name: $TASK_TOOL"
+              exit 1
+            fi
+          fi
+
           # Task execution based on type
-          case "${{ matrix.task.type }}" in
+          case "$TASK_TYPE" in
             "analyze")
-              node arci/analyst.js "${{ matrix.task.input }}" > task-result.json
+              node arci/analyst.js "$TASK_INPUT" > task-result.json
               ;;
             "design")
-              node arci/architect.js "${{ matrix.task.input }}" > task-result.json
+              node arci/architect.js "$TASK_INPUT" > task-result.json
               ;;
             "develop")
-              node arci/developer.js "${{ matrix.task.input }}" > task-result.json
+              node arci/developer.js "$TASK_INPUT" > task-result.json
               ;;
             "test")
-              node arci/tester.js "${{ matrix.task.input }}" > task-result.json
+              node arci/tester.js "$TASK_INPUT" > task-result.json
               ;;
             "deploy")
-              node arci/deployer.js "${{ matrix.task.input }}" > task-result.json
+              node arci/deployer.js "$TASK_INPUT" > task-result.json
               ;;
             "audit")
-              node tools/${{ matrix.task.tool }}.js "${{ matrix.task.input }}" > task-result.json
+              node "tools/${TASK_TOOL}.js" "$TASK_INPUT" > task-result.json
               ;;
             *)
-              echo "Unknown task type: ${{ matrix.task.type }}"
+              echo "Unknown task type: $TASK_TYPE"
               exit 1
               ;;
           esac

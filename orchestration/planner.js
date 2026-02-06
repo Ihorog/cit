@@ -3,10 +3,12 @@
  */
 
 import fs from 'fs/promises';
+import crypto from 'crypto';
 
 class ExecutionPlanner {
   constructor() {
     this.plan = null;
+    this.nodeCounter = 0;
   }
 
   /**
@@ -26,7 +28,7 @@ class ExecutionPlanner {
     const optimized = await this.optimizeDistribution(nodes, tasks, dependencies);
 
     this.plan = {
-      conductor_id: Date.now(),
+      conductor_id: crypto.randomUUID(),
       mission: analysis.goal,
       scale,
       nodes: optimized.nodes,
@@ -65,7 +67,7 @@ class ExecutionPlanner {
 
     // Create nodes for each type
     for (const [type, typeTasks] of Object.entries(tasksByType)) {
-      const nodeId = `node_${type}_${Date.now()}`;
+      const nodeId = `node_${type}_${++this.nodeCounter}`;
 
       nodes.push({
         id: nodeId,
