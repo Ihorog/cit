@@ -1,0 +1,171 @@
+name: Execution Node
+
+on:
+  workflow_dispatch:
+    inputs:
+      conductor_id:
+        required: true
+        type: string
+      node_id:
+        required: true
+        type: string
+      node_type:
+        required: true
+        type: string
+      tasks:
+        required: true
+        type: string
+      dependencies:
+        required: false
+        type: string
+        default: '[]'
+
+env:
+  CONDUCTOR_ID: ${{ github.event.inputs.conductor_id }}
+  NODE_ID: ${{ github.event.inputs.node_id }}
+  NODE_TYPE: ${{ github.event.inputs.node_type }}
+
+jobs:
+  # ═══════════════════════════════════════════════════════
+  # WAIT FOR DEPENDENCIES
+  # ═══════════════════════════════════════════════════════
+
+  wait-dependencies:
+    name: "\u23F3 Wait for Dependencies"
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Dependencies
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node orchestration/check-dependencies.js \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --node-id ${{ env.NODE_ID }} \
+            --dependencies '${{ github.event.inputs.dependencies }}'
+
+  # ═══════════════════════════════════════════════════════
+  # EXECUTE TASKS IN PARALLEL
+  # ═══════════════════════════════════════════════════════
+
+  execute-tasks:
+    name: "\U0001F527 Execute Tasks"
+    needs: wait-dependencies
+    if: needs.wait-dependencies.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        task: ${{ fromJson(github.event.inputs.tasks) }}
+      max-parallel: 5
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Execute Task
+        id: execute
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          # Task execution based on type
+          case "${{ matrix.task.type }}" in
+            "analyze")
+              node arci/analyst.js "${{ matrix.task.input }}" > task-result.json
+              ;;
+            "design")
+              node arci/architect.js "${{ matrix.task.input }}" > task-result.json
+              ;;
+            "develop")
+              node arci/developer.js "${{ matrix.task.input }}" > task-result.json
+              ;;
+            "test")
+              node arci/tester.js "${{ matrix.task.input }}" > task-result.json
+              ;;
+            "deploy")
+              node arci/deployer.js "${{ matrix.task.input }}" > task-result.json
+              ;;
+            "audit")
+              node tools/${{ matrix.task.tool }}.js "${{ matrix.task.input }}" > task-result.json
+              ;;
+            *)
+              echo "Unknown task type: ${{ matrix.task.type }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Report Task Result
+        if: always()
+        run: |
+          node orchestration/report-task.js \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --node-id ${{ env.NODE_ID }} \
+            --task-id ${{ matrix.task.id }} \
+            --result task-result.json \
+            --status ${{ steps.execute.outcome }}
+
+      - name: Upload Task Result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: task-${{ env.NODE_ID }}-${{ matrix.task.id }}
+          path: task-result.json
+          retention-days: 7
+
+  # ═══════════════════════════════════════════════════════
+  # AGGREGATE NODE RESULTS
+  # ═══════════════════════════════════════════════════════
+
+  aggregate-node:
+    name: "\U0001F4E6 Aggregate Node Results"
+    needs: execute-tasks
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download All Task Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: task-${{ env.NODE_ID }}-*
+          path: task-results/
+
+      - name: Aggregate Results
+        run: |
+          node orchestration/aggregate-node.js \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --node-id ${{ env.NODE_ID }} \
+            --results-dir task-results/ \
+            --output node-result.json
+
+      - name: Report Node Completion
+        run: |
+          node orchestration/report-node.js \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --node-id ${{ env.NODE_ID }} \
+            --result node-result.json
+
+      - name: Upload Node Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-${{ env.NODE_ID }}
+          path: node-result.json
+          retention-days: 7

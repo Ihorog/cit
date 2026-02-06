@@ -1,0 +1,272 @@
+name: Conductor - Main Orchestrator
+
+on:
+  workflow_dispatch:
+    inputs:
+      mission:
+        description: 'High-level mission'
+        required: true
+        type: string
+      scale:
+        description: 'Execution scale'
+        required: true
+        type: choice
+        options:
+          - small    # 1-5 tasks
+          - medium   # 5-20 tasks
+          - large    # 20-50 tasks
+          - massive  # 50+ tasks
+      parallel:
+        description: 'Max parallel jobs'
+        required: false
+        default: '10'
+        type: string
+
+env:
+  CONDUCTOR_ID: ${{ github.run_id }}
+  MISSION: ${{ github.event.inputs.mission }}
+  SCALE: ${{ github.event.inputs.scale }}
+
+jobs:
+  # ═══════════════════════════════════════════════════════
+  # PHASE 0: ANALYSIS AND PLANNING
+  # ═══════════════════════════════════════════════════════
+
+  analyze-mission:
+    name: "\U0001F9E0 Analyze Mission"
+    runs-on: ubuntu-latest
+    outputs:
+      execution_plan: ${{ steps.plan.outputs.plan }}
+      node_count: ${{ steps.plan.outputs.nodes }}
+      task_count: ${{ steps.plan.outputs.tasks }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Analyze with ARCI Analyst
+        id: analyze
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node arci/analyst.js "${{ env.MISSION }}" > analysis.json
+          echo "analysis=$(cat analysis.json)" >> $GITHUB_OUTPUT
+
+      - name: Create Execution Plan
+        id: plan
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node orchestration/planner.js \
+            --analysis analysis.json \
+            --scale ${{ env.SCALE }} \
+            --output execution-plan.json
+
+          # Extract metadata
+          NODES=$(jq -r '.nodes | length' execution-plan.json)
+          TASKS=$(jq -r '.tasks | length' execution-plan.json)
+
+          echo "nodes=$NODES" >> $GITHUB_OUTPUT
+          echo "tasks=$TASKS" >> $GITHUB_OUTPUT
+          echo "plan=$(cat execution-plan.json | jq -c)" >> $GITHUB_OUTPUT
+
+      - name: Upload Execution Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-plan
+          path: execution-plan.json
+          retention-days: 7
+
+      - name: Create Mission Dashboard
+        run: |
+          node orchestration/dashboard.js \
+            --plan execution-plan.json \
+            --output mission-dashboard.md
+
+      - name: Comment on Trigger
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const dashboard = fs.readFileSync('mission-dashboard.md', 'utf8');
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `## 🎯 Mission Orchestration Started\n\n${dashboard}`
+            });
+
+  # ═══════════════════════════════════════════════════════
+  # PHASE 1: DEPLOY EXECUTION NODES
+  # ═══════════════════════════════════════════════════════
+
+  deploy-nodes:
+    name: "\U0001F680 Deploy Execution Nodes"
+    needs: analyze-mission
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ${{ fromJson(needs.analyze-mission.outputs.execution_plan).nodes }}
+      max-parallel: ${{ fromJson(github.event.inputs.parallel) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Execution Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: execution-plan
+
+      - name: Trigger Node Workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const node = ${{ toJson(matrix.node) }};
+
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'execution-node.yml',
+              ref: context.ref,
+              inputs: {
+                conductor_id: '${{ env.CONDUCTOR_ID }}',
+                node_id: node.id,
+                node_type: node.type,
+                tasks: JSON.stringify(node.tasks),
+                dependencies: JSON.stringify(node.dependencies || [])
+              }
+            });
+
+            console.log(`✅ Deployed node: ${node.id} (${node.type})`);
+
+      - name: Register Node
+        run: |
+          node orchestration/register-node.js \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --node-id ${{ matrix.node.id }} \
+            --status deployed
+
+  # ═══════════════════════════════════════════════════════
+  # PHASE 2: MONITOR EXECUTION
+  # ═══════════════════════════════════════════════════════
+
+  monitor-execution:
+    name: "\U0001F4CA Monitor Execution"
+    needs: [analyze-mission, deploy-nodes]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Monitor Nodes
+        id: monitor
+        timeout-minutes: 120
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node orchestration/monitor.js \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --total-nodes ${{ needs.analyze-mission.outputs.node_count }} \
+            --total-tasks ${{ needs.analyze-mission.outputs.task_count }} \
+            --timeout 7200
+
+      - name: Collect Results
+        if: always()
+        run: |
+          node orchestration/collect-results.js \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --output results.json
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-results
+          path: results.json
+          retention-days: 30
+
+  # ═══════════════════════════════════════════════════════
+  # PHASE 3: AGGREGATION AND REPORTING
+  # ═══════════════════════════════════════════════════════
+
+  aggregate-results:
+    name: "\U0001F4C8 Aggregate Results"
+    needs: monitor-execution
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Results
+        uses: actions/download-artifact@v4
+        with:
+          name: execution-results
+
+      - name: Generate Report
+        run: |
+          node orchestration/report-generator.js \
+            --results results.json \
+            --format markdown \
+            --output final-report.md
+
+      - name: Generate Metrics
+        run: |
+          node orchestration/metrics-generator.js \
+            --results results.json \
+            --output metrics.json
+
+      - name: Update CAV State
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          node core/cav.js update \
+            --conductor-id ${{ env.CONDUCTOR_ID }} \
+            --results results.json \
+            --metrics metrics.json
+
+      - name: Post Final Report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('final-report.md', 'utf8');
+
+            await github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: `## 🎉 Mission Complete\n\n${report}`
+            });
+
+      - name: Archive Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-mission-results
+          path: |
+            final-report.md
+            metrics.json
+            results.json
+          retention-days: 90
