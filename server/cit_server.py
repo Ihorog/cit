@@ -3,7 +3,6 @@ from flask_cors import CORS
 import json
 import os
 import sys
-import signal
 import threading
 import logging
 from datetime import datetime, timezone
@@ -205,8 +204,20 @@ def ai_passport():
 
 @app.route('/restart', methods=['POST'])
 def restart():
-    """Restart the CIT server process via API."""
+    """Restart the CIT server process via API. Localhost only."""
     try:
+        # Дозволити перезапуск лише з локального хоста
+        remote = request.remote_addr or ''
+        if remote not in ('127.0.0.1', '::1', 'localhost'):
+            logger.warning(f"Restart denied for remote addr: {remote}")
+            return jsonify({
+                "ok": False,
+                "service": "cit",
+                "time": datetime.now(timezone.utc).isoformat(),
+                "action": "restart",
+                "error": "Restart allowed from localhost only"
+            }), 403
+
         logger.info("Restart requested via /restart endpoint")
 
         def _do_restart():
