@@ -1,0 +1,18 @@
+[project]
+name = "cimeika"
+version = "0.1.0"
+description = "Організм інтегральної цілісності - 7 формацій"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pyyaml>=6.0",
+    "python-multipart>=0.0.6",
+]
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["core", "zdibnosti", "api"]
