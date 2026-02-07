@@ -1,21 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getCiStatus, formatStatus } from '@/lib/ci-engine';
 import type { CiContext, CiStatus } from '@/lib/ci-engine';
 
-type FlowState = 'landing' | 'threshold' | 'manifesting' | 'result' | 'seal';
-
-const SALT: Record<CiContext, number> = { career: 1, love: 2, timing: 3 };
-const STATES: CiStatus[] = ['PROCEED', 'HOLD', 'NOT_NOW'];
-
-function getCiStatusClient(context: CiContext, lockedMinuteUtc: number): CiStatus {
-  const seed = Number(lockedMinuteUtc) + (SALT[context] ?? 0);
-  return STATES[((seed % 3) + 3) % 3];
-}
-
-function formatStatus(status: CiStatus): string {
-  return status === 'NOT_NOW' ? 'NOT NOW' : status;
-}
+type FlowState = 'landing' | 'threshold' | 'manifesting' | 'result' | 'seal' | 'error';
 
 export default function ArtifactPage() {
   const [flow, setFlow] = useState<FlowState>('landing');
@@ -32,7 +21,7 @@ export default function ArtifactPage() {
   const handleConfirm = () => {
     const minute = Math.floor(Date.now() / 60000);
     setLockedMinute(minute);
-    const result = getCiStatusClient(context, minute);
+    const result = getCiStatus(context, minute);
     setStatus(result);
     setArtifactCode(`CI-${minute}-${context.slice(0, 3).toUpperCase()}`);
     setFlow('manifesting');
@@ -67,7 +56,7 @@ export default function ArtifactPage() {
         window.location.href = data.url;
       }
     } catch {
-      // Stripe checkout creation failed
+      setFlow('error');
     }
   };
 
@@ -134,6 +123,17 @@ export default function ArtifactPage() {
         {flow === 'seal' && (
           <div style={styles.section}>
             <p style={styles.subtitle}>Redirecting to payment...</p>
+          </div>
+        )}
+
+        {flow === 'error' && (
+          <div style={styles.section}>
+            <p style={{ color: '#ff6b6b', fontSize: '16px' }}>
+              Payment unavailable. Please try again.
+            </p>
+            <button onClick={() => setFlow('result')} style={styles.primaryBtn}>
+              Back
+            </button>
           </div>
         )}
       </div>

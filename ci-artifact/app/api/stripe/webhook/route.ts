@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const artifactCode = session.metadata?.artifact_code;
 
     if (artifactCode) {
-      await getSupabase()
+      const { error } = await getSupabase()
         .from('artifacts')
         .update({
           is_sealed: true,
@@ -37,6 +37,10 @@ export async function POST(req: NextRequest) {
           stripe_session_id: session.id,
         })
         .eq('artifact_code', artifactCode);
+
+      if (error) {
+        console.error('Supabase update failed:', error.message);
+      }
     }
   }
 
