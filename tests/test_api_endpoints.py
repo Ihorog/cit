@@ -198,6 +198,42 @@ def test_existing_ci1_endpoint():
         print(f"✓ Existing /ci1 endpoint still works correctly")
 
 
+def test_restart_endpoint():
+    """Test /restart endpoint returns correct schema and only accepts POST"""
+    print("\nTesting /restart endpoint...")
+    
+    with app.test_client() as client:
+        # POST should return restart confirmation
+        response = client.post('/restart')
+        
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}"
+        
+        data = response.get_json()
+        
+        required_fields = ['ok', 'service', 'time', 'action', 'message']
+        for field in required_fields:
+            assert field in data, f"Missing required field: {field}"
+        
+        assert data['ok'] is True, "ok should be True"
+        assert data['service'] == 'cit', "service should be 'cit'"
+        assert data['action'] == 'restart', "action should be 'restart'"
+        assert isinstance(data['message'], str), "message should be a string"
+        
+        print(f"✓ /restart endpoint returns correct schema")
+        print(f"  Response: {json.dumps(data, indent=2)}")
+
+
+def test_restart_endpoint_rejects_get():
+    """Test /restart endpoint rejects GET requests"""
+    print("\nTesting /restart endpoint rejects GET...")
+    
+    with app.test_client() as client:
+        response = client.get('/restart')
+        assert response.status_code == 405, f"Expected 405, got {response.status_code}"
+        
+        print(f"✓ /restart endpoint correctly rejects GET requests")
+
+
 def run_all_tests():
     """Run all test functions"""
     print("=" * 60)
@@ -212,6 +248,8 @@ def run_all_tests():
         test_chat_endpoint_missing_message_field,
         test_chat_endpoint_invalid_json,
         test_existing_ci1_endpoint,
+        test_restart_endpoint,
+        test_restart_endpoint_rejects_get,
     ]
     
     passed = 0
