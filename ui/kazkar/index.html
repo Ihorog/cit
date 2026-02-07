@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📖 Казкар — Форма Оповіді</title>
+    <link rel="stylesheet" href="styli/kazkar.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="title">📖 Казкар</h1>
+            <p class="subtitle">Форма Оповіді — здатність зберігати сенс</p>
+            <div class="tsilisnist-indicator" id="tsilisnist">
+                <div class="tsilisnist-label">Цілісність:</div>
+                <div class="tsilisnist-bar">
+                    <div class="tsilisnist-fill" id="tsilisnist-fill"></div>
+                </div>
+                <div class="tsilisnist-value" id="tsilisnist-value">0%</div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Кнопка активації -->
+            <div class="activation-section" id="activation-section">
+                <button class="btn-activate" id="btn-activate">
+                    Активувати Казкар
+                </button>
+                <div class="activation-status" id="activation-status"></div>
+            </div>
+
+            <!-- Вхід у Легенду Сі -->
+            <div class="legenda-card card-glow" id="legenda-card" style="display: none;">
+                <div class="card-icon">✨</div>
+                <h2 class="card-title">Легенда Сі</h2>
+                <p class="card-description">
+                    Інтерактивне поле знання, де ти не читаєш текст,
+                    а досліджуєш сенси через семантичний граф
+                </p>
+                <button class="btn-enter" id="btn-enter-legenda">
+                    Увійти в Легенду
+                </button>
+            </div>
+
+            <!-- Плетіння зв'язності -->
+            <div class="zv-yaznist-section card" id="zv-yaznist-section" style="display: none;">
+                <h2>Плетіння Зв'язності</h2>
+                <p class="section-description">
+                    Створи оповідь з подій — знайди зв'язок між ними
+                </p>
+                <div class="form-group">
+                    <label>Події (кожна з нового рядка):</label>
+                    <textarea 
+                        id="podiyi-input" 
+                        rows="5" 
+                        placeholder="Подія 1&#10;Подія 2&#10;Подія 3"
+                    ></textarea>
+                </div>
+                <button class="btn-action" id="btn-plesty">
+                    Плести Зв'язність
+                </button>
+                <div class="opovid-result" id="opovid-result"></div>
+            </div>
+
+            <!-- Останні оповіді -->
+            <div class="opovidi-section card" id="opovidi-section" style="display: none;">
+                <h2>Останні Оповіді</h2>
+                <div class="opovidi-list" id="opovidi-list">
+                    <!-- Список оповідей буде тут -->
+                </div>
+            </div>
+
+            <!-- Архетипи -->
+            <div class="arkhetypy-section card" id="arkhetypy-section" style="display: none;">
+                <h2>7 Архетипів</h2>
+                <div class="arkhetypy-grid" id="arkhetypy-grid">
+                    <!-- Архетипи будуть тут -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Навігація по формаціях -->
+        <nav class="formatsiyi-nav">
+            <a href="/" class="nav-link">🏠 Головна</a>
+            <span class="nav-link active">📖 Казкар</span>
+            <span class="nav-link disabled">🔮 Формація 2</span>
+            <span class="nav-link disabled">🌟 Формація 3</span>
+        </nav>
+    </div>
+
+    <script src="skripty/kazkar.js"></script>
+</body>
+</html>
