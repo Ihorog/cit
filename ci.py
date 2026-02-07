@@ -1147,8 +1147,6 @@ class CiHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def handle_chat(self, data):
-        global OPENAI_API_KEY, OPENAI_MODEL
-        
         if not OPENAI_API_KEY:
             self.send_json({"error": "API ключ не налаштовано. Відкрий налаштування."}, 400)
             return
