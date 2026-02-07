@@ -1,8 +1,8 @@
 {
     "active_subscribers": {
         "127.0.0.1": {
-            "last_seen": "2026-02-01 17:35:57",
-            "client_type": "AI_AGENT",
+            "last_seen": "2026-02-07 14:25:45",
+            "client_type": "WEB_USER",
             "provisioning_status": "package_optimized"
         }
     }
