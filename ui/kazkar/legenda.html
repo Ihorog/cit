@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Легенда Сі</title>
+    <link rel="stylesheet" href="styli/legenda.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="index.html" class="back-link">← Назад до Казкара</a>
+            <h1 class="title">✨ Легенда Сі</h1>
+            <p class="subtitle">Інтерактивне поле знання</p>
+        </header>
+
+        <main class="main-content">
+            <!-- Поточний вузол -->
+            <div class="current-node-section">
+                <div class="node-card" id="current-node">
+                    <div class="node-depth">Глибина: <span id="node-depth">0</span></div>
+                    <h2 class="node-title" id="node-title">Присутність</h2>
+                    <p class="node-description" id="node-description">
+                        Завантаження...
+                    </p>
+                    <div class="node-archetype" id="node-archetype">
+                        Архетип: <span id="archetype-name">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Візуалізація графа -->
+            <div class="graph-section card">
+                <h3>Граф Сенсів</h3>
+                <div class="graph-container" id="graph-container">
+                    <svg id="graph-svg" width="100%" height="400"></svg>
+                </div>
+            </div>
+
+            <!-- Резонуючі сенси -->
+            <div class="resonance-section card">
+                <h3>Резонуючі Сенси</h3>
+                <div class="resonance-tags" id="resonance-tags">
+                    <!-- Теги будуть тут -->
+                </div>
+            </div>
+
+            <!-- Доступні шляхи -->
+            <div class="paths-section card">
+                <h3>Доступні Шляхи</h3>
+                <div class="paths-grid" id="paths-grid">
+                    <!-- Шляхи будуть тут -->
+                </div>
+            </div>
+
+            <!-- Пошук -->
+            <div class="search-section card">
+                <h3>Семантичний Пошук</h3>
+                <div class="search-input-group">
+                    <input 
+                        type="text" 
+                        id="search-input" 
+                        placeholder="Пошук по сенсу..."
+                    >
+                    <button id="btn-search" class="btn-search">🔍</button>
+                </div>
+                <div class="search-results" id="search-results"></div>
+            </div>
+
+            <!-- Історія навігації -->
+            <div class="history-section card">
+                <h3>Історія Навігації</h3>
+                <div class="history-breadcrumbs" id="history-breadcrumbs">
+                    <!-- Шлях буде тут -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="skripty/navihatsiya_legendy.js"></script>
+</body>
+</html>

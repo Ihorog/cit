@@ -1,0 +1,99 @@
+{
+  "orhanizm": {
+    "nazva": "Cimeika",
+    "versiya": "0.1.0",
+    "stan": "aktyvnyy",
+    "opys": "Організм інтегральної цілісності — 7 формацій"
+  },
+  "formatsiyi": {
+    "kazkar": {
+      "nazva": "Казкар",
+      "symvol": "📖",
+      "poryadok": 1,
+      "aktyvna": false,
+      "stan": "gotova_do_aktyvatsii",
+      "tsilisnist": 0.0,
+      "komponenty": {
+        "legenda_si": {
+          "nazva": "✨ Легенда Сі",
+          "aktyvna": false,
+          "kilkist_vuzliv": 10,
+          "kilkist_zv_yazkiv": 10
+        },
+        "arkhetypy": {
+          "kilkist": 7,
+          "zavantazheni": false
+        },
+        "opovidach": {
+          "kilkist_istoriy": 0
+        }
+      },
+      "ostannya_aktyvatsiya": null
+    },
+    "formatsiya_2": {
+      "nazva": "Формація 2",
+      "symvol": "🔮",
+      "poryadok": 2,
+      "aktyvna": false,
+      "stan": "v_rozrobtsi"
+    },
+    "formatsiya_3": {
+      "nazva": "Формація 3",
+      "symvol": "🌟",
+      "poryadok": 3,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_4": {
+      "nazva": "Формація 4",
+      "symvol": "🌊",
+      "poryadok": 4,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_5": {
+      "nazva": "Формація 5",
+      "symvol": "🔥",
+      "poryadok": 5,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_6": {
+      "nazva": "Формація 6",
+      "symvol": "🌳",
+      "poryadok": 6,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_7": {
+      "nazva": "Формація 7",
+      "symvol": "✨",
+      "poryadok": 7,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    }
+  },
+  "si": {
+    "nazva": "Сі",
+    "opys": "Центр присутності організму",
+    "aktyvna": false,
+    "dykhalnyy_tsykl": false,
+    "formatsiyi_zareaestrovani": []
+  },
+  "dzerkalo": {
+    "nazva": "Дзеркало",
+    "opys": "Синхронізація UI ↔ Dev",
+    "aktyvne": true,
+    "ostannye_synkhronizatsiya": null
+  },
+  "synkhronizatsiya": {
+    "ostannye_onovlennya": "2026-02-07T14:20:00Z",
+    "dzerkalo_aktyvne": true,
+    "versiya_manifestu": "1.0"
+  },
+  "meta": {
+    "stvorennya": "2026-02-07T14:20:00Z",
+    "avtor": "Ihorog",
+    "lisenzia": "Cimeika Ecosystem"
+  }
+}
