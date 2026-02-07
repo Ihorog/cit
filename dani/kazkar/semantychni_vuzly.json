@@ -1,0 +1,94 @@
+{
+  "vuzly": [
+    {
+      "id": "prysutnist",
+      "nazva": "Присутність",
+      "opys": "Центральна точка всього. Здатність бути тут і зараз.",
+      "hlybyna": 0,
+      "zv_yazani_vuzly": ["tysha", "dostatnist", "moment"],
+      "rezonansni_sensy": ["усвідомленість", "тепер", "буття"],
+      "arkhetyp": "Поріг"
+    },
+    {
+      "id": "tysha",
+      "nazva": "Тиша",
+      "opys": "Простір без шуму. Місце, де можна почути себе.",
+      "hlybyna": 1,
+      "zv_yazani_vuzly": ["prysutnist", "spokiy"],
+      "rezonansni_sensy": ["спокій", "порожнеча", "глибина"],
+      "arkhetyp": "Рефлексія"
+    },
+    {
+      "id": "dostatnist",
+      "nazva": "Достатність",
+      "opys": "Відчуття повноти. Відсутність браку.",
+      "hlybyna": 1,
+      "zv_yazani_vuzly": ["prysutnist", "pryynyattya"],
+      "rezonansni_sensy": ["повнота", "гармонія", "задоволення"],
+      "arkhetyp": "Творення"
+    },
+    {
+      "id": "moment",
+      "nazva": "Момент",
+      "opys": "Точка в часі. Миттєвість, що містить вічність.",
+      "hlybyna": 1,
+      "zv_yazani_vuzly": ["prysutnist", "chas"],
+      "rezonansni_sensy": ["зараз", "миттєвість", "вічність"],
+      "arkhetyp": "Цикл"
+    },
+    {
+      "id": "spokiy",
+      "nazva": "Спокій",
+      "opys": "Стан без тривоги. Внутрішня рівновага.",
+      "hlybyna": 2,
+      "zv_yazani_vuzly": ["tysha", "balans"],
+      "rezonansni_sensy": ["рівновага", "мир", "стабільність"],
+      "arkhetyp": "Рефлексія"
+    },
+    {
+      "id": "pryynyattya",
+      "nazva": "Прийняття",
+      "opys": "Здатність приймати те, що є. Без опору.",
+      "hlybyna": 2,
+      "zv_yazani_vuzly": ["dostatnist", "mudrist"],
+      "rezonansni_sensy": ["відпускання", "дозвіл", "потік"],
+      "arkhetyp": "Перетворення"
+    },
+    {
+      "id": "chas",
+      "nazva": "Час",
+      "opys": "Потік подій. Ритм існування.",
+      "hlybyna": 2,
+      "zv_yazani_vuzly": ["moment", "tsykl"],
+      "rezonansni_sensy": ["ритм", "плин", "тривалість"],
+      "arkhetyp": "Цикл"
+    },
+    {
+      "id": "balans",
+      "nazva": "Баланс",
+      "opys": "Динамічна рівновага. Гармонія протилежностей.",
+      "hlybyna": 3,
+      "zv_yazani_vuzly": ["spokiy"],
+      "rezonansni_sensy": ["гармонія", "центрованість", "рівновага"],
+      "arkhetyp": "Зв'язок"
+    },
+    {
+      "id": "mudrist",
+      "nazva": "Мудрість",
+      "opys": "Глибоке розуміння. Знання через досвід.",
+      "hlybyna": 3,
+      "zv_yazani_vuzly": ["pryynyattya"],
+      "rezonansni_sensy": ["розуміння", "досвід", "інсайт"],
+      "arkhetyp": "Мандрівка"
+    },
+    {
+      "id": "tsykl",
+      "nazva": "Цикл",
+      "opys": "Повторення з трансформацією. Спіраль розвитку.",
+      "hlybyna": 3,
+      "zv_yazani_vuzly": ["chas"],
+      "rezonansni_sensy": ["повторення", "ріст", "спіраль"],
+      "arkhetyp": "Цикл"
+    }
+  ]
+}

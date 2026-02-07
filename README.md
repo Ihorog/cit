@@ -287,3 +287,168 @@ See [docs/PROPOSAL_GUIDE.md](docs/PROPOSAL_GUIDE.md) for detailed instructions.
 ## License
 
 This project is released under the MIT License.  See `LICENSE` for details.
+
+---
+
+## 📖 Казкар — Форма Оповіді (v0.1.0)
+
+**Казкар** — перша з 7 формацій цілісності організму Cimeika. Це здатність зберігати сенс, бачити зв'язок між подіями, не загубитися в хаосі фактів.
+
+### Філософія
+
+```
+Казкар — це здатність зберігати сенс.
+Бачити зв'язок між подіями.
+Не загубитися в хаосі фактів.
+
+Відчувається як:
+- "я розумію, що зі мною відбувається"
+- внутрішня зв'язаність
+- відсутність абсурду
+
+Утримує цілісну картину без нав'язування істини.
+```
+
+### ✨ Легенда Сі
+
+Всередині Казкара знаходиться **Легенда Сі** — інтерактивне поле знання, де користувач не читає текст, а досліджує сенси через семантичний граф.
+
+**10 базових вузлів:**
+- **Присутність** (центр, глибина 0)
+- **Тиша**, **Достатність**, **Момент** (глибина 1)
+- **Спокій**, **Прийняття**, **Час** (глибина 2)
+- **Баланс**, **Мудрість**, **Цикл** (глибина 3)
+
+**7 архетипів:**
+- 🚪 Поріг — початок, перехід
+- ✨ Творення — народження нового
+- 🪞 Рефлексія — осмислення
+- 🔄 Цикл — повторення з трансформацією
+- 🔗 Зв'язок — об'єднання
+- 🧭 Мандрівка — шлях, пошук
+- 🦋 Перетворення — метаморфоза
+
+### Запуск Казкара
+
+```bash
+# Встановити залежності
+pip install -e .
+
+# Запустити FastAPI сервер
+uvicorn api.main:app --reload
+
+# Або з параметрами
+uvicorn api.main:app --host 0.0.0.0 --port 8000
+```
+
+Після запуску відкрийте браузер:
+- Головна: http://localhost:8000/
+- Казкар: http://localhost:8000/ui/kazkar/index.html
+- Легенда Сі: http://localhost:8000/ui/kazkar/legenda.html
+- API Docs: http://localhost:8000/docs
+
+### API Endpoints
+
+**Казкар:**
+- `GET /api/kazkar/aktyvuvaty` — активувати формацію
+- `GET /api/kazkar/proyav` — отримати стан для UI
+- `POST /api/kazkar/plesty-zv-yaznist` — створити оповідь з подій
+- `GET /api/kazkar/arkhetypy` — отримати всі архетипи
+- `GET /api/kazkar/opovidi/ostanni` — останні оповіді
+
+**Легенда Сі:**
+- `GET /api/kazkar/legenda/aktyvuvaty` — увійти в легенду
+- `GET /api/kazkar/legenda/navihuvaty/{vuzol_id}` — навігувати до вузла
+- `POST /api/kazkar/legenda/poshuk` — семантичний пошук
+- `GET /api/kazkar/legenda/eksport` — експортувати повний граф
+
+### Архітектура
+
+```
+cit/                      ← repo root = Python пакет
+├── __init__.py
+├── core/
+│   ├── si.py            # Сі — центр присутності
+│   ├── dzerkalo.py      # Дзеркало UI ↔ Dev
+│   └── formatsiyi.py    # Базовий клас формацій
+│
+├── zdibnosti/
+│   └── kazkar/
+│       ├── forma_opovidi.py       # Основний модуль Казкара
+│       ├── prostir_legendy.py     # ✨ Легенда Сі
+│       ├── semantychnyi_graf.py   # Семантичний граф
+│       ├── dvyhun_arkhetypiv.py   # Двигун архетипів
+│       └── opovidach.py           # Генератор оповідей
+│
+├── api/
+│   ├── main.py          # FastAPI app
+│   └── kazkar_routes.py # API маршрути
+│
+├── ui/kazkar/           # Інтерфейс користувача
+├── dani/kazkar/         # Дані (архетипи, легенди)
+└── manifest.json        # Стан організму
+```
+
+### Компоненти
+
+**Сі (Si)** — центр присутності:
+- Фіксує момент "тепер"
+- Приймає сигнали від формацій
+- Підтримує дихальний цикл
+
+**Дзеркало (Dzerkalo)** — синхронізація:
+- Читає/записує manifest.json
+- Синхронізує UI ↔ Dev
+- Забезпечує узгодженість стану
+
+**Казкар (Formatsiya)** — форма оповіді:
+- Плете зв'язність між подіями
+- Утримує семантичний граф
+- Генерує оповіді через архетипи
+
+### Приклади використання
+
+**Python:**
+```python
+from zdibnosti.kazkar import Kazkar
+
+# Ініціалізація
+kazkar = Kazkar()
+
+# Активація
+result = kazkar.aktyvuvaty()
+print(f"Цілісність: {result['tsilisnist']}")
+
+# Вхід у Легенду Сі
+kazkar.uviyty_v_legendu()
+
+# Навігація
+nav = kazkar.navihuvaty_po_legendi('tysha')
+print(f"Поточний вузол: {nav['potochnyy_vuzol']['nazva']}")
+
+# Плетіння зв'язності
+podiyi = ["Ранок почався", "Виникла ідея", "Написав код"]
+opovid = kazkar.plesty_zv_yaznist(podiyi)
+print(f"Архетип: {opovid['opovid']['arkhetyp']['nazva']}")
+```
+
+**JavaScript (UI):**
+```javascript
+// Активація
+const response = await fetch('/api/kazkar/aktyvuvaty');
+const data = await response.json();
+
+// Навігація по легенді
+await fetch('/api/kazkar/legenda/aktyvuvaty');
+const nav = await fetch('/api/kazkar/legenda/navihuvaty/tysha');
+```
+
+### Дані
+
+**dani/kazkar/arkhetypy.yaml** — 7 архетипів з тригерами  
+**dani/kazkar/semantychni_vuzly.json** — 10 вузлів графа  
+**dani/kazkar/legendy/001_probudzhennya.md** — перша легенда
+
+### Майбутнє
+
+Казкар — перша з 7 формацій цілісності. Наступні формації будуть додані в майбутніх версіях, кожна з унікальними здібностями та інтеграцією з організмом Cimeika.
