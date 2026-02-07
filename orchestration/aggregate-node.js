@@ -25,8 +25,8 @@ async function listJsonFiles(dir) {
         files.push(fullPath);
       }
     }
-  } catch {
-    // Directory may not exist
+  } catch (err) {
+    console.error(`Failed to read directory ${dir}: ${err.message}`);
   }
   return files;
 }
@@ -49,7 +49,8 @@ if (resultsDir) {
     try {
       const data = JSON.parse(await fs.readFile(file, 'utf-8'));
       taskResults.push({ file: path.basename(file), ...data });
-    } catch {
+    } catch (err) {
+      console.error(`Failed to parse ${file}: ${err.message}`);
       taskResults.push({ file: path.basename(file), error: 'parse_failed' });
     }
   }

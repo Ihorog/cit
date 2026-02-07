@@ -22,7 +22,8 @@ if (!conductorId || !nodeId) {
 let dependencies;
 try {
   dependencies = JSON.parse(depsRaw);
-} catch {
+} catch (err) {
+  console.error(`Failed to parse dependencies: ${err.message}`);
   dependencies = [];
 }
 

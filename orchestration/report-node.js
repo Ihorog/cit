@@ -25,7 +25,8 @@ let result = null;
 if (resultPath) {
   try {
     result = JSON.parse(await fs.readFile(resultPath, 'utf-8'));
-  } catch {
+  } catch (err) {
+    console.error(`Failed to read result file ${resultPath}: ${err.message}`);
     result = { error: `Could not read result file: ${resultPath}` };
   }
 }
