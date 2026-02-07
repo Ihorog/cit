@@ -29,17 +29,25 @@ export async function POST(req: NextRequest) {
     const artifactCode = session.metadata?.artifact_code;
 
     if (artifactCode) {
-      const { error } = await getSupabase()
+      const { data, error } = await getSupabase()
         .from('artifacts')
         .update({
           is_sealed: true,
           sealed_at_utc: new Date().toISOString(),
           stripe_session_id: session.id,
         })
-        .eq('artifact_code', artifactCode);
+        .eq('artifact_code', artifactCode)
+        .eq('is_sealed', false)
+        .is('stripe_session_id', null)
+        .select();
 
       if (error) {
         console.error('Supabase update failed:', error.message);
+      } else if (!data || data.length !== 1) {
+        console.warn(
+          'Supabase update affected unexpected number of rows for artifact_code/session:',
+          { artifactCode, sessionId: session.id, updatedRows: data ? data.length : 0 },
+        );
       }
     }
   }
