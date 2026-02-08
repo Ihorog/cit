@@ -160,8 +160,9 @@ class JobStore:
                 break
             
             try:
-                job = json.loads(job_file.read_text(encoding="utf-8"))
-                jobs.append(job)
+                job = read_json_file(str(job_file))
+                if job:
+                    jobs.append(job)
             except Exception:
                 continue
         

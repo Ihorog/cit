@@ -1,7 +1,12 @@
-import json
+import sys
 import os
 import subprocess
+from pathlib import Path
 from datetime import datetime
+
+# Add parent directory to path for utils imports
+sys.path.insert(0, str(Path(__file__).parent))
+from utils.json_handler import read_json_file
 
 def get_node_status(port=5000):
     # Перевірка чи живий сервер
@@ -16,8 +21,11 @@ def check_registry():
     return "VALID" if os.path.exists(path) else "MISSING"
 
 def display_dashboard():
-    with open("docs/wiki/registry/matrix.json", "r") as f:
-        matrix = json.load(f)
+    matrix = read_json_file("docs/wiki/registry/matrix.json")
+    
+    if not matrix:
+        print("Error: Could not load matrix.json")
+        return
     
     print(f"\n{'='*75}")
     print(f"  CIMEIKA GLOBAL MONITOR | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")

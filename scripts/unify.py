@@ -5,9 +5,13 @@
 """
 import shutil
 import yaml
-import json
+import sys
 from pathlib import Path
 from typing import Dict
+
+# Add parent directory to path for utils imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.json_handler import read_json_file, write_json_file
 
 
 # Мапа репозиторіїв для інтеграції
@@ -55,18 +59,11 @@ def register_module(manifest: Dict) -> bool:
     registry_path = Path('registry/modules.json')
     
     # Завантажити існуючий реєстр
-    if not registry_path.exists():
-        registry = {
-            "version": "1.0.0",
-            "core": "Ihorog/cit",
-            "modules": []
-        }
-    else:
-        try:
-            registry = json.loads(registry_path.read_text())
-        except Exception as e:
-            print(f"❌ Error loading registry: {e}")
-            return False
+    registry = read_json_file(str(registry_path), default={
+        "version": "1.0.0",
+        "core": "Ihorog/cit",
+        "modules": []
+    })
     
     # Перевірити, чи модуль вже зареєстрований
     module_id = manifest['id']
