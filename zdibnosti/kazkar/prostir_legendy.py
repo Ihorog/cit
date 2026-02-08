@@ -285,3 +285,200 @@ class ProstirLegendy:
             for vuzol in self.vuzly.values()
             if vuzol.hlybyna == hlybyna
         ]
+    
+    def stvoryty_novyy_vuzol(
+        self,
+        vuzol_id: str,
+        nazva: str,
+        opys: str,
+        hlybyna: int,
+        zv_yazani_vuzly: Optional[List[str]] = None,
+        rezonansni_sensy: Optional[List[str]] = None,
+        arkhetyp: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Створити новий семантичний вузол у Легенді Сі
+        
+        Args:
+            vuzol_id: унікальний ідентифікатор вузла
+            nazva: назва вузла
+            opys: опис вузла
+            hlybyna: рівень глибини (0, 1, 2, 3, ...)
+            zv_yazani_vuzly: список ID зв'язаних вузлів
+            rezonansni_sensy: список резонансних сенсів
+            arkhetyp: назва архетипу
+            
+        Returns:
+            Результат операції з даними створеного вузла
+        """
+        # Перевірка: чи вузол вже існує
+        if vuzol_id in self.vuzly:
+            return {
+                "uspishno": False,
+                "pomylka": f"Вузол з ID '{vuzol_id}' вже існує",
+                "isnuyuchyy_vuzol": self.vuzly[vuzol_id].do_dict()
+            }
+        
+        # Перевірка зв'язаних вузлів
+        if zv_yazani_vuzly:
+            for zv_id in zv_yazani_vuzly:
+                if zv_id not in self.vuzly:
+                    return {
+                        "uspishno": False,
+                        "pomylka": f"Зв'язаний вузол '{zv_id}' не існує",
+                        "dostupni_vuzly": list(self.vuzly.keys())
+                    }
+        
+        # Створення нового вузла
+        novyy_vuzol = SemantychnyyVuzol(
+            id=vuzol_id,
+            nazva=nazva,
+            opys=opys,
+            hlybyna=hlybyna,
+            zv_yazani_vuzly=zv_yazani_vuzly or [],
+            rezonansni_sensy=rezonansni_sensy or [],
+            arkhetyp=arkhetyp
+        )
+        
+        self.vuzly[vuzol_id] = novyy_vuzol
+        
+        # Додати зворотні зв'язки до зв'язаних вузлів
+        if zv_yazani_vuzly:
+            for zv_id in zv_yazani_vuzly:
+                if vuzol_id not in self.vuzly[zv_id].zv_yazani_vuzly:
+                    self.vuzly[zv_id].zv_yazani_vuzly.append(vuzol_id)
+        
+        return {
+            "uspishno": True,
+            "novyy_vuzol": novyy_vuzol.do_dict(),
+            "zagalna_kilkist_vuzliv": len(self.vuzly),
+            "chas": datetime.now().isoformat()
+        }
+    
+    def dodaty_zv_yazok(self, vuzol_id_1: str, vuzol_id_2: str) -> Dict[str, Any]:
+        """
+        Додати зв'язок між двома існуючими вузлами
+        
+        Args:
+            vuzol_id_1: ID першого вузла
+            vuzol_id_2: ID другого вузла
+            
+        Returns:
+            Результат операції
+        """
+        # Перевірка існування вузлів
+        if vuzol_id_1 not in self.vuzly:
+            return {
+                "uspishno": False,
+                "pomylka": f"Вузол '{vuzol_id_1}' не знайдено",
+                "dostupni_vuzly": list(self.vuzly.keys())
+            }
+        
+        if vuzol_id_2 not in self.vuzly:
+            return {
+                "uspishno": False,
+                "pomylka": f"Вузол '{vuzol_id_2}' не знайдено",
+                "dostupni_vuzly": list(self.vuzly.keys())
+            }
+        
+        # Перевірка: чи зв'язок вже існує
+        if vuzol_id_2 in self.vuzly[vuzol_id_1].zv_yazani_vuzly:
+            return {
+                "uspishno": False,
+                "pomylka": f"Зв'язок між '{vuzol_id_1}' та '{vuzol_id_2}' вже існує"
+            }
+        
+        # Додати двосторонній зв'язок
+        self.vuzly[vuzol_id_1].zv_yazani_vuzly.append(vuzol_id_2)
+        if vuzol_id_1 not in self.vuzly[vuzol_id_2].zv_yazani_vuzly:
+            self.vuzly[vuzol_id_2].zv_yazani_vuzly.append(vuzol_id_1)
+        
+        return {
+            "uspishno": True,
+            "zv_yazok": {
+                "vuzol_1": self.vuzly[vuzol_id_1].do_dict(),
+                "vuzol_2": self.vuzly[vuzol_id_2].do_dict()
+            },
+            "chas": datetime.now().isoformat()
+        }
+    
+    def onovyty_vuzol(
+        self,
+        vuzol_id: str,
+        nazva: Optional[str] = None,
+        opys: Optional[str] = None,
+        hlybyna: Optional[int] = None,
+        rezonansni_sensy: Optional[List[str]] = None,
+        arkhetyp: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Оновити існуючий вузол
+        
+        Args:
+            vuzol_id: ID вузла для оновлення
+            nazva: нова назва (опційно)
+            opys: новий опис (опційно)
+            hlybyna: нова глибина (опційно)
+            rezonansni_sensy: нові резонансні сенси (опційно)
+            arkhetyp: новий архетип (опційно)
+            
+        Returns:
+            Результат операції з оновленим вузлом
+        """
+        if vuzol_id not in self.vuzly:
+            return {
+                "uspishno": False,
+                "pomylka": f"Вузол '{vuzol_id}' не знайдено",
+                "dostupni_vuzly": list(self.vuzly.keys())
+            }
+        
+        vuzol = self.vuzly[vuzol_id]
+        
+        # Оновити поля, якщо надано нові значення
+        if nazva is not None:
+            vuzol.nazva = nazva
+        if opys is not None:
+            vuzol.opys = opys
+        if hlybyna is not None:
+            vuzol.hlybyna = hlybyna
+        if rezonansni_sensy is not None:
+            vuzol.rezonansni_sensy = rezonansni_sensy
+        if arkhetyp is not None:
+            vuzol.arkhetyp = arkhetyp
+        
+        return {
+            "uspishno": True,
+            "onovlenyy_vuzol": vuzol.do_dict(),
+            "chas": datetime.now().isoformat()
+        }
+    
+    def vydalyty_vuzol(self, vuzol_id: str) -> Dict[str, Any]:
+        """
+        Видалити вузол з графа
+        
+        Args:
+            vuzol_id: ID вузла для видалення
+            
+        Returns:
+            Результат операції
+        """
+        if vuzol_id not in self.vuzly:
+            return {
+                "uspishno": False,
+                "pomylka": f"Вузол '{vuzol_id}' не знайдено"
+            }
+        
+        # Видалити всі зв'язки з цим вузлом
+        for vuzol in self.vuzly.values():
+            if vuzol_id in vuzol.zv_yazani_vuzly:
+                vuzol.zv_yazani_vuzly.remove(vuzol_id)
+        
+        # Видалити вузол
+        vydalenyy_vuzol = self.vuzly.pop(vuzol_id)
+        
+        return {
+            "uspishno": True,
+            "vydalenyy_vuzol": vydalenyy_vuzol.do_dict(),
+            "zalyshlasya_kilkist_vuzliv": len(self.vuzly),
+            "chas": datetime.now().isoformat()
+        }

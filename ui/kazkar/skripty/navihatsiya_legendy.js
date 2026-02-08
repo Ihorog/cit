@@ -21,6 +21,10 @@ async function initializeLegenda() {
         if (e.key === 'Enter') vykonatyPoshuk();
     });
     
+    // Обробники для форм редагування
+    document.getElementById('form-create-node')?.addEventListener('submit', stvorytyVuzol);
+    document.getElementById('form-add-link')?.addEventListener('submit', dodatyZvyazok);
+    
     // Активувати легенду і завантажити початковий вузол
     await aktyvuvatyLegendu();
 }
@@ -257,5 +261,106 @@ async function vykonatyPoshuk() {
     } catch (error) {
         console.error('Помилка пошуку:', error);
         resultsDiv.innerHTML = '<p style="color: #ff6b6b;">Помилка пошуку</p>';
+    }
+}
+
+// === Функції редагування графа ===
+
+async function stvorytyVuzol(event) {
+    event.preventDefault();
+    
+    const vuzolId = document.getElementById('new-node-id').value.trim();
+    const nazva = document.getElementById('new-node-nazva').value.trim();
+    const opys = document.getElementById('new-node-opys').value.trim();
+    const hlybyna = parseInt(document.getElementById('new-node-hlybyna').value);
+    const zvyazkyStr = document.getElementById('new-node-zvyazky').value.trim();
+    const sensyStr = document.getElementById('new-node-sensy').value.trim();
+    const arkhetyp = document.getElementById('new-node-arkhetyp').value.trim();
+    
+    // Парсинг списків
+    const zv_yazani_vuzly = zvyazkyStr ? zvyazkyStr.split(',').map(s => s.trim()).filter(s => s) : [];
+    const rezonansni_sensy = sensyStr ? sensyStr.split(',').map(s => s.trim()).filter(s => s) : [];
+    
+    try {
+        const response = await fetch(`${API_BASE}/legenda/vuzol`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                vuzol_id: vuzolId,
+                nazva: nazva,
+                opys: opys,
+                hlybyna: hlybyna,
+                zv_yazani_vuzly: zv_yazani_vuzly,
+                rezonansni_sensy: rezonansni_sensy,
+                arkhetyp: arkhetyp || null
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.uspishno) {
+            alert(`✅ Вузол "${nazva}" успішно створено!`);
+            
+            // Очистити форму
+            document.getElementById('form-create-node').reset();
+            
+            // Оновити граф
+            await zavantazhytyGraf();
+            
+            // Перейти до нового вузла
+            await navihuvaty(vuzolId);
+        } else {
+            alert(`❌ Помилка: ${data.pomylka}`);
+        }
+        
+    } catch (error) {
+        console.error('Помилка створення вузла:', error);
+        alert('❌ Помилка створення вузла');
+    }
+}
+
+async function dodatyZvyazok(event) {
+    event.preventDefault();
+    
+    const vuzolId1 = document.getElementById('link-node-1').value.trim();
+    const vuzolId2 = document.getElementById('link-node-2').value.trim();
+    
+    if (!vuzolId1 || !vuzolId2) {
+        alert('❌ Будь ласка, введіть обидва ID вузлів');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE}/legenda/zv-yazok`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                vuzol_id_1: vuzolId1,
+                vuzol_id_2: vuzolId2
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.uspishno) {
+            alert(`✅ Зв'язок між "${vuzolId1}" та "${vuzolId2}" створено!`);
+            
+            // Очистити форму
+            document.getElementById('form-add-link').reset();
+            
+            // Оновити граф
+            await zavantazhytyGraf();
+            
+            // Оновити відображення поточного вузла якщо це один з двох зв'язаних
+            if (legendaState.potochnyyVuzol?.id === vuzolId1 || legendaState.potochnyyVuzol?.id === vuzolId2) {
+                await vidbrazytyShlyakhy();
+            }
+        } else {
+            alert(`❌ Помилка: ${data.pomylka}`);
+        }
+        
+    } catch (error) {
+        console.error('Помилка створення зв\'язку:', error);
+        alert('❌ Помилка створення зв\'язку');
     }
 }

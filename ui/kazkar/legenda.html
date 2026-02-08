@@ -74,6 +74,63 @@
                     <!-- Шлях буде тут -->
                 </div>
             </div>
+
+            <!-- Редагування графа -->
+            <div class="edit-section card">
+                <h3>Редагування Графа</h3>
+                
+                <!-- Створення нового вузла -->
+                <div class="edit-subsection">
+                    <h4>Створити новий вузол</h4>
+                    <form id="form-create-node" class="node-form">
+                        <div class="form-group">
+                            <label for="new-node-id">ID вузла:</label>
+                            <input type="text" id="new-node-id" required placeholder="naprыklad: spoкiy_dushi">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-node-nazva">Назва:</label>
+                            <input type="text" id="new-node-nazva" required placeholder="Наприклад: Спокій Душі">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-node-opys">Опис:</label>
+                            <textarea id="new-node-opys" required rows="3" placeholder="Опис вузла..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="new-node-hlybyna">Глибина:</label>
+                            <input type="number" id="new-node-hlybyna" required min="0" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-node-zvyazky">Зв'язані вузли (через кому):</label>
+                            <input type="text" id="new-node-zvyazky" placeholder="prysutnist, tysha">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-node-sensy">Резонансні сенси (через кому):</label>
+                            <input type="text" id="new-node-sensy" placeholder="спокій, гармонія, мир">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-node-arkhetyp">Архетип:</label>
+                            <input type="text" id="new-node-arkhetyp" placeholder="Рефлексія">
+                        </div>
+                        <button type="submit" class="btn-create">Створити вузол</button>
+                    </form>
+                </div>
+
+                <!-- Додавання зв'язку -->
+                <div class="edit-subsection">
+                    <h4>Додати зв'язок між вузлами</h4>
+                    <form id="form-add-link" class="link-form">
+                        <div class="form-group">
+                            <label for="link-node-1">Перший вузол ID:</label>
+                            <input type="text" id="link-node-1" required placeholder="prysutnist">
+                        </div>
+                        <div class="form-group">
+                            <label for="link-node-2">Другий вузол ID:</label>
+                            <input type="text" id="link-node-2" required placeholder="tysha">
+                        </div>
+                        <button type="submit" class="btn-link">Створити зв'язок</button>
+                    </form>
+                </div>
+            </div>
         </main>
     </div>
 
