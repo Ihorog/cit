@@ -4,7 +4,7 @@ API маршрути для Казкара
 Endpoints для роботи з формацією Казкар та Легендою Сі
 """
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 
 from zdibnosti.kazkar import Kazkar
@@ -35,7 +35,7 @@ class NovoVuzolRequest(BaseModel):
     hlybyna: int
     zv_yazani_vuzly: List[str] = []
     rezonansni_sensy: List[str] = []
-    arkhetyp: str = None
+    arkhetyp: Optional[str] = None
 
 
 class ZvyazokRequest(BaseModel):
@@ -46,11 +46,11 @@ class ZvyazokRequest(BaseModel):
 
 class OnovlennyaVuzlaRequest(BaseModel):
     """Модель для оновлення вузла"""
-    nazva: str = None
-    opys: str = None
-    hlybyna: int = None
-    rezonansni_sensy: List[str] = None
-    arkhetyp: str = None
+    nazva: Optional[str] = None
+    opys: Optional[str] = None
+    hlybyna: Optional[int] = None
+    rezonansni_sensy: Optional[List[str]] = None
+    arkhetyp: Optional[str] = None
 
 
 @router.get("/aktyvuvaty")
