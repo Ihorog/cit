@@ -360,7 +360,7 @@ async function dodatyZvyazok(event) {
         }
         
     } catch (error) {
-        console.error('Помилка створення зв\'язку:', error);
-        alert('❌ Помилка створення зв\'язку');
+        console.error("Помилка створення зв'язку:", error);
+        alert("❌ Помилка створення зв'язку");
     }
 }

@@ -232,7 +232,7 @@ def test_kompleksnyy_stsenariy():
     print("Виконання комплексного сценарію...")
     
     legenda = ProstirLegendy()
-    pochatkovа_kilkist = len(legenda.vuzly)
+    pochatkova_kilkist = len(legenda.vuzly)
     
     # 1. Створити новий вузол
     legenda.stvoryty_novyy_vuzol(
@@ -267,7 +267,7 @@ def test_kompleksnyy_stsenariy():
     assert rezultat_onovlennya["uspishno"] is True
     
     # 5. Перевірити фінальний стан
-    assert len(legenda.vuzly) == pochatkovа_kilkist + 2, "Має бути 2 нових вузли"
+    assert len(legenda.vuzly) == pochatkova_kilkist + 2, "Має бути 2 нових вузли"
     assert "radist" in legenda.vuzly["harmonia"].zv_yazani_vuzly
     assert legenda.vuzly["radist"].arkhetyp == "Творення"
     assert legenda.vuzly["radist"].hlybyna == 2
