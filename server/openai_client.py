@@ -6,10 +6,16 @@ Supports intelligent routing between Responses API and Chat Completions API.
 
 import json
 import os
+import sys
 import urllib.request
 import urllib.error
 import logging
 from typing import Dict, Optional
+from pathlib import Path
+
+# Add parent directory to path for config imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from config.openai_config import get_api_key, get_model
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +39,8 @@ class OpenAIClient:
             api_key: OpenAI API key (defaults to env: CIT_OPENAI_API_KEY or OPENAI_API_KEY)
             model: Model to use (defaults to env: CIT_OPENAI_MODEL or gpt-4o-mini)
         """
-        self.api_key = api_key or os.getenv("CIT_OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY") or ""
-        self.model = model or os.getenv("CIT_OPENAI_MODEL") or os.getenv("CIT_MODEL") or "gpt-4o-mini"
+        self.api_key = get_api_key(api_key)
+        self.model = get_model(model)
         
     def set_api_key(self, api_key: str):
         """Update API key"""

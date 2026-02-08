@@ -5,10 +5,16 @@ Stores jobs locally using JSON files (no external dependencies).
 
 import json
 import os
+import sys
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
+
+# Add parent directory to path for utils imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.json_handler import read_json_file, write_json_file
+from utils.time_utils import now_utc_iso
+from config.paths import JOBS_DIR
 
 
 class JobStore:
@@ -22,10 +28,10 @@ class JobStore:
             storage_dir: Directory to store job data. Defaults to storage/jobs/
         """
         if storage_dir is None:
-            base = Path(__file__).resolve().parent.parent
-            storage_dir = base / "storage" / "jobs"
+            self.storage_dir = JOBS_DIR
+        else:
+            self.storage_dir = Path(storage_dir)
         
-        self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
     
     def create_job(self, request_id: str, job_type: str = "generic", payload: dict = None) -> dict:
@@ -41,7 +47,7 @@ class JobStore:
             Job object with job_id and initial state
         """
         job_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat()
+        now = now_utc_iso()
         
         job = {
             "job_id": job_id,
@@ -70,13 +76,7 @@ class JobStore:
             Job object or None if not found
         """
         job_file = self.storage_dir / f"{job_id}.json"
-        if not job_file.exists():
-            return None
-        
-        try:
-            return json.loads(job_file.read_text(encoding="utf-8"))
-        except Exception:
-            return None
+        return read_json_file(str(job_file))
     
     def update_job(self, job_id: str, updates: dict) -> bool:
         """
@@ -94,7 +94,7 @@ class JobStore:
             return False
         
         job.update(updates)
-        job["updated_at"] = datetime.now(timezone.utc).isoformat()
+        job["updated_at"] = now_utc_iso()
         
         self._save_job(job)
         return True
@@ -116,13 +116,13 @@ class JobStore:
             return False
         
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": now_utc_iso(),
             "level": level,
             "message": message
         }
         
         job["logs"].append(log_entry)
-        job["updated_at"] = datetime.now(timezone.utc).isoformat()
+        job["updated_at"] = now_utc_iso()
         
         self._save_job(job)
         return True
@@ -170,4 +170,4 @@ class JobStore:
     def _save_job(self, job: dict):
         """Save job to disk."""
         job_file = self.storage_dir / f"{job['job_id']}.json"
-        job_file.write_text(json.dumps(job, indent=2, ensure_ascii=False), encoding="utf-8")
+        write_json_file(str(job_file), job, indent=2)

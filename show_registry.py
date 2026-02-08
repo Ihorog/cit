@@ -1,17 +1,20 @@
-import json
-import os
+import sys
+from pathlib import Path
 from datetime import datetime
 
-REGISTRY_PATH = "storage/registry/cit_core.json"
+# Add parent directory to path for config imports
+sys.path.insert(0, str(Path(__file__).parent))
+from config.paths import CIT_CORE_REGISTRY
+from utils.json_handler import read_json_file
+
+REGISTRY_PATH = str(CIT_CORE_REGISTRY)
 
 def display_registry():
-    if not os.path.exists(REGISTRY_PATH):
+    data = read_json_file(REGISTRY_PATH)
+    if not data:
         print("--- [Ciт] РЕЄСТР ПОРОЖНІЙ АБО НЕ СТВОРЕНИЙ ---")
         return
 
-    with open(REGISTRY_PATH, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    
     subscribers = data.get("active_subscribers", {})
     
     print(f"\n{'='*75}")

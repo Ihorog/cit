@@ -5,10 +5,15 @@
 """
 
 import os
-import json
-from datetime import datetime
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Any
+
+# Add parent directory to path for utils imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.json_handler import append_json_line
+from utils.time_utils import now_utc_iso
+from config.paths import AUDIT_LOG_DIR
 
 
 class CITAudit:
@@ -31,15 +36,14 @@ class CITAudit:
         
     def _get_timestamp(self) -> str:
         """Отримати поточний timestamp в ISO формації"""
-        return datetime.now().isoformat()
+        return now_utc_iso()
     
     def _write_log_entry(self, category: str, entry: Dict[str, Any]):
         """Записати запис аудиту до файлу"""
         log_file = self.audit_log_path / f"audit_{category}.jsonl"
         entry["timestamp"] = self._get_timestamp()
         
-        with open(log_file, "a") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        append_json_line(str(log_file), entry)
     
     def audit_resources(self) -> Dict[str, Any]:
         """

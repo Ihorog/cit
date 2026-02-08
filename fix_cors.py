@@ -1,10 +1,21 @@
 import http.server
 import json
 import os
+import sys
 import urllib.request
+from pathlib import Path
 
-API_KEY = os.getenv("OPENAI_API_KEY", "")
-MODEL = os.getenv("CIT_MODEL", "gpt-4.1")
+# Add parent directory to path for config imports
+sys.path.insert(0, str(Path(__file__).parent))
+
+try:
+    from config.openai_config import get_api_key, get_model
+    API_KEY = get_api_key()
+    MODEL = get_model()
+except ImportError:
+    API_KEY = os.getenv("OPENAI_API_KEY", "")
+    MODEL = os.getenv("CIT_MODEL", "gpt-4.1")
+
 PORT = 8791
 
 class Handler(http.server.BaseHTTPRequestHandler):
