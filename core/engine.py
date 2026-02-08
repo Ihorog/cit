@@ -11,12 +11,12 @@ from pathlib import Path
 from typing import Dict, Optional
 import subprocess
 
-# Імпортувати PluginRegistry
 # Додати батьківську директорію до sys.path якщо запущено як скрипт
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from core.plugin_loader import PluginRegistry
+from config.openai_config import get_api_key, get_model
 
 
 class CiEngine:
@@ -41,8 +41,8 @@ class CiEngine:
         
         # Завантажити змінні середовища
         config['env'] = {
-            'OPENAI_API_KEY': os.environ.get('OPENAI_API_KEY', ''),
-            'OPENAI_MODEL': os.environ.get('OPENAI_MODEL', 'gpt-4o-mini'),
+            'OPENAI_API_KEY': get_api_key(),
+            'OPENAI_MODEL': get_model(),
             'HOST': os.environ.get('HOST', '0.0.0.0'),
             'PORT': int(os.environ.get('PORT', '8790')),
         }

@@ -5,20 +5,24 @@ import os
 import sys
 import threading
 import logging
-from datetime import datetime, timezone
 
 # Add parent directory to path to allow imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from server.openai_client import OpenAIClient
+from config.logging_config import setup_logging, get_logger
+from config.paths import CIT_CORE_REGISTRY, get_registry_path
+from utils.json_handler import read_json_file, write_json_file
+from utils.time_utils import now_utc_formatted
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(levelname)s: %(message)s')
-logger = logging.getLogger(__name__)
+setup_logging()
+logger = get_logger(__name__)
 
 app = Flask(__name__)
 CORS(app)
 
-REGISTRY_PATH = "storage/registry/cit_core.json"
+# Use centralized registry path
+REGISTRY_PATH = str(CIT_CORE_REGISTRY)
 
 # Initialize OpenAI client
 openai_client = OpenAIClient()
@@ -26,33 +30,23 @@ openai_client = OpenAIClient()
 def register_subscriber(ip, user_agent):
     """Register a subscriber with proper error handling."""
     try:
-        os.makedirs(os.path.dirname(REGISTRY_PATH), exist_ok=True)
-        
         # Load existing data or create new
-        if os.path.exists(REGISTRY_PATH):
-            try:
-                with open(REGISTRY_PATH, 'r') as f:
-                    data = json.load(f)
-                # Ensure active_subscribers key exists
-                if not isinstance(data, dict) or 'active_subscribers' not in data:
-                    data = {"active_subscribers": {}}
-            except (json.JSONDecodeError, IOError) as e:
-                logger.warning(f"Error reading registry, creating new: {e}")
-                data = {"active_subscribers": {}}
-        else:
+        data = read_json_file(REGISTRY_PATH, default={"active_subscribers": {}})
+        
+        # Ensure active_subscribers key exists
+        if not isinstance(data, dict) or 'active_subscribers' not in data:
             data = {"active_subscribers": {}}
         
         # Визначення типу абонента
         client_type = "AI_AGENT" if any(x in user_agent.lower() for x in ["python", "curl", "gpt", "gemini", "ai"]) else "WEB_USER"
         
         data["active_subscribers"][ip] = {
-            "last_seen": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+            "last_seen": now_utc_formatted(),
             "client_type": client_type,
             "provisioning_status": "package_optimized"
         }
         
-        with open(REGISTRY_PATH, "w") as f:
-            json.dump(data, f, indent=4)
+        write_json_file(REGISTRY_PATH, data, indent=4)
         
         return client_type
     except Exception as e:
@@ -73,7 +67,7 @@ def health():
         response = {
             "ok": True,
             "service": "cit",
-            "time": datetime.now(timezone.utc).isoformat(),
+            "time": now_utc_formatted(),
             "port": port,
             "model": openai_client.model,
             "openai": openai_available
@@ -86,7 +80,7 @@ def health():
         return jsonify({
             "ok": False,
             "service": "cit",
-            "time": datetime.now(timezone.utc).isoformat(),
+            "time": now_utc_formatted(),
             "error": "Health check failed"
         }), 500
 

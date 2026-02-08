@@ -21,27 +21,39 @@ from urllib.error import URLError
 from pathlib import Path
 import base64
 import time
-from datetime import datetime, timezone
+
+# Add parent directory to path for config imports
+sys.path.insert(0, str(Path(__file__).parent))
+
+# Import shared utilities
+try:
+    from config.openai_config import get_api_key, get_model
+    from utils.time_utils import now_utc_iso
+    CONFIG_AVAILABLE = True
+except ImportError:
+    CONFIG_AVAILABLE = False
+    from datetime import datetime, timezone
+    def now_utc_iso():
+        """Fallback: Return current UTC time in ISO 8601 format"""
+        return datetime.now(timezone.utc).isoformat()
 
 # Імпорт модуля аудиту
 try:
-    sys.path.insert(0, str(Path(__file__).parent))
     from core.audit import get_audit_instance
     AUDIT_ENABLED = True
 except ImportError:
     AUDIT_ENABLED = False
     print("[WARNING] Audit module not available")
 
-# ============ Утиліти ============
-def now_utc_iso():
-    """Return current UTC time in ISO 8601 format"""
-    return datetime.now(timezone.utc).isoformat()
-
 # ============ Конфігурація ============
 HOST = "0.0.0.0"
 PORT = 8790
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
-OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+if CONFIG_AVAILABLE:
+    OPENAI_API_KEY = get_api_key()
+    OPENAI_MODEL = get_model()
+else:
+    OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+    OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 DATA_DIR = Path.home() / ".ci-data"
 
 # ============ Іконка (base64 PNG) ============
