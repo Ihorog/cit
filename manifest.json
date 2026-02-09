@@ -18,7 +18,9 @@
           "nazva": "✨ Легенда Сі",
           "aktyvna": false,
           "kilkist_vuzliv": 10,
-          "kilkist_zv_yazkiv": 10
+          "kilkist_zv_yazkiv": 10,
+          "dynamichne_stvorennya": true,
+          "redahuvannya_v_realnomu_chasi": true
         },
         "arkhetypy": {
           "kilkist": 7,
@@ -27,6 +29,13 @@
         "opovidach": {
           "kilkist_istoriy": 0
         }
+      },
+      "funktsionalnist": {
+        "stvoryty_vuzol": true,
+        "dodaty_zv_yazok": true,
+        "onovyty_vuzol": true,
+        "vydalyty_vuzol": true,
+        "navihatsiya_bez_perezavantazhennya": true
       },
       "ostannya_aktyvatsiya": null
     },
