@@ -24,3 +24,6 @@ system_status.log
 .vs/
 __pycache__/
 *.pyc
+
+# Generated reports
+BRAND_COMPLIANCE_REPORT.md
