@@ -126,7 +126,7 @@ curl http://localhost:8790/health
 ```bash
 curl -X POST http://localhost:8790/chat \
   -H "Content-Type: application/json" \
-  -d '{"message": "Hello!"}'
+  -d '{"messages":[{"role":"user","content":"Hello!"}]}'
 ```
 
 **Create Job:**
