@@ -103,15 +103,16 @@ class BrandComplianceScanner:
                                 ))
 
                     # Check folder references
-                    if 'modules/podija' in line:
-                        self.violations.append(BrandViolation(
-                            file_path=str(file_path.relative_to(self.repo_path)),
-                            line_number=line_num,
-                            violation_type='folder_path',
-                            found='podija',
-                            expected='podiya',
-                            severity='critical'
-                        ))
+                    for wrong, correct_data in self.BRAND_RULES['code'].items():
+                        if f'modules/{wrong}' in line:
+                            self.violations.append(BrandViolation(
+                                file_path=str(file_path.relative_to(self.repo_path)),
+                                line_number=line_num,
+                                violation_type='folder_path',
+                                found=wrong,
+                                expected=correct_data['correct'],
+                                severity='critical'
+                            ))
 
                     # Check API routes
                     for wrong_route, correct_route in self.BRAND_RULES['api_routes'].items():
@@ -160,7 +161,7 @@ class BrandComplianceScanner:
 
                     # Check imports
                     if 'from' in line and '@/modules/' in line:
-                        for wrong in ['podija', 'gallery', 'calendar']:
+                        for wrong in ['podija', 'nastrij', 'gallery', 'calendar']:
                             if f'/{wrong}' in line:
                                 correct = self.BRAND_RULES['code'][wrong]['correct']
                                 self.violations.append(BrandViolation(
@@ -315,7 +316,7 @@ class BrandComplianceScanner:
         ]
         for old, new in renames:
             script.append(
-                f"find . -type d -name '{old}' "
+                f"find . -depth -type d -name '{old}' "
                 f"-exec bash -c 'mv \"$0\" \"${{0%{old}}}{new}\"' {{}} \\;\n"
             )
         # Module-scoped renames
@@ -325,7 +326,7 @@ class BrandComplianceScanner:
         ]
         for old, new in module_renames:
             script.append(
-                f"find . -type d -name '{old}' -path '*/modules/*' "
+                f"find . -depth -type d -name '{old}' -path '*/modules/*' "
                 f"-exec bash -c 'mv \"$0\" \"${{0%{old}}}{new}\"' {{}} \\;\n"
             )
 

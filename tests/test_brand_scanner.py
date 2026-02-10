@@ -265,6 +265,7 @@ def test_brand_rules_completeness():
     # UI display
     assert 'Podiya' in rules['ui_display']
     assert 'Podija' in rules['ui_display']
+    assert 'Nastriy' in rules['ui_display']
 
     print("✓ Brand rules are complete")
 

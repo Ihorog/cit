@@ -5,10 +5,10 @@
 set -e
 
 echo '📁 Renaming folders...'
-find . -type d -name 'podija' -exec bash -c 'mv "$0" "${0%podija}podiya"' {} \;
-find . -type d -name 'nastrij' -exec bash -c 'mv "$0" "${0%nastrij}nastriy"' {} \;
-find . -type d -name 'gallery' -path '*/modules/*' -exec bash -c 'mv "$0" "${0%gallery}galereya"' {} \;
-find . -type d -name 'calendar' -path '*/modules/*' -exec bash -c 'mv "$0" "${0%calendar}kalendar"' {} \;
+find . -depth -type d -name 'podija' -exec bash -c 'mv "$0" "${0%podija}podiya"' {} \;
+find . -depth -type d -name 'nastrij' -exec bash -c 'mv "$0" "${0%nastrij}nastriy"' {} \;
+find . -depth -type d -name 'gallery' -path '*/modules/*' -exec bash -c 'mv "$0" "${0%gallery}galereya"' {} \;
+find . -depth -type d -name 'calendar' -path '*/modules/*' -exec bash -c 'mv "$0" "${0%calendar}kalendar"' {} \;
 
 echo '📝 Updating file contents...'
 find . -type f \( -name '*.py' -o -name '*.js' -o -name '*.jsx' -o -name '*.sql' \) \
