@@ -366,6 +366,12 @@ uvicorn api.main:app --host 0.0.0.0 --port 8000
 - `PUT /api/kazkar/legenda/vuzol/{vuzol_id}` — **оновити вузол** 🆕
 - `DELETE /api/kazkar/legenda/vuzol/{vuzol_id}` — **видалити вузол** 🆕
 
+**Пропозиції моменту (Ci-moment):** 🆕
+- `GET /api/kazkar/porady/moment?potochnyy_vuzol={vuzol_id}` — **отримати пропозицію для моменту**
+- `POST /api/kazkar/porady/opovid` — **пропозиція на основі оповіді**
+- `GET /api/kazkar/porady/istoriya?kilkist={N}` — **історія пропозицій**
+- `GET /api/kazkar/porady/statystyka` — **статистика пропозицій**
+
 ### Редагування Легенди Сі 🆕
 
 Легенда Сі тепер підтримує **динамічне створення та редагування вузлів** прямо через веб-інтерфейс:
@@ -425,6 +431,83 @@ curl -X POST http://localhost:8000/api/kazkar/legenda/zv-yazok \
 - **Валідація**: перевірка існування вузлів та унікальності ID
 - **Цілісність графа**: видалення вузла автоматично видаляє всі зв'язки з ним
 
+### Пропозиції моменту (Ci-moment) 🆕
+
+**Система пропозицій для моменту присутності** — механізм контекстуальних підказок, що допомагає користувачу глибше дослідити Легенду Сі.
+
+#### Філософія
+
+Пропозиції — це не команди, а м'які орієнтири. Як подих: природно виникають, не нав'язуються.
+
+#### Типи пропозицій
+
+1. **Пропозиції на основі поточного вузла**
+   - Коли користувач у вузлі "Момент" → пропонується дослідити "Час" або повернутись до "Присутності"
+   - Коли у центрі "Присутність" → пропонуються три первинні шляхи
+
+2. **Пропозиції на основі оповіді**
+   - Після створення оповіді через `plesty-zv-yaznist` система аналізує архетип
+   - Якщо архетип "Цикл" (архетип Моменту) → пропонує дослідити вузол "Момент"
+
+3. **Історія та статистика**
+   - Система зберігає останні 50 пропозицій
+   - Можна відстежити які дії пропонувалися найчастіше
+
+#### Приклади використання
+
+**Отримати пропозицію для моменту:**
+```bash
+# Без контексту (загальна пропозиція)
+curl http://localhost:8000/api/kazkar/porady/moment
+
+# З контекстом поточного вузла
+curl http://localhost:8000/api/kazkar/porady/moment?potochnyy_vuzol=moment
+```
+
+**Отримати пропозицію на основі оповіді:**
+```bash
+curl -X POST http://localhost:8000/api/kazkar/porady/opovid \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "arkhetyp": {
+      "nazva": "Цикл"
+    },
+    "opovid": "Повторення з трансформацією"
+  }'
+```
+
+**Переглянути історію пропозицій:**
+```bash
+# Останні 10 пропозицій
+curl http://localhost:8000/api/kazkar/porady/istoriya?kilkist=10
+```
+
+**Отримати статистику:**
+```bash
+curl http://localhost:8000/api/kazkar/porady/statystyka
+```
+
+#### Інтеграція з Сі (Si)
+
+Пропозиції можуть бути інтегровані з центром присутності через hook:
+
+```python
+from core.si import Si
+from zdibnosti.kazkar.porady import MomentPorady
+
+si = Si()
+porady = MomentPorady()
+
+# Встановити hook
+si.vstanovyty_moment_propozitsiya_hook(
+    lambda moment: porady.daty_moment_propozitsiu(moment)
+)
+
+# Тепер при фіксації моменту автоматично генерується пропозиція
+result = si.zafiksuvaty_teper()
+print(result["propozitsiya"])  # Контекстуальна пропозиція
+```
+
 ### Архітектура
 
 ```
@@ -441,7 +524,8 @@ cit/                      ← repo root = Python пакет
 │       ├── prostir_legendy.py     # ✨ Легенда Сі
 │       ├── semantychnyi_graf.py   # Семантичний граф
 │       ├── dvyhun_arkhetypiv.py   # Двигун архетипів
-│       └── opovidach.py           # Генератор оповідей
+│       ├── opovidach.py           # Генератор оповідей
+│       └── porady.py              # 🆕 Пропозиції моменту
 │
 ├── api/
 │   ├── main.py          # FastAPI app

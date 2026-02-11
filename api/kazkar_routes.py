@@ -8,12 +8,17 @@ from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 
 from zdibnosti.kazkar import Kazkar
+from zdibnosti.kazkar.porady import MomentPorady
+from datetime import datetime
 
 # Створення роутера
 router = APIRouter()
 
 # Глобальний екземпляр Казкара (в реальному додатку використовувати dependency injection)
 kazkar_instance = Kazkar()
+
+# Глобальний екземпляр MomentPorady
+moment_porady_instance = None
 
 
 class PodijiRequest(BaseModel):
@@ -292,22 +297,146 @@ async def onovyty_vuzol(vuzol_id: str, request: OnovlennyaVuzlaRequest) -> Dict[
 async def vydalyty_vuzol(vuzol_id: str) -> Dict[str, Any]:
     """
     Видалити вузол з Легенди Сі
-    
+
     Args:
         vuzol_id: ID вузла для видалення
-        
+
     Returns:
         Результат видалення
     """
     try:
         rezultat = kazkar_instance.prostir_legendy.vydalyty_vuzol(vuzol_id)
-        
+
         # Оновити семантичний граф
         if rezultat.get("uspishno"):
             # Видалити вузол з графа (якщо метод існує)
             if hasattr(kazkar_instance.semantychnyi_graf, 'vydalyty_vuzol'):
                 kazkar_instance.semantychnyi_graf.vydalyty_vuzol(vuzol_id)
-        
+
         return rezultat
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/porady/moment")
+async def daty_moment_propozitsiu(
+    potochnyy_vuzol: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Отримати пропозицію для моменту присутності
+
+    Args:
+        potochnyy_vuzol: ID поточного вузла (опційно)
+
+    Returns:
+        Пропозиція на основі контексту
+    """
+    global moment_porady_instance
+
+    try:
+        # Ініціалізувати екземпляр, якщо потрібно
+        if moment_porady_instance is None:
+            moment_porady_instance = MomentPorady(
+                prostir_legendy=kazkar_instance.prostir_legendy
+            )
+
+        # Отримати поточний час
+        potochnyy_moment = datetime.now()
+
+        # Надати пропозицію
+        propozitsiya = moment_porady_instance.daty_moment_propozitsiu(
+            potochnyy_moment=potochnyy_moment,
+            potochnyy_vuzol=potochnyy_vuzol
+        )
+
+        return propozitsiya
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/porady/opovid")
+async def daty_propozitsiu_dlya_opovidі(opovid: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Отримати пропозицію на основі оповіді
+
+    Args:
+        opovid: згенерована оповідь з архетипом
+
+    Returns:
+        Пропозиція для дослідження
+    """
+    global moment_porady_instance
+
+    try:
+        # Ініціалізувати екземпляр, якщо потрібно
+        if moment_porady_instance is None:
+            moment_porady_instance = MomentPorady(
+                prostir_legendy=kazkar_instance.prostir_legendy
+            )
+
+        # Надати пропозицію
+        propozitsiya = moment_porady_instance.daty_propozytsiyi_dlya_opovidі(opovid)
+
+        return propozitsiya
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/porady/istoriya")
+async def otrymaty_istoriyu_porad(kilkist: int = 10) -> Dict[str, Any]:
+    """
+    Отримати історію пропозицій
+
+    Args:
+        kilkist: кількість останніх пропозицій (за замовчуванням 10)
+
+    Returns:
+        Список останніх пропозицій
+    """
+    global moment_porady_instance
+
+    try:
+        # Якщо екземпляр не ініціалізований, повернути порожню історію
+        if moment_porady_instance is None:
+            return {
+                "istoriya": [],
+                "kilkist": 0
+            }
+
+        # Отримати історію
+        istoriya = moment_porady_instance.otrymaty_istoriyu(kilkist)
+
+        return {
+            "istoriya": istoriya,
+            "kilkist": len(istoriya)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/porady/statystyka")
+async def otrymaty_statystyku_porad() -> Dict[str, Any]:
+    """
+    Отримати статистику пропозицій
+
+    Returns:
+        Статистика по типах дій та пропозицій
+    """
+    global moment_porady_instance
+
+    try:
+        # Якщо екземпляр не ініціалізований, повернути порожню статистику
+        if moment_porady_instance is None:
+            return {
+                "zahalna_kilkist": 0,
+                "po_typakh": {},
+                "ostannya_chas": None
+            }
+
+        # Отримати статистику
+        statystyka = moment_porady_instance.otrymaty_statystyku()
+
+        return statystyka
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
