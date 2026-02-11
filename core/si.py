@@ -4,7 +4,7 @@
 Сі утримує момент "тепер", приймає сигнали від формацій
 та підтримує безперервний дихальний цикл
 """
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 import time
 
@@ -24,20 +24,34 @@ class Si:
         self.formatsiyi_aktyvni: List[str] = []
         self.syhnaly_tsilisnosti: List[Dict[str, Any]] = []
         self.dykhalnyy_tsykl_aktyvnyy = False
+
+        # Hook для пропозицій моменту
+        self.moment_propozitsiya_hook: Optional[Callable] = None
         
     def zafiksuvaty_teper(self) -> Dict[str, Any]:
         """
         Замикання у момент "тепер"
-        
+
         Це базова практика присутності - усвідомлення поточного моменту
         """
         self.moment_teper = datetime.now()
-        
-        return {
+
+        rezultat = {
             "moment": self.moment_teper.isoformat(),
             "typ": "fiksatsiya_tepera",
             "vidchuttya": "prysutnist"
         }
+
+        # Викликати hook для пропозицій, якщо встановлено
+        if self.moment_propozitsiya_hook:
+            try:
+                propozitsiya = self.moment_propozitsiya_hook(self.moment_teper)
+                rezultat["propozitsiya"] = propozitsiya
+            except Exception:
+                # Якщо hook викликає помилку, просто ігноруємо
+                pass
+
+        return rezultat
     
     def otrymaty_syhnal_tsilisnosti(self, formatsiya: str, syhnal: Dict[str, Any]) -> None:
         """
@@ -128,3 +142,13 @@ class Si:
             "kilkist_syhnaliv": len(self.syhnaly_tsilisnosti),
             "dykhalnyy_tsykl": self.dykhalnyy_tsykl_aktyvnyy
         }
+
+    def vstanovyty_moment_propozitsiya_hook(self, hook: Callable) -> None:
+        """
+        Встановити hook для пропозицій моменту
+
+        Args:
+            hook: функція, що приймає datetime і повертає пропозицію
+        """
+        self.moment_propozitsiya_hook = hook
+
