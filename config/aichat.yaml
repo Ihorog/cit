@@ -1,0 +1,12 @@
+# aichat configuration template for Cimeika
+# Copy to ~/.config/aichat/config.yaml and set your API key
+
+model: openai:gpt-4o-mini
+temperature: 0.7
+save: true
+highlight: true
+
+clients:
+  - type: openai
+    # Set via environment variable OPENAI_API_KEY
+    api_key: null
