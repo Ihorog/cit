@@ -36,6 +36,12 @@ The service is designed to run locally on Android through Termux and can be conn
 * **Configuration** – Runtime configuration via `/config` endpoint
 * **Audit** – `GET /audit` and `GET /audit/resources` provide comprehensive system auditing (see [Audit Documentation](docs/AUDIT.md))
 
+### System Orchestrator
+* **Ci command-line interface** – Unified `ci` command for system management (`chat`, `status`, `sync`)
+* **Automated installation** – `install.sh` script handles dependency setup and configuration
+* **Ukrainian language enforcement** – System role ensures all orchestrator responses are in Ukrainian
+* **aichat integration** – Uses [aichat](https://github.com/sigoden/aichat) for LLM interactions with standardized response formats
+
 ### Technical
 * **No external dependencies** – implemented with Python's built‑in modules, so it works out of the box in Termux.  
 * **Simple deployment** – start the server with a single script or integrate it into Termux Boot for auto‑start.
@@ -70,6 +76,56 @@ The service will listen on all interfaces (port `8790` by default).
 You can add the start command to `scripts/termux_boot/cit_start.sh` and enable Termux Boot to run CIT automatically after a reboot.
 
 Access the Web UI at `http://127.0.0.1:8790/ui` in your browser to use the chat interface with voice capabilities.
+
+## Ci System Orchestrator
+
+CIT includes a command-line orchestrator (`ci`) that provides a unified interface for interacting with the Cimeika ecosystem. The orchestrator uses [aichat](https://github.com/sigoden/aichat) as its backend and enforces Ukrainian language responses.
+
+### Installation
+
+Run the automated installation script to set up the `ci` command and all dependencies:
+
+```bash
+cd ~/cit
+./install.sh
+```
+
+This script will:
+- Check and install dependencies (`git`, `curl`, `fzf`, `aichat`)
+- Configure `aichat` with the Cimeika role
+- Add the `ci` command to your PATH
+- Set up the system orchestrator role with Ukrainian language enforcement
+
+### Usage
+
+The `ci` command provides three main modes:
+
+```bash
+# Enter dialogue mode with the Cimeika Orchestrator
+ci chat
+
+# Check system health and integration status
+ci status
+
+# Synchronize local changes with cimeika-unified
+ci sync
+
+# Show help
+ci --help
+```
+
+### Configuration Files
+
+- `config/aichat.yaml` — aichat configuration template
+- `config/roles/cimeika.md` — System role defining the Orchestrator's behavior and language requirements
+
+The Orchestrator identifies as **Ci (Сі)** and responds exclusively in Ukrainian using standardized formats:
+- **Готово** — task completed
+- **Результат** — presenting results
+- **Недоступно** — resource or service unavailable
+- **Потрібне уточнення** — additional information needed
+
+> **Note:** The `ci chat` command requires `aichat` to be installed and an `OPENAI_API_KEY` environment variable to be set.
 
 ## Modular Engine
 
