@@ -1,0 +1,126 @@
+#!/bin/bash
+# CIMEIKA SYSTEM ORCHESTRATOR — ci
+# Головний виконуваний файл системи Cimeika.
+# Використання: ci [chat|status|sync]
+
+set -euo pipefail
+
+CI_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROLE_PATH="$HOME/.config/aichat/roles/cimeika.md"
+CIT_PORT="${CIT_PORT:-8790}"
+
+# --- Кольори ---
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+usage() {
+    echo "Cimeika Orchestrator — ci"
+    echo ""
+    echo "Використання: ci <команда> [аргументи]"
+    echo ""
+    echo "Команди:"
+    echo "  chat    Вхід у режим діалогу з Оркестратором"
+    echo "  status  Перевірка працездатності інтеграцій"
+    echo "  sync    Синхронізація змін з cimeika-unified"
+    echo ""
+}
+
+cmd_status() {
+    echo -e "${CYAN}--- CIMEIKA HEALTH CHECK ---${NC}"
+
+    # Перевірка CIT сервера
+    if curl -sS --max-time 2 "http://127.0.0.1:$CIT_PORT/health" > /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} CIT сервер: Активний (порт $CIT_PORT)"
+    else
+        echo -e "${RED}✗${NC} CIT сервер: Недоступний (порт $CIT_PORT)"
+    fi
+
+    # Перевірка Git
+    if command -v git &> /dev/null; then
+        echo -e "${GREEN}✓${NC} git: $(git --version 2>&1 | awk '{print $3}')"
+    else
+        echo -e "${RED}✗${NC} git: не встановлений"
+    fi
+
+    # Перевірка aichat
+    if command -v aichat &> /dev/null; then
+        echo -e "${GREEN}✓${NC} aichat: встановлений"
+    else
+        echo -e "${YELLOW}⚠${NC} aichat: не встановлений"
+    fi
+
+    # Перевірка ролі cimeika
+    if [ -f "$ROLE_PATH" ]; then
+        echo -e "${GREEN}✓${NC} Роль cimeika: налаштована"
+    else
+        echo -e "${YELLOW}⚠${NC} Роль cimeika: не знайдена ($ROLE_PATH)"
+    fi
+
+    echo -e "${CYAN}Ci: Активний${NC}"
+}
+
+cmd_chat() {
+    if ! command -v aichat &> /dev/null; then
+        echo -e "${RED}Помилка:${NC} aichat не встановлений."
+        echo "Запустіть install.sh для встановлення залежностей."
+        exit 1
+    fi
+
+    if [ ! -f "$ROLE_PATH" ]; then
+        echo -e "${YELLOW}Увага:${NC} Роль cimeika не знайдена. Копіюю шаблон..."
+        mkdir -p "$(dirname "$ROLE_PATH")"
+        cp "$CI_ROOT/config/roles/cimeika.md" "$ROLE_PATH"
+        echo -e "${GREEN}✓${NC} Роль cimeika встановлена."
+    fi
+
+    aichat --role cimeika "$@"
+}
+
+cmd_sync() {
+    echo -e "${CYAN}--- CIMEIKA SYNC ---${NC}"
+
+    if [ ! -d "$CI_ROOT/.git" ]; then
+        echo -e "${RED}Помилка:${NC} Не знайдено git репозиторій у $CI_ROOT"
+        exit 1
+    fi
+
+    cd "$CI_ROOT"
+    echo "Отримання змін з origin..."
+    git pull --rebase origin main || echo -e "${YELLOW}⚠${NC} Pull не вдався"
+
+    if [ -n "$(git status --porcelain)" ]; then
+        git add -A
+        git commit -m "ci sync: автоматична синхронізація $(date -u +%Y-%m-%dT%H:%M:%SZ)" || true
+        git push origin main || echo -e "${YELLOW}⚠${NC} Push не вдався"
+        echo -e "${GREEN}✓${NC} Зміни синхронізовано."
+    else
+        echo -e "${GREEN}✓${NC} Локальна копія актуальна."
+    fi
+}
+
+# --- Маршрутизація команд ---
+CMD="${1:-}"
+
+case "$CMD" in
+    status)
+        cmd_status
+        ;;
+    chat)
+        shift
+        cmd_chat "$@"
+        ;;
+    sync)
+        cmd_sync
+        ;;
+    -h|--help|help|"")
+        usage
+        ;;
+    *)
+        echo -e "${RED}Невідома команда:${NC} $CMD"
+        usage
+        exit 1
+        ;;
+esac
