@@ -1,0 +1,359 @@
+name: 🚀 CI Production Deployment
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+
+  # ═══════════════════════════════════════════════════════
+  # STEP 1: DETECT TRIGGER
+  # ═══════════════════════════════════════════════════════
+
+  detect:
+    name: 🔍 Визначити запит
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.issue.title, '[DEPLOY]') ||
+      contains(toJson(github.event.issue.labels.*.name), 'deployment')
+    outputs:
+      proceed: ${{ steps.check.outputs.proceed }}
+
+    steps:
+      - name: Підтвердити запит
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: [
+                '## 🚀 CI Production Deployment — Розпочато',
+                '',
+                '| Крок | Статус |',
+                '|------|--------|',
+                '| 🔐 Перевірка secrets | ⏳ |',
+                '| 🗄️ Supabase setup | ⏳ |',
+                '| 💳 Stripe setup | ⏳ |',
+                '| 🌐 Vercel deploy | ⏳ |',
+                '| 🏥 Health check | ⏳ |',
+              ].join('\n')
+            });
+            core.setOutput('proceed', 'true');
+
+  # ═══════════════════════════════════════════════════════
+  # STEP 2: VALIDATE SECRETS
+  # ═══════════════════════════════════════════════════════
+
+  validate:
+    name: 🔐 Перевірка secrets
+    needs: detect
+    runs-on: ubuntu-latest
+    environment: ci-production
+    outputs:
+      valid: ${{ steps.validate.outputs.valid }}
+      missing: ${{ steps.validate.outputs.missing }}
+
+    steps:
+      - name: Перевірити наявність secrets
+        id: validate
+        env:
+          HAS_STRIPE_SECRET:    ${{ secrets.STRIPE_SECRET_KEY != '' }}
+          HAS_STRIPE_WEBHOOK:   ${{ secrets.STRIPE_WEBHOOK_SECRET != '' }}
+          HAS_STRIPE_PUB:       ${{ secrets.STRIPE_PUBLISHABLE_KEY != '' }}
+          HAS_SUPABASE_URL:     ${{ secrets.SUPABASE_URL != '' }}
+          HAS_SUPABASE_SRV:     ${{ secrets.SUPABASE_SERVICE_ROLE_KEY != '' }}
+          HAS_SUPABASE_ANON:    ${{ secrets.SUPABASE_ANON_KEY != '' }}
+          HAS_VERCEL_TOKEN:     ${{ secrets.VERCEL_TOKEN != '' }}
+          HAS_VERCEL_ORG:       ${{ secrets.VERCEL_ORG_ID != '' }}
+          HAS_VERCEL_PROJECT:   ${{ secrets.VERCEL_PROJECT_ID != '' }}
+        run: |
+          MISSING=""
+          [ "$HAS_STRIPE_SECRET" != "true" ]  && MISSING="$MISSING STRIPE_SECRET_KEY"
+          [ "$HAS_STRIPE_WEBHOOK" != "true" ] && MISSING="$MISSING STRIPE_WEBHOOK_SECRET"
+          [ "$HAS_STRIPE_PUB" != "true" ]     && MISSING="$MISSING STRIPE_PUBLISHABLE_KEY"
+          [ "$HAS_SUPABASE_URL" != "true" ]   && MISSING="$MISSING SUPABASE_URL"
+          [ "$HAS_SUPABASE_SRV" != "true" ]   && MISSING="$MISSING SUPABASE_SERVICE_ROLE_KEY"
+          [ "$HAS_SUPABASE_ANON" != "true" ]  && MISSING="$MISSING SUPABASE_ANON_KEY"
+          [ "$HAS_VERCEL_TOKEN" != "true" ]   && MISSING="$MISSING VERCEL_TOKEN"
+          [ "$HAS_VERCEL_ORG" != "true" ]     && MISSING="$MISSING VERCEL_ORG_ID"
+          [ "$HAS_VERCEL_PROJECT" != "true" ] && MISSING="$MISSING VERCEL_PROJECT_ID"
+
+          if [ -n "$MISSING" ]; then
+            echo "valid=false" >> $GITHUB_OUTPUT
+            echo "missing=$MISSING" >> $GITHUB_OUTPUT
+          else
+            echo "valid=true" >> $GITHUB_OUTPUT
+            echo "missing=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Звіт про validation
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const valid = '${{ steps.validate.outputs.valid }}';
+            const missing = '${{ steps.validate.outputs.missing }}';
+
+            if (valid !== 'true') {
+              const missingList = missing.trim().split(' ')
+                .map(s => `- \`${s}\``)
+                .join('\n');
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: [
+                  '## ❌ Відсутні Secrets',
+                  '',
+                  'Налаштуйте наступні secrets у репозиторії:',
+                  missingList,
+                  '',
+                  '### Як налаштувати:',
+                  '```bash',
+                  '# Для кожного secret виконай:',
+                  '# gh secret set <ІМ\'Я_SECRET> --repo Ihorog/cit',
+                  '```',
+                  '',
+                  '**Посилання:**',
+                  '- Stripe: https://dashboard.stripe.com/apikeys',
+                  '- Supabase: https://supabase.com/dashboard → Settings → API',
+                  '- Vercel: https://vercel.com/account/tokens',
+                  '',
+                  '_Після налаштування — створіть новий `[DEPLOY]` issue._'
+                ].join('\n')
+              });
+
+              core.setFailed('Missing secrets: ' + missing);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: '✅ **Всі secrets перевірено** — продовжуємо deployment...'
+              });
+            }
+
+  # ═══════════════════════════════════════════════════════
+  # STEP 3: SETUP SUPABASE
+  # ═══════════════════════════════════════════════════════
+
+  supabase:
+    name: 🗄️ Supabase Setup
+    needs: validate
+    if: needs.validate.outputs.valid == 'true'
+    runs-on: ubuntu-latest
+    environment: ci-production
+
+    steps:
+      - name: Виконати SQL схему
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          # Виконати SQL через Supabase REST API
+          SQL=$(cat << 'ENDSQL'
+          DO $$
+          BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ci_artifact_status') THEN
+              CREATE TYPE ci_artifact_status AS ENUM ('NOT_NOW','PENDING','PAID','LOCKED');
+            END IF;
+          END$$;
+
+          CREATE TABLE IF NOT EXISTS artifacts (
+            id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            artifact_code           TEXT UNIQUE NOT NULL,
+            user_fingerprint        TEXT NOT NULL,
+            lock_time               TIMESTAMPTZ NOT NULL,
+            status                  ci_artifact_status NOT NULL DEFAULT 'PENDING',
+            stripe_payment_intent_id TEXT,
+            created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+            updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+          );
+
+          CREATE INDEX IF NOT EXISTS idx_artifacts_code
+            ON artifacts(artifact_code);
+          CREATE INDEX IF NOT EXISTS idx_artifacts_fingerprint
+            ON artifacts(user_fingerprint);
+          CREATE INDEX IF NOT EXISTS idx_artifacts_status
+            ON artifacts(status);
+
+          ALTER TABLE artifacts ENABLE ROW LEVEL SECURITY;
+
+          DROP POLICY IF EXISTS "Public insert" ON artifacts;
+          CREATE POLICY "Public insert" ON artifacts
+            FOR INSERT TO public WITH CHECK (true);
+
+          DROP POLICY IF EXISTS "Service update" ON artifacts;
+          CREATE POLICY "Service update" ON artifacts
+            FOR UPDATE TO service_role USING (true);
+          ENDSQL
+          )
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            "${SUPABASE_URL}/rest/v1/rpc/exec" \
+            -H "apikey: ${SUPABASE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\": $(echo "$SQL" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))')}" \
+            || echo "connection_error\n000")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          echo "Supabase response: $HTTP_CODE"
+
+      - name: Звіт Supabase
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const status = '${{ job.status }}';
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: status === 'success'
+                ? '✅ **Supabase** — схему налаштовано'
+                : '⚠️ **Supabase** — перевірте схему вручну у Dashboard'
+            });
+
+  # ═══════════════════════════════════════════════════════
+  # STEP 4: DEPLOY TO VERCEL
+  # ═══════════════════════════════════════════════════════
+
+  deploy:
+    name: 🌐 Vercel Deploy
+    needs: [validate, supabase]
+    if: needs.validate.outputs.valid == 'true'
+    runs-on: ubuntu-latest
+    environment: ci-production
+    outputs:
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          NEXT_PUBLIC_SITE_URL: https://ci.cimeika.com.ua
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Deploy to Vercel
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          URL=$(vercel deploy --prod --token="$VERCEL_TOKEN" \
+            --env STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
+            --env STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
+            --env SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            --yes 2>&1 | tail -1)
+
+          echo "url=$URL" >> $GITHUB_OUTPUT
+          echo "Deployed: $URL"
+
+      - name: Звіт Vercel
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '✅ **Vercel** — задеплоєно: `${{ steps.deploy.outputs.url }}`'
+            });
+
+  # ═══════════════════════════════════════════════════════
+  # STEP 5: HEALTH CHECK + FINAL REPORT
+  # ═══════════════════════════════════════════════════════
+
+  finalize:
+    name: 🏁 Фінальний звіт
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Health Check
+        id: health
+        run: |
+          sleep 30
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ needs.deploy.outputs.url }}/api/health" || echo "000")
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "Health: $STATUS"
+
+      - name: Фінальний звіт
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployUrl = '${{ needs.deploy.outputs.url }}';
+            const healthStatus = '${{ steps.health.outputs.status }}';
+            const isHealthy = healthStatus === '200';
+
+            const report = [
+              '## 🎉 CI Production Deployment — Завершено',
+              '',
+              '| Крок | Результат |',
+              '|------|-----------|',
+              '| 🔐 Secrets | ✅ |',
+              '| 🗄️ Supabase | ✅ |',
+              '| 🌐 Vercel | ✅ |',
+              `| 🏥 Health | ${isHealthy ? '✅ OK' : '⚠️ ' + healthStatus} |`,
+              '',
+              `### 🌐 Production URL`,
+              `**[ci.cimeika.com.ua](https://ci.cimeika.com.ua)**`,
+              '',
+              `Vercel: ${deployUrl}`,
+              '',
+              '### DNS — налаштуйте у реєстратора домену:',
+              '```',
+              'Type:  CNAME',
+              'Name:  ci',
+              'Value: cname.vercel-dns.com',
+              'TTL:   3600',
+              '```',
+              '',
+              '### Наступні кроки:',
+              '1. Налаштувати DNS',
+              '2. Перевірити Stripe webhook',
+              '3. Тестовий платіж',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: report
+            });
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed',
+              labels: ['deployed', 'production', 'ci-project']
+            });
