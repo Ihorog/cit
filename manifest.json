@@ -1,1 +1,104 @@
-{\n  "contracts": {\n    "state_crdt": "/CONTRACTS/STATE_CRDT.md",\n    "manifest_protocol": "/CONTRACTS/MANIFEST.md",\n    "abilities_registry": "/CONTRACTS/ABILITIES.md"\n  },\n  "abilities_registry": {\n    "system_will": {\n      "path": "/abilities/system_will",\n      "priority": 111,\n      "status": "dormant",\n      "trigger": "intent:architecture"\n    },\n    "repo_registry": {\n      "path": "/abilities/repo_registry",\n      "priority": 111,\n      "status": "dormant",\n      "trigger": "sync:manifest"\n    }\n  }\n}
+{
+  "orhanizm": {
+    "nazva": "Cimeika",
+    "versiya": "0.1.0",
+    "stan": "aktyvnyy",
+    "opys": "Організм інтегральної цілісності — 7 формацій"
+  },
+  "formatsiyi": {
+    "kazkar": {
+      "nazva": "Казкар",
+      "symvol": "📖",
+      "poryadok": 1,
+      "aktyvna": false,
+      "stan": "gotova_do_aktyvatsii",
+      "tsilisnist": 0.0,
+      "komponenty": {
+        "legenda_si": {
+          "nazva": "✨ Легенда Сі",
+          "aktyvna": false,
+          "kilkist_vuzliv": 10,
+          "kilkist_zv_yazkiv": 10,
+          "dynamichne_stvorennya": true,
+          "redahuvannya_v_realnomu_chasi": true
+        },
+        "arkhetypy": {
+          "kilkist": 7,
+          "zavantazheni": false
+        },
+        "opovidach": {
+          "kilkist_istoriy": 0
+        }
+      },
+      "funktsionalnist": {
+        "stvoryty_vuzol": true,
+        "dodaty_zv_yazok": true,
+        "onovytu_vuzol": true,
+        "vydalyty_vuzol": true,
+        "navihatsiya_bez_perezavantazhennya": true
+      },
+      "ostannya_aktyvatsiya": null
+    },
+    "formatsiya_2": {
+      "nazva": "Формація 2",
+      "symvol": "🔮",
+      "poryadok": 2,
+      "aktyvna": false,
+      "stan": "v_rozrobtsi"
+    },
+    "formatsiya_3": {
+      "nazva": "Формація 3",
+      "symvol": "🌟",
+      "poryadok": 3,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_4": {
+      "nazva": "Формація 4",
+      "symvol": "🌊",
+      "poryadok": 4,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_5": {
+      "nazva": "Формація 5",
+      "symvol": "🔥",
+      "poryadok": 5,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_6": {
+      "nazva": "Формація 6",
+      "symvol": "🌳",
+      "poryadok": 6,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    },
+    "formatsiya_7": {
+      "nazva": "Формація 7",
+      "symvol": "✨",
+      "poryadok": 7,
+      "aktyvna": false,
+      "stan": "zaplanovana"
+    }
+  },
+  "contracts": {
+    "state_crdt": "/CONTRACTS/STATE_CRDT.md",
+    "manifest_protocol": "/CONTRACTS/MANIFEST.md",
+    "abilities_registry": "/CONTRACTS/ABILITIES.md"
+  },
+  "abilities_registry": {
+    "system_will": {
+      "path": "/abilities/system_will",
+      "priority": 111,
+      "status": "dormant",
+      "trigger": "intent:architecture"
+    },
+    "repo_registry": {
+      "path": "/abilities/repo_registry",
+      "priority": 111,
+      "status": "dormant",
+      "trigger": "sync:manifest"
+    }
+  }
+}
