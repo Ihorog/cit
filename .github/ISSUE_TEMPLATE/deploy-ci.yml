@@ -1,0 +1,34 @@
+name: 🚀 Deploy CI to Production
+description: One-click deployment CI Project на production
+title: "[DEPLOY] CI Production Deployment"
+labels: ["deployment", "production", "ci-project"]
+assignees:
+  - Ihorog
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🚀 CI Production Deployment
+        
+        Натисни **Submit** — GitHub Actions зробить все автоматично:
+        
+        1. ✅ Перевірка secrets
+        2. ✅ Supabase database schema
+        3. ✅ Vercel deployment
+        4. ✅ Health check
+        5. ✅ Звіт у цьому issue
+        
+        **Час:** ~5-10 хвилин
+
+  - type: checkboxes
+    id: ready
+    attributes:
+      label: Підтверджую готовність
+      options:
+        - label: "Всі GitHub Secrets налаштовані"
+          required: true
+        - label: "Supabase проєкт створено"
+          required: true
+        - label: "Vercel акаунт готовий"
+          required: true
