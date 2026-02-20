@@ -1,24 +1,78 @@
-# CRDT State Synchronization Protocol
+# STATE_CRDT Contract
 
-## Overview
-Conflict-free Replicated Data Types (CRDTs) allow distributed systems to synchronize data state without requiring coordination between nodes. This document outlines the key components of the CRDT state synchronization protocol, focusing on strategies like Last Writer Wins (LWW) for merging, the use of SHA-256 hashing, timestamp-based conflict resolution, and canonical JSON serialization rules.
+## Protocol Version: 1.0.0
 
-## Last Writer Wins (LWW) Merge Strategy
-In a CRDT system, the Last Writer Wins (LWW) strategy is employed to resolve conflicts when concurrent updates occur. Under this strategy, the most recent update (determined by a timestamp) is accepted while earlier updates are discarded. This requires careful timestamp management to ensure that updates are applied in the correct order.
+### Purpose
+Conflict-free Replicated Data Type (CRDT) protocol for state synchronization across CIMEIKA organism nodes.
 
-## SHA-256 Hashing
-To maintain data integrity and ensure that state changes are tracked accurately, SHA-256 hashing is used. Each change is hashed so that when state updates are sent between nodes, they can verify the change’s integrity and uniqueness. 
+### Strategy
+**Last-Write-Wins (LWW)** with lamport timestamps and SHA-256 state hashing.
 
-## Timestamp-based Conflict Resolution
-The timestamp-based conflict resolution mechanism involves assigning a unique timestamp to each state change. When two updates conflict, the one with the later timestamp is applied. This helps in maintaining consistency across different replicas without requiring a centralized coordination mechanism.
+### State Structure
 
-## Canonical JSON Serialization Rules
-To ensure interoperability and consistent data exchange, Canonical JSON serialization rules are applied when formatting CRDT states for transfer. This includes:
-- Sorting JSON keys in alphabetical order.
-- Ensuring that all strings are escaped properly.
-- Using a consistent formatting style (e.g., whitespace handling).
+```json
+{
+  "node_id": "string (unique identifier)",
+  "timestamp": "ISO 8601 datetime",
+  "lamport_clock": "integer (monotonic counter)",
+  "state": {
+    "orhanizm": {},
+    "formatsiyi": {},
+    "abilities_registry": {}
+  },
+  "hash": "SHA-256 hex string",
+  "vector_clock": {
+    "node_1": 42,
+    "node_2": 38
+  }
+}
+```
 
-These rules are essential for avoiding discrepancies that might arise during state synchronization.
+### Merge Algorithm
 
-## Conclusion
-By leveraging the philosophies of LWW, SHA-256 hashing, timestamping, and canonical JSON serialization, CRDTs can achieve reliable state synchronization across distributed systems.
+1. **Timestamp Comparison**: Higher lamport_clock wins
+2. **Hash Verification**: SHA-256(canonical_json(state)) must match
+3. **Conflict Resolution**: Per-key LWW merge
+4. **Convergence**: All nodes eventually reach identical hash
+
+### Hash Computation
+
+**Canonical JSON**:
+- Keys sorted alphabetically
+- No whitespace
+- UTF-8 encoding
+
+**SHA-256**:
+- Cloudflare Workers: `crypto.subtle.digest('SHA-256', ...)`
+- Python/Vercel: `hashlib.sha256(...).hexdigest()`
+- Node.js/Termux: `crypto.createHash('sha256').update(...).digest('hex')`
+
+### Synchronization Flow
+
+```mermaid
+sequenceDiagram
+    participant A as Node A (Termux)
+    participant B as Node B (Workers)
+    participant C as Node C (Vercel)
+    
+    A->>B: POST /api/sync {state, timestamp, hash}
+    B->>B: Verify hash
+    B->>B: Merge with local state
+    B->>C: Propagate merged state
+    C->>C: Verify + merge
+    C-->>A: Ack with convergence status
+```
+
+### Validation Rules
+
+- **Hash mismatch** → Reject + request full state
+- **Timestamp regression** → Ignore update
+- **Network partition** → Queue updates, replay on reconnect
+- **State drift** → Full sync every N minutes
+
+### Implementation Requirements
+
+- Atomic writes to manifest.json
+- Append-only operation log
+- Periodic garbage collection of old states
+- Conflict metadata preserved for debugging
