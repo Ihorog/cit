@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+msg_file="$1"
+msg="$(head -n1 "$msg_file")"
+if echo "$msg" | grep -qE '^Merge '; then exit 0; fi
+if ! echo "$msg" | grep -qE '^(feat|fix|docs|style|refactor|test|chore|ci|111):\s.+'; then
+  echo "❌ Commit message invalid"
+  echo "Format: <type>: <description>"
+  echo "Types: feat|fix|docs|style|refactor|test|chore|ci|111"
+  exit 1
+fi
+exit 0

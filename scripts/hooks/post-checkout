@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+prev="$1"; new="$2"; flag="$3"
+if [ "${flag}" = "1" ]; then
+  echo "[CIT] Context switch: ${prev:0:7} -> ${new:0:7}"
+  if git stash list | grep -q "AUTO_STASH_"; then
+    echo "[CIT] AUTO_STASH exists. Apply manually with: git stash pop"
+  fi
+fi
+exit 0

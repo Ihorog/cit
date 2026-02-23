@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if ! git diff-files --quiet --ignore-submodules; then
+  ts="$(date +%Y%m%d_%H%M%S)"
+  git stash push -u -m "AUTO_STASH_${ts}" >/dev/null 2>&1 || true
+  echo "[CIT] Auto-stashed unstaged changes: AUTO_STASH_${ts}"
+fi
+exit 0
