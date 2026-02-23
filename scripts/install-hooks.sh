@@ -1,9 +1,19 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-set -e
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
 
-# Install git hooks
-cp scripts/hooks/pre-commit .git/hooks/pre-commit
-cp scripts/hooks/post-checkout .git/hooks/post-checkout
-cp scripts/hooks/commit-msg .git/hooks/commit-msg
-chmod +x .git/hooks/pre-commit .git/hooks/post-checkout .git/hooks/commit-msg
+[ -d ".git" ] || exit 0
+[ -d "scripts/hooks" ] || exit 0
+
+mkdir -p .git/hooks
+
+for h in pre-commit post-checkout commit-msg; do
+  src="scripts/hooks/$h"
+  dst=".git/hooks/$h"
+  [ -f "$src" ] || continue
+  install -m 0755 "$src" "$dst"
+done
+
+echo "[CIT] Git hooks installed"
