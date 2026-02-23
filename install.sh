@@ -133,3 +133,8 @@ if [ -z "${OPENAI_API_KEY:-}" ]; then
     echo "  export OPENAI_API_KEY=\"sk-...\""
     echo ""
 fi
+
+# --- CIT 111: auto-install git hooks (best-effort) ---
+if [ -d "$CI_ROOT/.git" ] && [ -f "$CI_ROOT/scripts/install-hooks.sh" ]; then
+  (cd "$CI_ROOT" && bash scripts/install-hooks.sh) || true
+fi
