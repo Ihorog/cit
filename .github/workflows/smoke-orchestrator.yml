@@ -1,0 +1,149 @@
+name: Smoke Orchestrator
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/ops/smoke_ci_orchestrator.sh'
+      - 'ci-registry.yml'
+      - 'ownership_matrix.md'
+      - 'LEGEND_CI.md'
+      - '.github/workflows/smoke-orchestrator.yml'
+
+jobs:
+  legend-ci-guard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout cit
+        uses: actions/checkout@v4
+        with:
+          path: cit
+          fetch-depth: 0
+
+      - name: Checkout ciwiki
+        uses: actions/checkout@v4
+        with:
+          repository: Ihorog/ciwiki
+          path: ciwiki
+
+      - name: Diff-precise Legend Ci guard
+        working-directory: cit
+        run: |
+          set -euo pipefail
+
+          BASE="${{ github.base_ref }}"
+          if [ -z "$BASE" ]; then
+            echo "ℹ️  No base ref (workflow_dispatch); skipping diff guard."
+            exit 0
+          fi
+
+          CHANGED=$(git diff --name-only "origin/${BASE}..." 2>/dev/null || true)
+          echo "Changed files:"
+          echo "$CHANGED"
+
+          # Block forbidden Legend Ci directories
+          FORBIDDEN_DIRS=("Legend ci/" "legend-ci/" "Legend-Ci/" "content/legend/" "docs/legend_ci/")
+          for dir in "${FORBIDDEN_DIRS[@]}"; do
+            if echo "$CHANGED" | grep -q "^${dir}"; then
+              echo "❌ ERROR: Changes in forbidden Legend Ci directory: ${dir}"
+              exit 1
+            fi
+          done
+
+          # Block suspicious Legend Ci filenames (except LEGEND_CI.md itself)
+          SUSPICIOUS=$(echo "$CHANGED" | grep -E \
+            '(^|/)(([^/]*legend-ci[^/]*\.md)|00-summary\.md|01-definition\.md|02-ontology\.md|03-narrative-layers\.md|04-buloiebude\.md|05-functions\.md|06-practice\.md|07-critique\.md)$' \
+            | grep -v '^LEGEND_CI\.md$' || true)
+          if [ -n "$SUSPICIOUS" ]; then
+            echo "❌ ERROR: Suspicious Legend Ci filename(s) detected:"
+            echo "$SUSPICIOUS"
+            exit 1
+          fi
+
+          # Scan only changed .md files for "було → є → буде" pattern
+          CHANGED_MD=$(echo "$CHANGED" | grep '\.md$' | grep -v '^LEGEND_CI\.md$' || true)
+          if [ -n "$CHANGED_MD" ]; then
+            while IFS= read -r f; do
+              if [ -f "$f" ] && grep -qP 'було\s*→\s*є\s*→\s*буде' "$f" 2>/dev/null; then
+                echo "❌ ERROR: Found 'було → є → буде' pattern in $f (Legend Ci content not allowed here)"
+                exit 1
+              fi
+            done <<< "$CHANGED_MD"
+          fi
+
+          # Strict redirect-only contract for LEGEND_CI.md if changed
+          if echo "$CHANGED" | grep -q '^LEGEND_CI\.md$'; then
+            echo "🔍 Enforcing strict redirect-only contract for LEGEND_CI.md..."
+            CANONICAL_URL="https://www.cimeika.com.ua/legend/"
+
+            # Must be small (<= 6 lines)
+            LINE_COUNT=$(wc -l < LEGEND_CI.md)
+            if [ "$LINE_COUNT" -gt 6 ]; then
+              echo "❌ ERROR: LEGEND_CI.md has $LINE_COUNT lines (max 6)"
+              exit 1
+            fi
+
+            # Must not contain YAML frontmatter
+            if head -1 LEGEND_CI.md | grep -q '^---'; then
+              echo "❌ ERROR: LEGEND_CI.md must not have YAML frontmatter"
+              exit 1
+            fi
+
+            # Must contain exactly one URL and it must be the canonical URL
+            URL_COUNT=$(grep -oE 'https?://[^[:space:]]+' LEGEND_CI.md | wc -l)
+            if [ "$URL_COUNT" -ne 1 ]; then
+              echo "❌ ERROR: LEGEND_CI.md must contain exactly one URL (found $URL_COUNT)"
+              exit 1
+            fi
+
+            FOUND_URL=$(grep -oE 'https?://[^[:space:]]+' LEGEND_CI.md | head -1)
+            if [ "$FOUND_URL" != "$CANONICAL_URL" ]; then
+              echo "❌ ERROR: LEGEND_CI.md URL must be '$CANONICAL_URL' (found '$FOUND_URL')"
+              exit 1
+            fi
+
+            # Must match exact template: "# Legend Ci\n\n<canonical_url>"
+            # Both sides use $() which strips trailing newlines, making the comparison consistent.
+            EXPECTED=$(printf '# Legend Ci\n\n%s' "$CANONICAL_URL")
+            ACTUAL=$(cat LEGEND_CI.md)
+            if [ "$ACTUAL" != "$EXPECTED" ]; then
+              echo "❌ ERROR: LEGEND_CI.md does not match the required template."
+              echo "Expected:"
+              echo "$EXPECTED"
+              echo "Actual:"
+              echo "$ACTUAL"
+              exit 1
+            fi
+
+            echo "✅ LEGEND_CI.md passes strict redirect-only contract"
+          fi
+
+          echo "✅ Legend Ci guard passed"
+
+  smoke:
+    runs-on: ubuntu-latest
+    needs: legend-ci-guard
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout cit
+        uses: actions/checkout@v4
+        with:
+          path: cit
+          fetch-depth: 0
+
+      - name: Checkout ciwiki
+        uses: actions/checkout@v4
+        with:
+          repository: Ihorog/ciwiki
+          path: ciwiki
+
+      - name: Run smoke orchestrator
+        working-directory: cit
+        run: |
+          set -euo pipefail
+          bash scripts/ops/smoke_ci_orchestrator.sh
