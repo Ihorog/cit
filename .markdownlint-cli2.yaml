@@ -1,0 +1,6 @@
+# markdownlint-cli2 configuration
+
+# A configuration for markdownlint CLI
+rules:
+  no-trailing-punctuation:
+    severity: warning  # or 'error'
