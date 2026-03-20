@@ -1,0 +1,15 @@
+{
+  "id": "ci_stability_system",
+  "version": "1.0.0",
+  "status": "dormant",
+  "description": "Transforms weak nodes (-) into stable states (+) via F/C/S/R pipeline",
+  "entry": "api.py",
+  "routes_prefix": "/stability",
+  "ci_mapping": {
+    "F": "Kazkar",
+    "C": "Malya",
+    "S": "Nastrij",
+    "R": "Podija"
+  },
+  "modes": ["strict", "adaptive"]
+}
