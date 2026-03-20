@@ -24,6 +24,7 @@ env:
   CONDUCTOR_ID: ${{ github.event.inputs.conductor_id }}
   NODE_ID: ${{ github.event.inputs.node_id }}
   NODE_TYPE: ${{ github.event.inputs.node_type }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 permissions:
   contents: read

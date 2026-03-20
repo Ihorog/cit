@@ -26,6 +26,7 @@ env:
   CONDUCTOR_ID: ${{ github.run_id }}
   MISSION: ${{ github.event.inputs.mission }}
   SCALE: ${{ github.event.inputs.scale }}
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 permissions:
   contents: read
