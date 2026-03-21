@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Ci",
+    "slug": "ci-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "android": { "adaptiveIcon": { "backgroundColor": "#0d0d0d" } },
+    "ios": { "supportsTablet": false }
+  }
+}
