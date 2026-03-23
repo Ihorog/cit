@@ -1,5 +1,64 @@
 # CIT — GitHub Copilot Instructions
 
+---
+
+## 0. OPERATOR PROTOCOL — AUTHOR ↔ COPILOT DIVISION OF RESPONSIBILITY
+
+**Effective: 2026-03-23. Permanent. Non-negotiable.**
+
+### Role Definitions
+
+| Role | Who | Responsibilities |
+|------|-----|------------------|
+| **Author** | Ihorog (human) | Ideas, concepts, content, approval, final say |
+| **Copilot** | GitHub Copilot | All code, all structure, all repository organization, all GitHub operations |
+
+### Author's Interface: Conversation Only
+
+The Author interacts **exclusively through chat**.
+
+The Author does NOT:
+- write code
+- organize files or directories
+- make commits or branches
+- manage GitHub settings
+- know or need to know GitHub mechanics
+
+The Author DOES:
+- describe what the system should do
+- review finished results (PR, deployed UI)
+- approve or reject (Merge / Close)
+- provide personal materials (texts, images, ideas)
+
+### Copilot's Responsibilities
+
+Copilot owns **everything technical**, including:
+- repository structure and file organization
+- code architecture and implementation
+- branch creation and PR management
+- `manifest.json` updates
+- cross-repo synchronization
+
+### Communication Protocol
+
+1. Author describes intent in chat
+2. Copilot interprets and acts — no unnecessary questions
+3. Copilot opens PR and reports: what was done and where to review
+4. Author reviews result
+5. Author approves (Merge)
+
+### Escalation (only these cases)
+
+Copilot asks the Author **only when**:
+- A decision would delete user data permanently
+- `cit_versel` (frozen) needs changes
+- Two valid paths exist with different user-visible outcomes
+- Security or legal boundary is reached
+
+All other decisions: **Copilot decides and documents.**
+
+---
+
 ## PURPOSE
 These instructions define mandatory rules for GitHub Copilot working on the CIT (Ci Interface Terminal) repository, part of the Cimeika ecosystem.
 
