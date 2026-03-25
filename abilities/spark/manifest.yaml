@@ -1,0 +1,30 @@
+id: spark
+type: analytics
+status: dormant
+source: Ihorog/cit
+mount: /api/spark
+entry: spark_routes.py
+description: "Distributed analytics over all 7 Cimeika repos via Apache Spark"
+
+# АКТУАЛЬНИЙ РЕЄСТР (2026-03-23)
+dependencies:
+  - cit               # core_toolkit      — manifest.json, Dzerkalo
+  - ci_gitapi         # auth_gateway      — ecosystem DNA (private)
+  - cimeika-unified   # unified_platform  — 7 Python/TS modules
+  - cimeika-backend   # edge_runtime      — 7 CF Workers Durable Objects
+  - ci-memory         # shared_memory     — MIND.md AI context
+  - ciwiki            # knowledge_base    — docs, legends
+  - media             # media_assets      — binary index
+
+config:
+  spark_master: "local[*]"
+  driver_memory: "512m"
+  partitioned_by: "role"
+  sink: "dani/spark/indexed/corpus/"
+  raw:  "dani/spark/raw/"
+
+compatibility:
+  termux: true
+  vercel_edge: false
+  cloudflare_workers: false
+  cloudflare_note: "cimeika-backend data ingested as raw corpus, not executed in CF runtime"
