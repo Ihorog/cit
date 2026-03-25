@@ -99,6 +99,24 @@
       "priority": 111,
       "status": "dormant",
       "trigger": "sync:manifest"
+    },
+    "spark": {
+      "path": "/abilities/spark",
+      "priority": 11,
+      "status": "dormant",
+      "trigger": "api:spark",
+      "last_run": null,
+      "total_files": 0,
+      "datasets": [],
+      "repos": [
+        "Ihorog/cit",
+        "Ihorog/ci_gitapi",
+        "Ihorog/cimeika-unified",
+        "Ihorog/cimeika-backend",
+        "Ihorog/ci-memory",
+        "Ihorog/ciwiki",
+        "Ihorog/media"
+      ]
     }
   }
 }

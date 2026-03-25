@@ -1,26 +1,69 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "core": "Ihorog/cit",
+  "updated_at": "2026-03-23",
   "modules": [
     {
       "id": "ciwiki",
       "status": "active",
+      "role": "knowledge_base",
       "requires": []
     },
     {
       "id": "cimeika-unified",
       "status": "active",
+      "role": "unified_platform",
       "requires": ["media"]
     },
     {
       "id": "media",
       "status": "static",
+      "role": "media_assets",
       "requires": []
     },
     {
-      "id": "vercel",
-      "status": "cloud",
-      "requires": []
+      "id": "ci_gitapi",
+      "status": "active",
+      "role": "auth_gateway",
+      "requires": [],
+      "visibility": "private",
+      "repo": "Ihorog/ci_gitapi"
+    },
+    {
+      "id": "cimeika-backend",
+      "status": "active",
+      "role": "edge_runtime",
+      "requires": [],
+      "runtime": "cloudflare-workers",
+      "repo": "Ihorog/cimeika-backend"
+    },
+    {
+      "id": "ci-memory",
+      "status": "active",
+      "role": "shared_memory",
+      "requires": [],
+      "repo": "Ihorog/ci-memory"
+    },
+    {
+      "id": "spark",
+      "status": "dormant",
+      "role": "analytics",
+      "requires": [
+        "cit",
+        "ci_gitapi",
+        "cimeika-unified",
+        "cimeika-backend",
+        "ci-memory",
+        "ciwiki",
+        "media"
+      ],
+      "path": "/abilities/spark",
+      "trigger": "api:spark",
+      "compatibility": {
+        "termux": true,
+        "vercel_edge": false,
+        "cloudflare_workers": false
+      }
     }
   ]
 }
