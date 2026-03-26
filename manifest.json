@@ -1,122 +1,56 @@
 {
-  "orhanizm": {
-    "nazva": "Cimeika",
-    "versiya": "0.1.0",
-    "stan": "aktyvnyy",
-    "opys": "Організм інтегральної цілісності — 7 формацій"
-  },
   "formatsiyi": {
+    "ci": {
+      "nazva": "Ci",
+      "symvol": "🧠",
+      "poryadok": 0,
+      "stan": "aktyvna",
+      "opis": "Ядро оркестратора, головний розум організму"
+    },
     "kazkar": {
       "nazva": "Казкар",
       "symvol": "📖",
       "poryadok": 1,
-      "aktyvna": false,
       "stan": "gotova_do_aktyvatsii",
-      "tsilisnist": 0.0,
-      "komponenty": {
-        "legenda_si": {
-          "nazva": "✨ Легенда Сі",
-          "aktyvna": false,
-          "kilkist_vuzliv": 10,
-          "kilkist_zv_yazkiv": 10,
-          "dynamichne_stvorennya": true,
-          "redahuvannya_v_realnomu_chasi": true
-        },
-        "arkhetypy": {
-          "kilkist": 7,
-          "zavantazheni": false
-        },
-        "opovidach": {
-          "kilkist_istoriy": 0
-        }
-      },
-      "funktsionalnist": {
-        "stvoryty_vuzol": true,
-        "dodaty_zv_yazok": true,
-        "onovytu_vuzol": true,
-        "vydalyty_vuzol": true,
-        "navihatsiya_bez_perezavantazhennya": true
-      },
-      "ostannya_aktyvatsiya": null
+      "opis": "Архітектор пам'яті, наративів та інваріантів"
     },
-    "formatsiya_2": {
-      "nazva": "Формація 2",
+    "podiya": {
+      "nazva": "Подія",
       "symvol": "🔮",
       "poryadok": 2,
-      "aktyvna": false,
-      "stan": "v_rozrobtsi"
+      "stan": "v_rozrobtsi",
+      "opis": "Обробка подій, сценаріїв та реакцій"
     },
-    "formatsiya_3": {
-      "nazva": "Формація 3",
+    "nastriy": {
+      "nazva": "Настрій",
       "symvol": "🌟",
       "poryadok": 3,
-      "aktyvna": false,
-      "stan": "zaplanovana"
+      "stan": "zaplanovana",
+      "opis": "Емоційний стан організму та контекст"
     },
-    "formatsiya_4": {
-      "nazva": "Формація 4",
+    "malya": {
+      "nazva": "Маля",
       "symvol": "🌊",
       "poryadok": 4,
-      "aktyvna": false,
-      "stan": "zaplanovana"
+      "stan": "zaplanovana",
+      "opis": "Генерація ідей, креатив та візуальні концепти"
     },
-    "formatsiya_5": {
-      "nazva": "Формація 5",
-      "symvol": "🔥",
-      "poryadok": 5,
-      "aktyvna": false,
-      "stan": "zaplanovana"
-    },
-    "formatsiya_6": {
-      "nazva": "Формація 6",
+    "kalendar": {
+      "nazva": "Календар",
       "symvol": "🌳",
-      "poryadok": 6,
-      "aktyvna": false,
-      "stan": "zaplanovana"
+      "poryadok": 5,
+      "stan": "zaplanovana",
+      "opis": "Управління часом, планами та циклічністю"
     },
-    "formatsiya_7": {
-      "nazva": "Формація 7",
+    "galereya": {
+      "nazva": "Галерея",
       "symvol": "✨",
-      "poryadok": 7,
-      "aktyvna": false,
-      "stan": "zaplanovana"
+      "poryadok": 6,
+      "stan": "zaplanovana",
+      "opis": "Медіа, візуали, R2 та галерея"
     }
   },
-  "contracts": {
-    "state_crdt": "/CONTRACTS/STATE_CRDT.md",
-    "manifest_protocol": "/CONTRACTS/MANIFEST.md",
-    "abilities_registry": "/CONTRACTS/ABILITIES.md"
-  },
-  "abilities_registry": {
-    "system_will": {
-      "path": "/abilities/system_will",
-      "priority": 111,
-      "status": "dormant",
-      "trigger": "intent:architecture"
-    },
-    "repo_registry": {
-      "path": "/abilities/repo_registry",
-      "priority": 111,
-      "status": "dormant",
-      "trigger": "sync:manifest"
-    },
-    "spark": {
-      "path": "/abilities/spark",
-      "priority": 11,
-      "status": "dormant",
-      "trigger": "api:spark",
-      "last_run": null,
-      "total_files": 0,
-      "datasets": [],
-      "repos": [
-        "Ihorog/cit",
-        "Ihorog/ci_gitapi",
-        "Ihorog/cimeika-unified",
-        "Ihorog/cimeika-backend",
-        "Ihorog/ci-memory",
-        "Ihorog/ciwiki",
-        "Ihorog/media"
-      ]
-    }
-  }
+  "version": "2026.03.26",
+  "organism": "CIMEIKA",
+  "last_sync": "2026-03-26"
 }
