@@ -1,0 +1,27 @@
+name: sidecar-check
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "5 3 * * *"
+
+jobs:
+  sidecar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check sidecar structure
+        run: |
+          test -d server
+          test -d core
+          test -d registry
+          test -d scripts/termux_boot
+          test -f AGENTS.md
+
+      - name: Check sidecar manifests
+        run: |
+          test -f manifests/repo-identity.yaml
+          test -f manifests/repo-boundary.yaml
+          test -f docs/processes/sidecar-role.md

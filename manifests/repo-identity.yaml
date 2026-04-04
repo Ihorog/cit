@@ -1,0 +1,7 @@
+repo:
+  repo_id: cit
+  repo_name: cit
+  visibility: snapshot_or_managed
+  layer: sidecar
+  class: local_termux_orchestrator
+  status: restricted_sidecar
