@@ -130,7 +130,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Execution Plan
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: execution-plan
 
@@ -226,7 +226,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: execution-results
 
