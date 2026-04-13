@@ -84,7 +84,7 @@ jobs:
           echo "plan=$(cat execution-plan.json | jq -c)" >> $GITHUB_OUTPUT
 
       - name: Upload Execution Plan
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: execution-plan
           path: execution-plan.json
@@ -205,7 +205,7 @@ jobs:
 
       - name: Upload Results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: execution-results
           path: results.json
@@ -267,7 +267,7 @@ jobs:
             });
 
       - name: Archive Results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: final-mission-results
           path: |
