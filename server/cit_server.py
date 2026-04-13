@@ -241,4 +241,5 @@ def restart():
         }), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get('CIT_PORT', 8791))
+    app.run(host='0.0.0.0', port=port)
