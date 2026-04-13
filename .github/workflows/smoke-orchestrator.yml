@@ -18,13 +18,13 @@ jobs:
 
     steps:
       - name: Checkout cit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: cit
           fetch-depth: 0
 
       - name: Checkout ciwiki
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: Ihorog/ciwiki
           path: ciwiki
@@ -131,13 +131,13 @@ jobs:
 
     steps:
       - name: Checkout cit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: cit
           fetch-depth: 0
 
       - name: Checkout ciwiki
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: Ihorog/ciwiki
           path: ciwiki
