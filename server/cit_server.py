@@ -240,6 +240,38 @@ def restart():
             "error": str(e)
         }), 500
 
+
+# ── Static UI serving ──────────────────────────────────────────────────────
+import mimetypes
+from pathlib import Path
+
+UI_ROOT = Path(__file__).parent.parent
+
+@app.route('/', methods=['GET'])
+def index():
+    """Головний інтерфейс — PWA асистент."""
+    f = UI_ROOT / 'cit-pwa' / 'index.html'
+    if f.exists():
+        return f.read_text(encoding='utf-8'), 200, {'Content-Type': 'text/html; charset=utf-8'}
+    return '<h2>CIT running · <a href="/dashboard">Dashboard</a></h2>', 200, {'Content-Type': 'text/html'}
+
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    """Vault Dashboard — Health / Logs."""
+    f = UI_ROOT / 'ui_dashboard' / 'index.html'
+    if f.exists():
+        return f.read_text(encoding='utf-8'), 200, {'Content-Type': 'text/html; charset=utf-8'}
+    return 'Dashboard not found', 404
+
+@app.route('/pwa/<path:filename>', methods=['GET'])
+def pwa_static(filename):
+    """PWA static assets."""
+    f = UI_ROOT / 'cit-pwa' / filename
+    if f.exists():
+        mt, _ = mimetypes.guess_type(str(f))
+        return f.read_bytes(), 200, {'Content-Type': mt or 'application/octet-stream'}
+    return 'Not found', 404
+
 if __name__ == '__main__':
     port = int(os.environ.get('CIT_PORT', 8791))
     app.run(host='0.0.0.0', port=port)
