@@ -10,9 +10,9 @@ dataclasses-json==0.6.4
 openai==1.12.0
 huggingface_hub==0.20.3
 pymysql==1.1.0
-schedule==1.2.2
-python-telegram-bot==21.0
-PyYAML==6.0.3
+schedule==1.2.1
+python-telegram-bot==22.7
+PyYAML==6.0.1
 jsonschema==4.21.1
 fastapi>=0.109.0
 uvicorn[standard]>=0.27.0
