@@ -3,7 +3,7 @@ setuptools>=70.0.0
 Flask==3.0.2
 gunicorn==22.0.0
 requests==2.31.0
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 numpy==1.26.4
 asyncio-mqtt==0.16.2
 dataclasses-json==0.6.4
