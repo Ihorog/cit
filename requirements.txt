@@ -4,7 +4,7 @@ Flask==3.1.3
 gunicorn==22.0.0
 requests==2.31.0
 python-dotenv==1.2.2
-numpy==1.26.4
+numpy==2.2.6
 asyncio-mqtt==0.16.2
 dataclasses-json==0.6.4
 openai==1.12.0
