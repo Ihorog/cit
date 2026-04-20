@@ -8,7 +8,7 @@ numpy==2.2.6
 asyncio-mqtt==0.16.2
 dataclasses-json==0.6.4
 openai==1.12.0
-huggingface_hub==1.10.1
+huggingface_hub==1.11.0
 pymysql==1.1.0
 schedule==1.2.1
 python-telegram-bot==22.7
