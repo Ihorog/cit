@@ -1,0 +1,15 @@
+repo_id: cit
+
+boundaries:
+  allowed:
+    - local_orchestration
+    - termux_bootstrap
+    - local_gateway
+    - device_sidecar
+    - local_artifact_generation
+    - local_status_and_sync
+  not_allowed:
+    - primary_product_core
+    - canonical_frontend
+    - canonical_registry_ownership
+    - primary_infra_control_plane
