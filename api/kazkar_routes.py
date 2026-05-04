@@ -393,8 +393,6 @@ async def otrymaty_istoriyu_porad(kilkist: int = 10) -> Dict[str, Any]:
     Returns:
         Список останніх пропозицій
     """
-    global moment_porady_instance
-
     try:
         # Якщо екземпляр не ініціалізований, повернути порожню історію
         if moment_porady_instance is None:
@@ -422,8 +420,6 @@ async def otrymaty_statystyku_porad() -> Dict[str, Any]:
     Returns:
         Статистика по типах дій та пропозицій
     """
-    global moment_porady_instance
-
     try:
         # Якщо екземпляр не ініціалізований, повернути порожню статистику
         if moment_porady_instance is None:

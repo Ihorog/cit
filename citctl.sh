@@ -102,8 +102,8 @@ EOF
     ;;
 
   restart)
-    "$0" stop || true
-    "$0" start
+    bash "${BASH_SOURCE[0]}" stop || true
+    bash "${BASH_SOURCE[0]}" start
     ;;
 
   *)

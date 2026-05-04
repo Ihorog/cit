@@ -15,7 +15,7 @@
 </head>
 <body>
   <h2>CIT • Vault Dashboard</h2>
-  <div class="muted">CIT: <code id="citUrl">http://127.0.0.1:8794</code> • UI: <code>http://127.0.0.1:8795</code></div>
+  <div class="muted">CIT: <code id="citUrl"></code> • UI: <code>http://127.0.0.1:8795</code></div>
 
   <div class="row" style="margin-top:12px">
     <div class="card">
@@ -39,7 +39,7 @@
 
 <script>
 async function loadHealth(){
-  const r = await fetch('http://127.0.0.1:8794/health').catch(()=>null);
+  const r = await fetch('/health').catch(()=>null);
   document.getElementById('health').textContent = r ? await r.text() : 'CIT недоступний';
 }
 async function loadVault(){
