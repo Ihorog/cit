@@ -1,315 +1,77 @@
-# CIT — GitHub Copilot Instructions
+# GitHub Copilot Instructions — Ci Moment v2
+
+Status: `ACTIVE REPOSITORY RULES`
 
 ---
 
-## 0. OPERATOR PROTOCOL — AUTHOR ↔ COPILOT DIVISION OF RESPONSIBILITY
+## 0. Source of truth
 
-**Effective: 2026-03-23. Permanent. Non-negotiable.**
+This repository is the clean v2 development surface for Ci Moment / Legend Ci.
 
-### Role Definitions
+The old `Ihorog/ci-moment` repository is historical reference only.
 
-| Role | Who | Responsibilities |
-|------|-----|------------------|
-| **Author** | Ihorog (human) | Ideas, concepts, content, approval, final say |
-| **Copilot** | GitHub Copilot | All code, all structure, all repository organization, all GitHub operations |
-
-### Author's Interface: Conversation Only
-
-The Author interacts **exclusively through chat**.
-
-The Author does NOT:
-- write code
-- organize files or directories
-- make commits or branches
-- manage GitHub settings
-- know or need to know GitHub mechanics
-
-The Author DOES:
-- describe what the system should do
-- review finished results (PR, deployed UI)
-- approve or reject (Merge / Close)
-- provide personal materials (texts, images, ideas)
-
-### Copilot's Responsibilities
-
-Copilot owns **everything technical**, including:
-- repository structure and file organization
-- code architecture and implementation
-- branch creation and PR management
-- `manifest.json` updates
-- cross-repo synchronization
-
-### Communication Protocol
-
-1. Author describes intent in chat
-2. Copilot interprets and acts — no unnecessary questions
-3. Copilot opens PR and reports: what was done and where to review
-4. Author reviews result
-5. Author approves (Merge)
-
-### Escalation (only these cases)
-
-Copilot asks the Author **only when**:
-- A decision would delete user data permanently
-- `cit_versel` (frozen) needs changes
-- Two valid paths exist with different user-visible outcomes
-- Security or legal boundary is reached
-
-All other decisions: **Copilot decides and documents.**
+Inherited CIT-specific instructions are not valid for this repository unless explicitly reintroduced in a dedicated integration layer.
 
 ---
 
-## PURPOSE
-These instructions define mandatory rules for GitHub Copilot working on the CIT (Ci Interface Terminal) repository, part of the Cimeika ecosystem.
+## 1. Core formula
 
-**CIT Overview**: Lightweight API gateway bridging Cimeika devices to OpenAI API, designed for Android/Termux with **zero external dependencies in core**. Version 2.1 implements unified modular architecture consolidating 5 repositories following the **111 density principle**: 1 Core, 1 Registry, 1 Entry Point.
-
-Goal:
-- eliminate repeated actions,
-- enforce a single execution path,
-- ensure all changes flow through PR → verification → human approval.
-
-Copilot acts as a controlled execution agent, not an autonomous decision-maker.
-
-**Core Philosophy**: Minimal diffs, reversible changes, stable endpoints. This is production-adjacent.
-
----
-
-## CIT-SPECIFIC RULES (READ FIRST)
-**Before any code changes**, read [AGENTS.md](../AGENTS.md):
-- Operating mode: production-adjacent local service
-- Default approach: minimal diffs, reversible changes, stable endpoints
-- Implementation: stdlib Python, small helper functions, deterministic handlers
-- Testing: Always include manual curl tests for `/health` and `/chat`
-- Output: Never print secrets, log only operational info
-
----
-
-## CIT ARCHITECTURE ESSENTIALS
-
-### Entry Points
-- **Flask server**: [server/cit_server.py](../server/cit_server.py) — Production API (port 8790/5000)
-- **Standalone server**: [ci.py](../ci.py) — Single-file HTTP server with embedded UI (port 8790)
-- **Modular engine**: [core/engine.py](../core/engine.py) — Module runtime with CLI (`build`, `run`, `module`)
-
-### Key Components
-- **OpenAI Client**: [server/openai_client.py](../server/openai_client.py) — Autonomous client with intelligent routing (Responses API → Chat Completions fallback)
-- **Plugin System** (optional): [core/plugin_loader.py](../core/plugin_loader.py) — Dynamic module registration
-
-### Critical Files
-- [AGENTS.md](../AGENTS.md) — Operating rules for AI agents (READ FIRST)
-- [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md) — Technical architecture and data flows
-- [docs/UNIFICATION.md](../docs/UNIFICATION.md) — Modular architecture and 111 principle
-- [README.md](../README.md) — Feature overview and quick start
-
----
-
-## DEVELOPER WORKFLOWS
-
-### Testing API Endpoints (MANDATORY)
-Always test with these commands after changes:
-```bash
-# Health check
-curl http://127.0.0.1:8790/health
-
-# Chat endpoint
-curl -X POST http://127.0.0.1:8790/chat \
-  -H 'Content-Type: application/json' \
-  -d '{"messages":[{"role":"user","content":"ping"}]}'
-```
-
-### Running Tests
-```bash
-python tests/test_v21_components.py      # OpenAI client, job manager
-python tests/test_modular_engine.py      # Plugin system, manifests
-python tests/test_api_endpoints.py       # API endpoints
-```
-
-### Starting the Server
-```bash
-# Required: Set API key
-export OPENAI_API_KEY="sk-..."
-
-# Option 1: Flask server (preferred for production)
-python server/cit_server.py
-
-# Option 2: Standalone server with UI
-python ci.py
-
-# Option 3: Modular engine
-python core/engine.py run
-```
-
-### Building and Validating Modules (Optional)
-```bash
-python core/engine.py module <id>      # Run specific module
+```text
+Result → Seal → Artifact → Verify → Repeat → Referral
 ```
 
 ---
 
-## PROJECT-SPECIFIC CONVENTIONS
+## 2. Must
 
-### Code Style
-- **Python stdlib first**: Prefer standard library over external dependencies
-- **No secrets in code**: Read from environment (`OPENAI_API_KEY`, `CIT_MODEL`)
-- **Ukrainian comments**: Core comments in Ukrainian, docs/public-facing in English
-- **Small helpers**: Add helper functions rather than new modules unless necessary
-
-### Environment Variables
-```bash
-OPENAI_API_KEY          # Required: OpenAI API key
-CIT_MODEL / OPENAI_MODEL # Optional: Model name (default: gpt-4o-mini)
-CIT_PORT / PORT         # Optional: Server port (default: 8790 or 5000)
-HOST                    # Optional: Bind address (default: 0.0.0.0)
-```
-
-### API Response Patterns
-Endpoints return consistent JSON: status field + data/error. See [server/cit_server.py](../server/cit_server.py) for exact schemas.
+- Treat artifact and verification as core product objects.
+- Track source/session for every meaningful product action.
+- Match Gumroad orders to artifacts before making economic claims.
+- Keep consent explicit.
+- Keep privacy language conservative.
+- Add tests for telemetry, artifact, payment attribution, and verification logic.
+- Preserve user data and secrets.
+- Prefer clear product architecture over inherited MVP shortcuts.
 
 ---
 
-## COMMON PITFALLS
-1. **Don't add external deps to core**: Flask server can have deps, but `ci.py` and core modules must use stdlib only
-2. **Port conflicts**: Default is 8790 for `ci.py`, 5000 for Flask. Check running processes
-3. **Environment setup**: Always export `OPENAI_API_KEY` before starting servers
-4. **Deployment**: Example deployment is Android/Termux (Samsung device)
+## 3. Must not
+
+- Do not copy old MVP assumptions blindly.
+- Do not implement cold paid growth before telemetry.
+- Do not hardcode private credentials.
+- Do not claim attribution works until tested.
+- Do not position Ci Moment as advice, prediction, therapy, legal, medical, financial, or life-critical guidance.
+- Do not expose internal infrastructure status as public acquisition surface.
 
 ---
 
-## BEFORE IMPLEMENTING CHANGES
-Before any changes, read [AGENTS.md](../AGENTS.md) — contains critical operating rules.
+## 4. Implementation priority
+
+1. Product spec.
+2. Telemetry spec.
+3. Artifact model.
+4. Gumroad attribution.
+5. Verify surface.
+6. Trust surface.
+7. Offer ladder.
+8. Dashboard / CRSS.
 
 ---
 
-- **Ecosystem**: Repository `ciwiki` (canonical reference for ecosystem)
-- **This Repo**: `cit` (technical implementation)
-- **Integration**: Changes must align with `ciwiki` documentation
+## 5. Acceptance rule
 
-If something is not defined here:
-- do NOT guess,
-- create a documentation PR in `ciwiki`,
-- wait for approval.
+The product direction is valid only when the system can answer:
 
----
+1. Where did this session come from?
+2. Did the user reach Result?
+3. Did the user click Seal?
+4. Did checkout open?
+5. Did a paid order happen?
+6. Which artifact was paid for?
+7. Did the user verify or revisit?
+8. Did the user repeat, share, or join membership?
+9. Which channel has the strongest CRSS?
+10. What is the real LTV/CAC boundary after data exists?
 
-## SCOPE (REPOSITORIES)
-Copilot instructions apply to:
-- `ciwiki` — Canonical documentation and conceptual framework
-- `cit` — This repository: API gateway and modular engine
-- `cimeika-unified` — Unified system integration
-- `citt` — Telegram bot integration
-- `media` (restricted: docs only)
-
-Repository `cit_versel`:
-- strictly frozen,
-- no changes,
-- no deployment,
-- no workflows.
-
----
-
-## HARD CONSTRAINTS
-- No direct commits to `main`.
-- All changes go through branches and Pull Requests.
-- No deployment, no production actions.
-- No secrets committed to repository.
-- No architectural rewrites unless explicitly authorized.
-
----
-
-## ANTI-REPEAT PRINCIPLE (CORE RULE)
-Any repeated action is a system failure.
-
-A repeat includes:
-- the same manual command executed more than once,
-- the same error occurring more than once,
-- the same sequence of steps repeated to achieve a standard outcome.
-
-When a repeat is detected, Copilot MUST:
-1. identify the root cause,
-2. introduce a mechanism that prevents repetition,
-3. document the resolution,
-4. ensure the issue cannot reoccur under the same conditions.
-
-Repeats must be eliminated permanently unless system conditions change.
-
----
-
-## STANDARD INTENT CLASSES
-Copilot MUST use only standard intent categories.
-No custom magic words or invented markers.
-
-Allowed intents:
-- status
-- health
-- analyze
-- fix
-- refactor
-- document
-- sync
-- run_tests
-- make_pr
-
-Each intent must have:
-- clear trigger condition,
-- deterministic outcome,
-- explicit approval boundary.
-
----
-
-## EXECUTION FLOW (SINGLE PATH)
-All work must follow this sequence:
-
-1. Plan (what and why).
-2. Implement in a branch.
-3. Verify (tests / checks / validation).
-4. Create Pull Request.
-5. Await human approval.
-6. Merge.
-
-There are no alternative paths.
-
----
-
-## PULL REQUEST REQUIREMENTS
-Each PR must include:
-- What changed
-- Why it changed (root cause)
-- How it was verified
-- Risk assessment
-- Rollback plan
-
-PRs without verification or explanation are invalid.
-
----
-
-## DOCUMENTATION FIRST
-If behavior, process, or contract is unclear:
-- update documentation in `ciwiki` first,
-- only then proceed to implementation.
-
----
-
-## SECURITY & SAFETY
-- Principle of least privilege.
-- Secrets only via GitHub Secrets or environment configuration.
-- No credentials in code or markdown.
-
----
-
-## MINIMALISM RULE
-Change only what is necessary.
-Do not refactor broadly.
-Do not rewrite systems without explicit authorization.
-
-But: always eliminate repetition when found.
-
----
-
-## FINAL AUTHORITY
-Human approval is mandatory before any merge.
-
-Copilot prepares.
-Human decides.
-
-END OF INSTRUCTIONS
+Until then, economics remain benchmark-based simulation.
