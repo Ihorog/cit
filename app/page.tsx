@@ -1,28 +1,49 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { persistArtifact, persistEvent, persistSession } from "@/lib/api/client";
 import { createArtifact, type CiArtifact } from "@/lib/artifacts/artifact";
 import { calculateStatus, CI_CONTEXTS, getLockedMinute, getStatusCopy, type CiContext } from "@/lib/engine/status";
 import { buildCheckoutUrl } from "@/lib/payments/gumroad";
-import { createSessionId, trackEvent } from "@/lib/telemetry/events";
+import { createSessionId, trackEvent, type CiTelemetryEvent } from "@/lib/telemetry/events";
+
+function getSource(): string {
+  if (typeof document === "undefined") return "direct";
+  return document.referrer || "direct";
+}
+
+function getDeviceType(): string {
+  if (typeof navigator === "undefined") return "unknown";
+  if (/Mobi|Android/i.test(navigator.userAgent)) return "mobile";
+  return "desktop";
+}
 
 export default function HomePage() {
   const [sessionId] = useState(() => createSessionId());
   const [selectedContext, setSelectedContext] = useState<CiContext | null>(null);
   const [artifact, setArtifact] = useState<CiArtifact | null>(null);
+  const [persistenceState, setPersistenceState] = useState("local_ready");
 
-  const source = typeof document !== "undefined" ? document.referrer || "direct" : "direct";
+  const source = useMemo(() => getSource(), []);
+  const deviceType = useMemo(() => getDeviceType(), []);
 
-  useMemo(() => {
-    trackEvent({ eventName: "page_view", sessionId, source, route: "/" });
-  }, [sessionId, source]);
-
-  function selectContext(context: CiContext) {
-    setSelectedContext(context);
-    trackEvent({ eventName: "context_selected", sessionId, source, context });
+  async function emit(event: Omit<CiTelemetryEvent, "timestamp">) {
+    const payload = trackEvent(event);
+    await persistEvent(payload);
   }
 
-  function renderResult() {
+  useEffect(() => {
+    void persistSession({ sessionId, source, referrer: source, deviceType });
+    void emit({ eventName: "page_view", sessionId, source, route: "/", deviceType });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, source, deviceType]);
+
+  async function selectContext(context: CiContext) {
+    setSelectedContext(context);
+    await emit({ eventName: "context_selected", sessionId, source, context, deviceType });
+  }
+
+  async function renderResult() {
     if (!selectedContext) return;
 
     const lockedMinute = getLockedMinute();
@@ -30,26 +51,33 @@ export default function HomePage() {
     const nextArtifact = createArtifact({ context: selectedContext, status, lockedMinute });
 
     setArtifact(nextArtifact);
-    trackEvent({
+    setPersistenceState("artifact_created_local");
+
+    const persisted = await persistArtifact({ sessionId, source, artifact: nextArtifact });
+    setPersistenceState(persisted?.persisted ? "artifact_persisted" : "artifact_local_only");
+
+    await emit({
       eventName: "result_rendered",
       sessionId,
       source,
       context: selectedContext,
       artifactId: nextArtifact.artifactId,
       verifyHash: nextArtifact.verifyHash,
+      deviceType,
     });
   }
 
-  function sealMoment() {
+  async function sealMoment() {
     if (!artifact) return;
 
-    trackEvent({
+    await emit({
       eventName: "seal_clicked",
       sessionId,
       source,
       context: artifact.context,
       artifactId: artifact.artifactId,
       verifyHash: artifact.verifyHash,
+      deviceType,
     });
 
     const checkoutUrl = buildCheckoutUrl({
@@ -59,13 +87,14 @@ export default function HomePage() {
       source,
     });
 
-    trackEvent({
+    await emit({
       eventName: "gumroad_checkout_opened",
       sessionId,
       source,
       context: artifact.context,
       artifactId: artifact.artifactId,
       verifyHash: artifact.verifyHash,
+      deviceType,
     });
 
     window.location.href = checkoutUrl;
@@ -82,7 +111,7 @@ export default function HomePage() {
 
         <div className="ci-grid" aria-label="Select context">
           {CI_CONTEXTS.map((item) => (
-            <button key={item.id} className="ci-button" onClick={() => selectContext(item.id)}>
+            <button key={item.id} className="ci-button" onClick={() => void selectContext(item.id)}>
               <strong>{item.label}</strong>
               <br />
               <span className="ci-muted">{item.description}</span>
@@ -93,7 +122,7 @@ export default function HomePage() {
         {selectedContext && !artifact ? (
           <div style={{ marginTop: 28 }}>
             <p className="ci-muted">Context selected: {selectedContext}</p>
-            <button className="ci-button" onClick={renderResult}>Reveal result</button>
+            <button className="ci-button" onClick={() => void renderResult()}>Reveal result</button>
           </div>
         ) : null}
 
@@ -104,8 +133,9 @@ export default function HomePage() {
             <p className="ci-lead">{getStatusCopy(artifact.status)}</p>
             <p className="ci-muted">Artifact: {artifact.artifactCode}</p>
             <p className="ci-muted">Verify hash: {artifact.verifyHash}</p>
+            <p className="ci-muted">Persistence: {persistenceState}</p>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 20 }}>
-              <button className="ci-button" onClick={sealMoment}>Seal this moment</button>
+              <button className="ci-button" onClick={() => void sealMoment()}>Seal this moment</button>
               <a className="ci-button" href={`/verify/${artifact.verifyHash}`} style={{ textDecoration: "none" }}>
                 Preview verify page
               </a>
