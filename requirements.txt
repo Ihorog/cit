@@ -7,7 +7,7 @@ python-dotenv==1.2.3
 numpy==2.2.6
 asyncio-mqtt==0.16.2
 dataclasses-json==0.6.7
-openai==3.0.0
+openai==3.5.0
 huggingface_hub==1.28.0
 pymysql==1.2.0
 schedule==1.2.1
